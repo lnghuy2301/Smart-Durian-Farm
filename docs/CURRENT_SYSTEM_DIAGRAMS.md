@@ -1,5 +1,7 @@
 # Sơ đồ nền tảng đã triển khai — 2026-10-07
 
+**Bổ sung Cultivation2026-10-09:** nhật ký Zone/Tree, khóa15 phút/correction phân công gốc/hash-chain mỗi Zone đã có trên feat/cultivation-events. Mermaid lifecycle hiện hành và giới hạn chain ở [workflow](CULTIVATION_EVENTS_WORKFLOW_DESIGN.md), [API/reproduction](CULTIVATION_EVENTS_IMPLEMENTATION.md). AppModule dùng cùng instances Auth/Farm/Zone/Tree/Assignments/danh mục/bridge; CultivationEventsStore/context/head vẫn RAM, không có đường ghi business MongoDB. ACK không tự sinh nhật ký. Sơ đồ 2026-10-07 bên dưới là snapshot lịch sử, không phủ nhận các module mới này.
+
 **Bổ sung2026-10-09:** web đã có; ACTUATOR_TASKS mới đã triển khai,168 API tests đạt. Sơ đồ control theo hiện trạng ở [workflow](ACTUATOR_TASKS_WORKFLOW_DESIGN.md); chi tiết phạm vi/test/receipt ở [guide](ACTUATOR_TASKS_IMPLEMENTATION.md). ACK v1 có taskId/status/action, chỉ nhận command. Các sơ đồ cũ phía dưới ghi mốc f20f6c1; không là danh sách module chưa làm hiện tại. PostgreSQL/MongoDB vẫn chỉ readiness, RAM không business persistence.
 
 Mốc code **f20f6c1**, **147/147 tests** cùng lint/typecheck/build đạt trong lượt rà soát. Mermaid source nằm trực tiếp trong Markdown để session sau chỉnh/tái sử dụng. Đây là sơ đồ hiện trạng theo code và test, không khẳng định đã kiểm thử mọi tình huống hoặc ESP32 thật. Xem [bằng chứng/giới hạn](PROJECT_READINESS_REVIEW_20261007.md).

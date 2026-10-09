@@ -21,6 +21,7 @@ import { readMqttConfig } from './mqtt/mqtt.config';
 import { MqttTransportModule } from './mqtt/mqtt-transport.module';
 import { ActuatorTasksModule } from './actuator-tasks/actuator-tasks.module';
 import { readActuatorTasksConfig } from './actuator-tasks/actuator-tasks.config';
+import { CultivationEventsModule } from './cultivation-events/cultivation-events.module';
 
 @Module({})
 export class AppModule {
@@ -33,6 +34,7 @@ export class AppModule {
       const usersModule = UsersModule.forMock(config.auth, authModule);
       const materialsModule = MaterialsModule.forMock(authModule);
       const standardsModule = StandardsModule.forMock(authModule);
+      const standardMaterialsModule = StandardMaterialsModule.forMock(authModule, materialsModule, standardsModule);
       const farmsModule = FarmsModule.forMock(authModule, usersModule);
       const zonesModule = ZonesModule.forMock(authModule, farmsModule, standardsModule);
       const treesModule = TreesModule.forMock(authModule, farmsModule, zonesModule);
@@ -48,7 +50,7 @@ export class AppModule {
         usersModule,
         materialsModule,
         standardsModule,
-        StandardMaterialsModule.forMock(authModule, materialsModule, standardsModule),
+        standardMaterialsModule,
         farmsModule,
         CooperativesModule.forMock(config.auth, authModule, usersModule, farmsModule),
         zonesModule,
@@ -61,6 +63,8 @@ export class AppModule {
         MqttModule.register(authModule, devicesModule, sensorsModule, telemetryModule, transportModule, taskModule),
         TreeHarvestsModule.forMock(authModule, usersModule, farmsModule, zonesModule, treesModule),
         assignmentsModule,
+        CultivationEventsModule.forMock([authModule, farmsModule, zonesModule, treesModule, assignmentsModule,
+          materialsModule, standardsModule, standardMaterialsModule]),
       );
     }
     return { module: AppModule, imports };

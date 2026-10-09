@@ -1,5 +1,9 @@
 # SMART FARM DURIAN --- PROJECT BUILD SPECIFICATION
 
+Kiểm chứng đợt Cultivation2026-10-09:192/192 API tests + lint/typecheck/build, web8 unit/22 browser + typecheck/build, Postman25 requests khớp route runtime. Chỉ kiểm thử local cô lập, chưa chứng minh persistence/ESP32 triển khai thật.
+
+**Cultivation hiện hành2026-10-09:** CULTIVATION_EVENTS đã triển khai RAM trên **feat/cultivation-events** từ main647e6ad. Chủ Farmer nhập trực tiếp, assignee cần Accepted [start,end); đọc toàn Zone khi còn việc và own history sau end. Author-only Pending15 phút, correction dùng context gốc/grace15 ngày; Owner correction khi còn sở hữu Farm. Target/action được sửa cùng Zone; structured details giữ snapshot Active vật tư, ngoài tiêu chuẩn cảnh báo. Chain **mỗi Zone**, Locked-only, Genesis previous_hash=null theo ERD. [API/setup/reproduction](CULTIVATION_EVENTS_IMPLEMENTATION.md), [quy trình đã chốt](CULTIVATION_EVENTS_WORKFLOW_DESIGN.md). Không tự tạo log từ ACK; không DB/migration/seed hoặc sửa nguồn ERD riêng. Các đề xuất global-chain/enum viết hoa toàn bộ bên dưới đã được thay bằng wire enums ERD Pending/Locked và thiết kế hiện hành.
+
 **Ưu tiên hiện hành2026-10-09:** DOCX MQTT_Configuration_Smart_Farm_Durian_v1.0 và quyết định trực tiếp thay các thiết kế IoT cũ. ACK có taskId/status/action, chỉ xác nhận **nhận command**. ACTUATOR_TASKS RAM đã triển khai feat/actuator-tasks-v1 từ f20ea20;168 API tests đạt. POST202/GET progress/state, reset trước Start khi Unknown, bơm2/van3tưới/van4phun, per-step ACK10s/Stop preemption/recovery riêng. Xem [implementation](ACTUATOR_TASKS_IMPLEMENTATION.md). DEVICES/SENSORS/ACTUATORS schemas không đổi; Sensors mapping301/C,302/%,303/% đã chốt. Không created_by/confirmed_by hoặc physical execution claim cho tasks, không DB migration/seed. Web read-only đã có; control UI/hardware thật chưa nghiệm thu. Các ghi chú chờ module phía dưới là lịch sử.
 
 Telemetry hoàn tất 2026-10-07 trên **feat/iot-telemetries** từ a656773 (kế thừa e1ad1a0/MQTT d10ebd2). Shared RAM store FIFO10.000 readings, nhận mọi packet hợp lệ theo chu kỳ hardware15 giây; GET latest/history có filter stream/received_at [from,to) và pagination. Farmer phải có assignment Accepted đang hiệu lực, hết phân công mất cả latest/history; chỉ xem readings trong khoảng assignment hiện tại. measured_at lúc backend nhận/đọc MQTT, received_at lúc ghi RAM, raw unit tối đa16; không sửa firmware/protocol/.env hoặc persistence. **147/147 tests + lint/typecheck/build đạt**, gồm10 domain/HTTP/fake tests và1 MQTT.js TCP -> App -> Telemetry -> HTTP mới; npm test giới hạn2 files đồng thời. Postman20 requests literal, đọc [IOT_TELEMETRIES_IMPLEMENTATION.md](IOT_TELEMETRIES_IMPLEMENTATION.md) và [thiết kế cuối](IOT_TELEMETRIES_WORKFLOW_DESIGN.md). Còn4 collections chưa có module + QR không có bảng; tiếp theo thảo luận ACTUATOR_TASKS/safety, persistence riêng. Các ghi chú chờ Telemetry/136 tests phía dưới là lịch sử. Nhánh chỉ local, không push/merge; giữ file riêng.
@@ -347,13 +351,13 @@ Ví dụ:
 Khi Farmer tạo event:
 
 ``` text
-status = PENDING
+status = Pending
 created_at = now
 lock_at = created_at + 15 minutes
 locked_at = null
 ```
 
-Trong 15 phút PENDING:
+Trong 15 phút Pending (chỉ tác giả còn quyền sửa theo context gốc):
 
 ``` text
 EDIT   = allowed
@@ -363,7 +367,7 @@ DELETE = allowed
 Sau deadline:
 
 ``` text
-status = LOCKED
+status = Locked
 ```
 
 LOCKED event:
@@ -378,7 +382,7 @@ Backend **không được chỉ tin vào status**.
 Mọi edit/delete phải kiểm tra đồng thời:
 
 ``` text
-status == PENDING
+status == Pending
 AND
 now < lock_at
 ```
@@ -397,12 +401,14 @@ Nếu Farmer phát hiện sai sau khi event đã LOCKED:
 -   `reference_event_id` trỏ tới event được sửa trực tiếp.
 -   `root_event_id` trỏ tới event gốc đầu tiên.
 -   lưu `correction_reason`.
--   correction event cũng trải qua PENDING → LOCKED như event bình
+-   correction event cũng trải qua Pending → Locked như event bình
     thường.
 
-Không giới hạn số lần correction trong cửa sổ còn quyền. Chỉ tác giả được correction;
-sau hết phân công, hạn tối đa 15 ngày từ end_date của phân công gốc, không gia hạn bằng
-phân công mới. Quyền correction không cho phép tạo nhật ký mới/điều khiển sau hết hạn.
+Không giới hạn số lần correction trong cửa sổ còn quyền/dung lượng RAM. Chỉ tác giả được correction;
+assignee sau hết việc có hạn now<end_date+15 ngày từ phân công gốc, không gia hạn bằng
+phân công mới. Context tạo với tư cách chủ yêu cầu còn sở hữu Farm. Quyền correction
+không cho phép assignee tạo nhật ký mới/điều khiển sau hết phân công. Chỉ một correction
+Pending/root, tham chiếu Locked mới nhất; target/action được đổi trong cùng Zone, không đổi Zone.
 
 ### Hash chain
 
@@ -418,20 +424,24 @@ hash = null
 Khi LOCKED:
 
 ``` text
-hash = SHA-256(canonical_event_data + previous_hash)
+hash = SHA-256(UTF8(canonicalJSON(v1_payload_including_previous_hash)))
 ```
 
 Không hash trực tiếp raw Mongo document hoặc JSON.stringify không ổn
 định.
 
-Cần tạo canonical serialization với thứ tự field xác định.
+Cần tạo canonical serialization với thứ tự field xác định. Hiện thực v1: key object
+sắp xếp đệ quy, array giữ thứ tự, domain smart-durian/cultivation-events/v1 và các field
+document ngoại trừ hash. Genesis previous_hash=null. Mỗi Zone một chain, bao gồm Zone
+và Tree targets, nối theo lock_at rồi _id. Head/count lưu RAM; không tự đặt zero genesis.
 
 Hash chain là **tamper-evident mechanism**, không gọi đây là blockchain.
 
 Mục đích:
 
 1.  Business rule ngăn chỉnh sửa event LOCKED.
-2.  Hash giúp phát hiện dữ liệu lịch sử bị can thiệp trái phép ở DB.
+2.  Hash giúp phát hiện can thiệp so với chain/head còn nguyên. Chưa persistence/trusted
+    external anchor; không chống người có thể viết lại toàn bộ chain và head.
 
 ------------------------------------------------------------------------
 
