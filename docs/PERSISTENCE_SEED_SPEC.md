@@ -1,6 +1,6 @@
 # Seed demo — dữ liệu mô phỏng và một bộ hardware thật
 
-Ngày 2026-10-10, bổ sung theo yêu cầu người dùng vào [thiết kế persistence](PERSISTENCE_DESIGN.md). Nhánh **docs/persistence-design**; tài liệu này là specification, chưa có seed runtime hoặc ghi database.
+Ngày 2026-10-10, bổ sung theo yêu cầu người dùng vào [thiết kế persistence](PERSISTENCE_DESIGN.md). Specification đã được triển khai trong **feat/persistence-foundation** từ622a189. [Lệnh migration/seed, manifest, kiểm thử và tái lập](PERSISTENCE_FOUNDATION_IMPLEMENTATION.md). Đã seed database demo local, nhưng API nghiệp vụ vẫn RAM cho tới đợt repositories.
 
 ## Yêu cầu đã chốt
 
@@ -19,7 +19,7 @@ Người dùng xác nhận ngày 2026-10-10:
 
 Theo yêu cầu dời ngày sớm hơn, profile đã đổi từ01/10 sang01/09/2026; giờ08:30 và cost10237500 giữ nguyên. Đây là cập nhật cấu hình trước khi có seed, không sửa dữ liệu database đã tồn tại; seed chạy lại sau này vẫn không được ghi đè Device đã có.
 
-Các thông tin đầu vào của bộ thật đã đủ; không hỏi lại station/tài khoản/ngày lắp/chi phí. Đã thêm DEMO_DEVICE_INSTALLED_AT và DEMO_DEVICE_COST với các giá trị trên vào .env local/.env.example, giữ nguyên nội dung local trước đó. Ba khóa DEMO_DEVICE_* hiện chỉ là cấu hình tham khảo cho demo; runtime chưa đọc hai khóa mới, không tự đăng ký Device hoặc tạo quan hệ database. Foundation tiếp theo phải triển khai parser/preflight cho seed riêng; seed runtime chưa triển khai và chưa ghi database.
+Các thông tin đầu vào của bộ thật đã đủ; không hỏi lại station/tài khoản/ngày lắp/chi phí. Đã thêm DEMO_DEVICE_INSTALLED_AT và DEMO_DEVICE_COST với các giá trị trên vào .env local/.env.example, giữ nguyên nội dung local trước đó. Ba khóa DEMO_DEVICE_* đã được parser/preflight CLI seed riêng đọc và dùng để tạo bộ hardware trong database; không làm global MQTT whitelist hoặc tự đăng ký Device lúc API boot. Foundation không chuyển store API sang database; IDs seed chưa được API RAM sử dụng.
 
 Kết quả đối chiếu cấu hình local chỉ ghi trạng thái, không ghi giá trị: broker host/port đã điền; SMS_PROVIDER=twilio; AUTH_TEST_PHONE khớp SMS_ALLOWED_PHONE sau chuẩn hóa. Đây không phải bằng chứng SMS đã gửi hoặc hardware đã kết nối trong lượt này. Khi triển khai seed mới, phải hướng dẫn và điền đầy đủ các khóa còn cần trong .env/.env.example, giữ nguyên giá trị cũ.
 
@@ -89,4 +89,4 @@ Người trình diễn phải phân biệt telemetry hiện tại của trạm t
 - Real phone/password không xuất hiện trong log, file JSON/Postman export, reports hoặc Git diff. Kiểm thử provider giả chứng minh seed không tự gửi OTP/SMS/MQTT.
 - Sau chuyển repository database: restart vẫn giữ bộ thật/account và các quan hệ; password reset qua SMS do thao tác người dùng được nghiệm thu riêng, không tự gửi trong test suite.
 
-Foundation và các đợt repositories đọc specification này cùng PERSISTENCE_DESIGN.md. Tạo nhánh code riêng khi triển khai; cập nhật lệnh seed, cấu hình đầy đủ, profile/manifest phân biệt dữ liệu thật/mẫu và hướng dẫn demo trước hội đồng trong guide implementation.
+Foundation đã tạo profile với3 Farms/6 Zones/54 Trees/3 Devices/9 Sensors/9 Actuators và các tài khoản/danh mục/phân công như guide implementation. Seed lần đầu inserted99 records có UUID +4 standard_material links; chạy lại inserted0/reused99. Kiểm thử216 backend/16 DB integration đạt, không phát sinh tin/lệnh thật. Các đợt repositories đọc specification này cùng PERSISTENCE_DESIGN.md và PERSISTENCE_FOUNDATION_IMPLEMENTATION.md; giữ cấu hình/profile/manifest phân biệt dữ liệu thật/mẫu, cập nhật hướng dẫn demo trước hội đồng khi API đã đọc database.

@@ -1,6 +1,6 @@
 # Persistence — thiết kế và kế hoạch chuyển từ RAM
 
-Ngày 2026-10-10. Nhánh tài liệu **docs/persistence-design**, từ QR **26d45a5**; kế thừa Cultivation3ee921b/main647e6ad. Người dùng chọn persistence trước, AI_DISEASE_DIAGNOSTICS/CHATBOT_CONVERSATIONS để sau vì chưa triển khai AI. Đây là **thiết kế**, chưa có migration/seed/repository database hoặc thay runtime. Mốc kiểm thử source hiện hành: API207/207, web8 unit/29 browser, lint/typecheck/build của đợt QR; không chạy lại trong lượt chỉ ghi thiết kế.
+Ngày 2026-10-10. Nhánh tài liệu **docs/persistence-design**, từ QR **26d45a5**; kế thừa Cultivation3ee921b/main647e6ad. Người dùng chọn persistence trước, AI_DISEASE_DIAGNOSTICS/CHATBOT_CONVERSATIONS để sau vì chưa triển khai AI. **Foundation đã triển khai** trên feat/persistence-foundation từ622a189: migration/schema/index/seed local,216 backend/16 DB integration tests +lint/typecheck/build đạt. [Hướng dẫn và giới hạn](PERSISTENCE_FOUNDATION_IMPLEMENTATION.md). Runtime API vẫn RAM, repository PostgreSQL/Mongo và HTTP restart acceptance còn tiếp theo. Các quyết định/thiết kế dưới đây là nguồn cho toàn đợt persistence, không phải tuyên bố toàn bộ đã hoàn tất.
 
 ## Quyết định đã chốt
 
@@ -69,7 +69,7 @@ Tái dùng pg/MongoClient hiện có, SQL tham số hóa và repository nhỏ th
 
 | Đợt | Phạm vi | Điều kiện nghiệm thu |
 |---|---|---|
-| 1 — Foundation | Migration runner/version/checksum/lock; schema/index theo ERD và kỹ thuật đã duyệt; repository contracts/mapping; seed có kiểm tra dữ liệu sẵn có | DB test riêng; migrate fresh/rerun; seed rerun không ghi đè; chưa tuyên bố APIs đã persistence chỉ vì tạo bảng |
+| 1 — Foundation (đã có) | Migration runner/version/checksum/lock; schema/index theo ERD và kỹ thuật đã duyệt; repository contracts/mapping; seed có kiểm tra dữ liệu sẵn có | Đạt216 backend/16 DB tests; local migrations Applied và seed rerun inserted0. APIs vẫn RAM |
 | 2 — PostgreSQL nghiệp vụ | Users/Auth/HTX/danh mục, tiếp Farm/Zone/phân công/Tree/Harvest, metadata IoT | Thay records/proposals/metadata thật; rollback/unique/concurrency/restart; quyền và response không đổi |
 | 3 — MongoDB nghiệp vụ | Telemetry, Tasks/control, Cultivation/context/head | Restart/retention/ACK cũ/correction context/hash-chain và transaction được kiểm thử |
 | 4 — Nghiệm thu xuyên suốt | API/web/Postman/QR với storage database, lịch sử và seed demo | Restart vẫn còn dữ liệu/quyền/history, chạy toàn bộ hồi quy và DB integration |
@@ -80,8 +80,8 @@ Seed tối thiểu gồm bootstrap Admin và danh mục demo; seed demo mở r�
 
 ## Handoff và việc chưa làm
 
-Bổ sung seed theo người dùng2026-10-10: [PERSISTENCE_SEED_SPEC.md](PERSISTENCE_SEED_SPEC.md) yêu cầu dữ liệu metadata IoT đa dạng/mô phỏng kèm1 bộ thật (Device+3 Sensors+3 Actuators theo identifiers hardware), và1 tài khoản demo chính nhận SMS/reset password thật. Không seed readings/ACK/Online giả cho bộ thật hoặc reset mật khẩu khi rerun. Broker/Twilio đã cấu hình, số chính khớp allowlist. Người dùng xác nhận station E08CFE41DCAC và Farmer cấu hình hiện có làm chủ Farm hardware; cho phép chọn metadata lắp đặt minh họa: installed_at2026-09-01T08:30:00+07:00, cost10237500 VNĐ. Đầu vào seed đã đủ, không hỏi lại; các khóa DEMO_DEVICE_* đã điền local/example theo guide, giữ cấu hình khác. Chưa có seed runtime hoặc đăng ký Device tự động.
+Bổ sung seed theo người dùng2026-10-10: [PERSISTENCE_SEED_SPEC.md](PERSISTENCE_SEED_SPEC.md) yêu cầu dữ liệu metadata IoT đa dạng/mô phỏng kèm1 bộ thật (Device+3 Sensors+3 Actuators theo identifiers hardware), và1 tài khoản demo chính nhận SMS/reset password thật. Không seed readings/ACK/Online giả cho bộ thật hoặc reset mật khẩu khi rerun. Broker/Twilio đã cấu hình, số chính khớp allowlist. Người dùng xác nhận station E08CFE41DCAC và Farmer cấu hình hiện có làm chủ Farm hardware; cho phép chọn metadata lắp đặt minh họa: installed_at2026-09-01T08:30:00+07:00, cost10237500 VNĐ. Đầu vào seed đã đủ, không hỏi lại; các khóa DEMO_DEVICE_* đã điền local/example theo guide, giữ cấu hình khác. CLI seed đã đọc các khóa và tạo bộ demo database local; không tự đăng ký Device lúc API boot hoặc chuyển API sang database.
 
-Lượt này chỉ thiết kế và điền cấu hình demo đã chốt; chưa thêm package, tạo bảng/index hoặc ghi database. Trước triển khai foundation: đọc AGENTS nếu có, git status/log/branch, tài liệu này, MODULE_HANDOFF, ERD_DIAGRAM.xml hiện có, source/types của từng module. Không sử dụng các mô tả QR/Cultivation chưa triển khai trong tài liệu cũ.
+Đợt foundation không thêm dependency/ORM hoặc sửa .env thật; đã tạo bảng/index/seed local theo lệnh riêng. Trước triển khai repositories: đọc AGENTS nếu có, git status/log/branch, guide foundation, tài liệu này, MODULE_HANDOFF, ERD_DIAGRAM.xml hiện có, source/types của từng module. Không sử dụng các mô tả QR/Cultivation chưa triển khai trong tài liệu cũ.
 
 Hai module AI trì hoãn theo người dùng. Không push/merge khi chưa có yêu cầu cho đợt mới; không stage toàn workspace hoặc sửa nguồn ERD/MQTT/Postman/UI riêng. Mỗi đợt cập nhật README/handoff/guide/Postman nếu API mapping thay đổi, ghi lệnh migrate/seed/test/reset chỉ dành DB test riêng và cách tái lập session khác.
