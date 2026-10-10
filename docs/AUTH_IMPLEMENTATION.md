@@ -1,5 +1,9 @@
 # Auth — đăng nhập và OTP ở chế độ test
 
+## Cập nhật persistence 2026-10-10
+
+AuthService hiện await hợp đồng UserAccounts, đọc snapshot và recheck version/status sau scrypt; OTP gắn version lúc gửi, password reset ghi qua adapter. Adapter PostgreSQL đã kiểm thử Auth HTTP riêng qua restart với password/revocation giữ nguyên, OTP cũ mất; **221 backend/26 DB integration tests +lint/typecheck/build đạt**. [Source, transaction, lệnh và giới hạn](POSTGRES_USERS_AUTH_IMPLEMENTATION.md). **AppModule/AUTH_MODE=mock vẫn dùng cùng MockUserStore với các module khác**; chưa bật database runtime toàn ứng dụng. Không cần thêm .env key hoặc đổi Postman/DTO, không gửi SMS thật trong test. Nội dung hướng dẫn local phía dưới vẫn áp dụng cho mode hiện tại.
+
 Cập nhật 2026-10-02: provider SMS được chọn là **Twilio Verify**, sau khi người dùng nhận SMS từ Try out Verify. Hướng dẫn credentials và demo: [TWILIO_VERIFY_INTEGRATION.md](TWILIO_VERIFY_INTEGRATION.md). Mock SMS vẫn dùng để test tự động; SpeedSMS giữ tương thích, không phải hướng demo hiện tại.
 
 ## Phạm vi

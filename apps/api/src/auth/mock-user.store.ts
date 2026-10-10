@@ -2,37 +2,21 @@ import { ConflictException, HttpException, HttpStatus } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { MockAuthConfig } from '../config/environment';
 import { hashPassword } from './password';
+import { AccountSnapshot, publicUser, UserAccounts, UserRecord } from './user-accounts';
+import { normalizeEmail, phoneIdentity } from './account-identity';
 
-export type UserRole = 'Farmer' | 'Manager' | 'Admin';
-export type UserStatus = 'Active' | 'Locked' | 'Pending' | 'Reject';
+export type { UserRole, UserStatus } from './user-accounts';
+export type TestUser = UserRecord;
 
-export interface TestUser {
-  id: string;
-  user_name: string;
-  phone_number: string;
-  gmail: string | null;
-  gmail_verify: boolean;
-  password: string;
-  role: UserRole;
-  status: UserStatus;
-  is_owner: boolean;
-  created_at: string;
-}
+export { normalizeEmail } from './account-identity';
 
-export function normalizeEmail(email: string): string { return email.trim().toLowerCase(); }
-
-// Chỉ dùng để chống đăng ký trùng số VN qua dạng 0/84/+84, không đổi cách login hiện tại.
-function phoneIdentity(phone: string): string {
-  const digits = phone.replace(/^\+/, '');
-  return /^0\d{9}$/.test(digits) ? `84${digits.slice(1)}` : digits;
-}
-
-export class MockUserStore {
+export class MockUserStore extends UserAccounts {
   readonly user: TestUser;
   private readonly users = new Map<string, TestUser>();
   private readonly versions = new Map<string, number>();
 
   private constructor(config: MockAuthConfig, passwordHash: string) {
+    super();
     this.user = this.add({
       user_name: 'Local test Farmer', phone_number: config.phoneNumber, gmail: null, gmail_verify: false,
       password: passwordHash, role: 'Farmer', status: 'Active', is_owner: false,
@@ -76,8 +60,22 @@ export class MockUserStore {
   }
 
   publicUser(user: TestUser = this.user): Omit<TestUser, 'password'> {
-    // Whitelist tường minh để không trả hash hoặc metadata nội bộ khi thêm field.
-    const { id, user_name, phone_number, gmail, gmail_verify, role, status, is_owner, created_at } = user;
-    return { id, user_name, phone_number, gmail, gmail_verify, role, status, is_owner, created_at };
+    return publicUser(user);
+  }
+
+  async loadById(id: string): Promise<AccountSnapshot | null> { return this.snapshot(this.findById(id)); }
+  async loadByPhone(phone: string): Promise<AccountSnapshot | null> { return this.snapshot(this.findByPhone(phone)); }
+  async dummyPasswordHash(): Promise<string> { return this.user.password; }
+  async replacePassword(id: string, expectedTokenVersion: number, passwordHash: string): Promise<boolean> {
+    const user = this.findById(id);
+    // Adapter memory cũng thực hiện compare-and-write trong một khối đồng bộ.
+    if (!user || user.status !== 'Active' || this.versionOf(id) !== expectedTokenVersion) { return false; }
+    user.password = passwordHash;
+    this.revokeTokens(id);
+    return true;
+  }
+
+  private snapshot(user: TestUser | undefined): AccountSnapshot | null {
+    return user ? { user: { ...user }, tokenVersion: this.versionOf(user.id) } : null;
   }
 }

@@ -1,15 +1,13 @@
 import { validateSync } from 'class-validator';
 import { randomUUID } from 'node:crypto';
 import { CreateDeviceDto } from '../devices/devices.dto';
+import { phoneIdentity } from '../auth/account-identity';
+export { phoneIdentity } from '../auth/account-identity';
 
 export interface SeedConfig {
   farmer: { phone: string; password: string };
   admin: { phone: string; password: string };
   device: { stationId: string; installedAt: string; cost: number };
-}
-export function phoneIdentity(phone: string): string {
-  const digits = phone.replace(/^\+/, '');
-  return /^0\d{9}$/.test(digits) ? `84${digits.slice(1)}` : digits;
 }
 
 export function readSeedConfig(env: NodeJS.ProcessEnv): SeedConfig {

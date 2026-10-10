@@ -1,5 +1,7 @@
 # Persistence foundation — migration, schema và seed demo
 
+Tiếp nối2026-10-10: adapter Users/Auth đã triển khai trên **feat/postgres-users-auth** từ2b6db5f, kiểm thử221 backend/26 DB integration tests và Auth HTTP restart riêng. [Guide và phạm vi](POSTGRES_USERS_AUTH_IMPLEMENTATION.md). AppModule toàn dự án vẫn RAM; Users/email/HTX và domain repositories chưa wiring. Các số216/16 và giới hạn của foundation dưới đây là kết quả của đợt foundation, chưa bao gồm adapter mới.
+
 Ngày 2026-10-10. Nhánh **feat/persistence-foundation**, base **622a189** từ docs/persistence-design; kế thừa QR/Cultivation/backend/frontend hiện có. Đọc cùng [thiết kế đã chốt](PERSISTENCE_DESIGN.md), [profile seed](PERSISTENCE_SEED_SPEC.md) và [handoff](MODULE_HANDOFF.md).
 
 ## Kết quả và giới hạn

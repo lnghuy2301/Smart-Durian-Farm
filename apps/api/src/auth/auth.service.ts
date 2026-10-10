@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { MockUserStore } from './mock-user.store';
+import { publicUser, UserAccounts } from './user-accounts';
 import { hashPassword, verifyPassword } from './password';
 import { OtpProof, OtpProvider } from './sms/otp.provider';
 import { WindowRateLimiter } from './rate-limiter';
@@ -10,7 +10,7 @@ const RESEND_DELAY_MS = 60 * 1000;
 const MAX_OTP_ATTEMPTS = 5;
 const TOKEN_TTL_SECONDS = 15 * 60;
 
-interface OtpChallenge { proof: OtpProof; expiresAt: number; attempts: number; consumed: boolean }
+interface OtpChallenge { proof: OtpProof; expiresAt: number; attempts: number; consumed: boolean; tokenVersion: number }
 interface OtpState { challenge?: OtpChallenge; nextSendAt: number; busy: boolean }
 
 @Injectable()
@@ -18,30 +18,35 @@ export class AuthService {
   private readonly otpStates = new Map<string, OtpState>();
   private readonly rateLimits = new WindowRateLimiter();
 
-  constructor(@Inject(MockUserStore) private readonly store: MockUserStore,
+  constructor(@Inject(UserAccounts) private readonly store: UserAccounts,
     @Inject(JwtService) private readonly jwt: JwtService,
     @Inject(OtpProvider) private readonly otpProvider: OtpProvider) {}
 
   async login(phoneNumber: string, password: string) {
     this.rateLimits.take('login', 20);
-    const user = this.store.findByPhone(phoneNumber);
-    const version = user ? this.store.versionOf(user.id) : 0;
+    const account = await this.store.loadByPhone(phoneNumber);
+    const user = account?.user;
+    const version = account?.tokenVersion;
     // Luôn verify một hash hợp lệ, kể cả số điện thoại sai, để giảm chênh lệch thời gian phản hồi.
-    const matches = await verifyPassword(password, user?.password ?? this.store.user.password);
-    if (!matches || !user || version !== this.store.versionOf(user.id) || user.status === 'Locked') {
+    const matches = await verifyPassword(password, user?.password ?? await this.store.dummyPasswordHash());
+    // Snapshot không tự thay đổi như object RAM. Đọc lại sau scrypt để không ký
+    // JWT từ mật khẩu/version/status cũ khi reset hoặc duyệt diễn ra đồng thời.
+    const current = user ? await this.store.loadById(user.id) : null;
+    if (!matches || !user || !current || version !== current.tokenVersion || current.user.status === 'Locked') {
       throw new UnauthorizedException('Số điện thoại hoặc mật khẩu không đúng');
     }
-    if (user.status !== 'Active') { throw new ForbiddenException('Tài khoản chưa được duyệt hoặc đã bị từ chối'); }
+    if (current.user.status !== 'Active') { throw new ForbiddenException('Tài khoản chưa được duyệt hoặc đã bị từ chối'); }
     return {
       access_token: await this.jwt.signAsync({ sub: user.id, version }, { expiresIn: TOKEN_TTL_SECONDS }),
-      token_type: 'Bearer', expires_in: TOKEN_TTL_SECONDS, user: this.store.publicUser(user),
+      token_type: 'Bearer', expires_in: TOKEN_TTL_SECONDS, user: publicUser(current.user),
     };
   }
 
   async forgotPassword(phoneNumber: string) {
     this.rateLimits.take('forgot', 5);
     const now = Date.now();
-    const user = this.store.findByPhone(phoneNumber);
+    const account = await this.store.loadByPhone(phoneNumber);
+    const user = account?.user;
     const state = user?.status === 'Active' ? this.stateFor(user.id) : undefined;
     if (state && !state.busy && now >= state.nextSendAt) {
       // Giữ cooldown trước await để request đồng thời không gửi hai SMS bị tính phí.
@@ -52,7 +57,7 @@ export class AuthService {
       try {
         const proof = await this.otpProvider.issue(phoneNumber, now + OTP_TTL_MS);
         // Chỉ kích hoạt OTP sau khi provider nhận yêu cầu; không khẳng định điện thoại đã nhận SMS.
-        state.challenge = { proof, expiresAt: now + OTP_TTL_MS, attempts: 0, consumed: false };
+        state.challenge = { proof, expiresAt: now + OTP_TTL_MS, attempts: 0, consumed: false, tokenVersion: account!.tokenVersion };
       } finally { state.busy = false; }
     }
     // Cùng response cho tài khoản có/không tồn tại; không trả OTP hoặc SID ra client.
@@ -60,11 +65,12 @@ export class AuthService {
   }
 
   async resetPassword(phoneNumber: string, otp: string, newPassword: string) {
-    const user = this.store.findByPhone(phoneNumber);
+    const account = await this.store.loadByPhone(phoneNumber);
+    const user = account?.user;
     const state = user ? this.otpStates.get(user.id) : undefined;
     const challenge = state?.challenge;
     if (!user || !state || state.busy || !challenge || challenge.consumed || Date.now() >= challenge.expiresAt || challenge.attempts >= MAX_OTP_ATTEMPTS ||
-        user.status !== 'Active') {
+        user.status !== 'Active' || challenge.tokenVersion !== account?.tokenVersion) {
       throw new BadRequestException('OTP không hợp lệ hoặc đã hết hạn');
     }
     challenge.attempts++;
@@ -86,9 +92,9 @@ export class AuthService {
       challenge.consumed = true;
       this.otpProvider.clear(phoneNumber);
       const passwordHash = await hashPassword(newPassword);
-      if (user.status !== 'Active') { throw new BadRequestException('Tài khoản không còn hoạt động'); }
-      user.password = passwordHash;
-      this.store.revokeTokens(user.id); // Chỉ thu hồi token của user đổi mật khẩu.
+      if (!await this.store.replacePassword(user.id, account!.tokenVersion, passwordHash)) {
+        throw new BadRequestException('Tài khoản hoặc phiên xác minh đã thay đổi; vui lòng xác minh lại');
+      }
       return { message: 'Đã đặt lại mật khẩu. Vui lòng đăng nhập lại' };
     } finally { state.busy = false; }
   }
@@ -97,11 +103,11 @@ export class AuthService {
     let payload: { sub?: string; version?: number };
     try { payload = await this.jwt.verifyAsync(token); }
     catch { throw new UnauthorizedException('Token không hợp lệ hoặc đã hết hạn'); }
-    const user = typeof payload.sub === 'string' ? this.store.findById(payload.sub) : undefined;
-    if (!user || payload.version !== this.store.versionOf(user.id) || user.status !== 'Active') {
+    const account = typeof payload.sub === 'string' ? await this.store.loadById(payload.sub) : null;
+    if (!account || payload.version !== account.tokenVersion || account.user.status !== 'Active') {
       throw new UnauthorizedException('Token không còn hợp lệ');
     }
-    return this.store.publicUser(user);
+    return publicUser(account.user);
   }
 
   testSms(phoneNumber: string) {

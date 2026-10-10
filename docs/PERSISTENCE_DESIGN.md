@@ -1,5 +1,7 @@
 # Persistence — thiết kế và kế hoạch chuyển từ RAM
 
+Tiến độ PostgreSQL2026-10-10: **feat/postgres-users-auth** từ2b6db5f đã có UserAccounts async + PostgreSQL account adapter/atomic password revocation/audit, **221 backend/26 DB tests +lint/typecheck/build đạt**, isolated Auth HTTP restart kiểm chứng. [Hướng dẫn và giới hạn](POSTGRES_USERS_AUTH_IMPLEMENTATION.md). Chưa wiring Users/email/HTX và các domain phụ thuộc; AppModule vẫn RAM, không bật mixed database Auth/memory domain. Các mốc “repository chưa triển khai” trong phần foundation dưới đây mô tả đợt trước; đợt2 mới hoàn thành adapter account, còn các repository/transactions nghiệp vụ khác.
+
 Ngày 2026-10-10. Nhánh tài liệu **docs/persistence-design**, từ QR **26d45a5**; kế thừa Cultivation3ee921b/main647e6ad. Người dùng chọn persistence trước, AI_DISEASE_DIAGNOSTICS/CHATBOT_CONVERSATIONS để sau vì chưa triển khai AI. **Foundation đã triển khai** trên feat/persistence-foundation từ622a189: migration/schema/index/seed local,216 backend/16 DB integration tests +lint/typecheck/build đạt. [Hướng dẫn và giới hạn](PERSISTENCE_FOUNDATION_IMPLEMENTATION.md). Runtime API vẫn RAM, repository PostgreSQL/Mongo và HTTP restart acceptance còn tiếp theo. Các quyết định/thiết kế dưới đây là nguồn cho toàn đợt persistence, không phải tuyên bố toàn bộ đã hoàn tất.
 
 ## Quyết định đã chốt
