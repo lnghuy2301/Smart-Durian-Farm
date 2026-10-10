@@ -1,5 +1,7 @@
 # PostgreSQL Users và danh mục HTX — giao dịch duyệt Manager
 
+**Tiếp nối2026-10-10:** workflow Manager sửa HTX email→SMS/history và CooperativesService/CooperativeRecords async/scheduler đã triển khai trên feat/postgres-cooperative-workflows từ9c328a4, migration004 bổ sung Applied, **226 backend/51 DB** và checks đạt. [Guide mới](POSTGRES_COOPERATIVE_WORKFLOWS_IMPLEMENTATION.md). AppModule vẫn RAM; các mô tả “workflow/service/scheduler chưa chuyển” và bước2/3 Session tiếp theo bên dưới chỉ áp dụng checkpoint9c328a4. Tiếp catalog PG, không triển khai lại Users/HTX. test:persistence hiện bốn suites.
+
 Ngày 2026-10-10. Nhánh **feat/postgres-users-cooperatives**, base **cb2a4d6** của feat/postgres-users-auth. Đọc cùng [bàn giao](MODULE_HANDOFF.md), [Users/Auth adapter](POSTGRES_USERS_AUTH_IMPLEMENTATION.md), [foundation](PERSISTENCE_FOUNDATION_IMPLEMENTATION.md), [thiết kế persistence](PERSISTENCE_DESIGN.md) và [báo cáo rà soát](PROJECT_REVIEW_20261010.md).
 
 ## Phạm vi đã làm và giới hạn

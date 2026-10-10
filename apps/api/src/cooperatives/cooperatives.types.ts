@@ -19,6 +19,8 @@ export interface CooperativeUpdateRequest {
 // Chứng cứ OTP/phiên bản và địa chỉ tài khoản là metadata riêng, không trả qua API.
 export interface StoredCooperativeUpdate {
   value: CooperativeUpdateRequest;
+  revision: number;
+  sessionId: string;
   cooperativeVersion: number;
   tokenVersion: number;
   email: string;
@@ -28,6 +30,7 @@ export interface StoredCooperativeUpdate {
   smsProof?: OtpProof;
   emailAttempts: number;
   smsAttempts: number;
+  smsActive: boolean;
   emailValidUntil: number;
   nextEmailSendAt: number;
   nextSmsSendAt: number;

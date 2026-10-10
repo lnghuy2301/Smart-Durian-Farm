@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, ForbiddenException, HttpException, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { Pool, PoolClient } from 'pg';
 import { publicUser, UserRecord } from '../auth/user-accounts';
+import { AccountSnapshot } from '../auth/user-accounts';
 import { TestCooperative } from '../users/mock-cooperative.store';
 import { ApproveManagerDto, CreateCooperativeDto } from '../users/users.dto';
 import { CooperativeNotification } from '../cooperatives/cooperatives.types';
@@ -22,6 +23,30 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export class PostgresCooperativesRepository {
   constructor(private readonly pool: Pool, private readonly users: PostgresUsersRepository,
     private readonly clock: () => Date = () => new Date()) {}
+
+  // Workflow dùng cùng pool/client và thứ tự khóa với registry/Manager approval.
+  // Quyền sửa/identity/version phải được callback recheck trước mọi ghi.
+  async withWorkflowLocks<T>(managerId: string, cooperativeId: string,
+    work: (client: PoolClient, account: AccountSnapshot, cooperative: CooperativeSnapshot) => Promise<T>): Promise<T> {
+    return this.transaction(async (client) => {
+      await this.lockUsers(client, [managerId]);
+      const account = await this.users.loadOnClient(client, managerId);
+      if (!account) { throw new NotFoundException('Không tìm thấy tài khoản'); }
+      return work(client, account, await this.read(client, cooperativeId, true));
+    });
+  }
+
+  async withActor<T>(actorId: string, work: (client: PoolClient, actor: UserRecord) => Promise<T>): Promise<T> {
+    return this.transaction(async (client) => work(client, await this.actor(client, actorId)));
+  }
+
+  async sweepScheduled(): Promise<void> {
+    // Job không nhận actor từ HTTP. Dùng Admin Active trong DB làm audit actor;
+    // chưa có Admin thì không tự xóa HTX mà không thể ghi audit hợp lệ.
+    const admin = await this.transaction(async (client) => (await client.query<{ id: string }>(
+      "SELECT id FROM public.users WHERE role='Admin' AND status='Active' ORDER BY id LIMIT 1")).rows[0]);
+    if (admin) { await this.sweep(admin.id); }
+  }
 
   async list(actorId: string, adminOnly = false): Promise<TestCooperative[]> {
     return this.transaction(async (client) => {
@@ -234,6 +259,7 @@ export class PostgresCooperativesRepository {
       const driver = error as { code?: string; constraint?: string };
       if (driver.code === '23505' && driver.constraint === 'cooperatives_certificate_number') { throw new ConflictException('HTX có số chứng nhận này đã tồn tại'); }
       if (driver.code === '23505' && driver.constraint === 'cooperatives_manager_id_key') { throw new ConflictException('Manager đã quản lý một HTX'); }
+      if (driver.code === '23505' && driver.constraint === 'cooperative_one_pending_manager') { throw new ConflictException('Manager đã có yêu cầu sửa HTX đang chờ; hoàn tất hoặc hủy trước'); }
       throw new ServiceUnavailableException('Không thể truy cập dữ liệu HTX; vui lòng thử lại sau');
     }
   }

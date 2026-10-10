@@ -47,7 +47,7 @@ async function fixture() {
     role: 'Manager', status: 'Pending', password: farmer.password });
   const service = app.get(CooperativesService);
   const store = app.get(MockCooperativeStore);
-  const coop = service.create(admin.id, input);
+  const coop = (await service.create(admin.id, input));
   const attach = () => app.get(UsersService).approve(admin.id, manager.id, { cooperative_id: coop.id });
   const sms = app.get<OtpProvider>(COOPERATIVE_OTP_PROVIDER);
   const http = async (path: string, method = 'GET', body?: object, token?: string) => fetch(`${await app.getUrl()}/api/${path}`, {
@@ -61,10 +61,10 @@ async function fixture() {
   };
   const emailStep = async (changes = { address: 'New address' }) => {
     const request = await service.createUpdateRequest(manager.id, coop.id, changes);
-    service.verifyEmail(manager.id, request.id, mails.at(-1)!.code);
+    (await service.verifyEmail(manager.id, request.id, mails.at(-1)!.code));
     return request;
   };
-  const smsCode = (id: string) => service.testSms(manager.id, id).messages[0].otp;
+  const smsCode = async (id: string) => (await service.testSms(manager.id, id)).messages[0].otp;
   return { app, users, admin, farmer, manager, otherManager, service, store, coop, attach, mails, sender, sms, http, login, emailStep, smsCode };
 }
 
@@ -79,7 +79,7 @@ test('Cooperatives share USERS/Farms store; Admin creates unmanaged HTX and exis
     assert.equal(f.users.findById(f.manager.id)!.status, 'Active');
     await assert.rejects(f.app.get(UsersService).approve(f.admin.id, f.otherManager.id, { cooperative_id: f.coop.id }), status(409));
     assert.equal(f.users.findById(f.otherManager.id)!.status, 'Pending');
-    assert.equal(f.service.get(f.manager.id, f.coop.id).lifecycle.deletion_due_at, null);
+    assert.equal((await f.service.get(f.manager.id, f.coop.id)).lifecycle.deletion_due_at, null);
   } finally { await f.app.close(); }
 });
 
@@ -90,7 +90,7 @@ test('HTX HTTP scopes reads, protects certificate/Manager fields, rejects null/u
     const admin = await f.login(env.AUTH_TEST_ADMIN_PHONE, env.AUTH_TEST_ADMIN_PASSWORD);
     const manager = await f.login(f.manager.phone_number);
     const farmer = await f.login(f.farmer.phone_number);
-    const other = f.service.create(f.admin.id, { ...input, certificate_number: 'COOP-002' });
+    const other = (await f.service.create(f.admin.id, { ...input, certificate_number: 'COOP-002' }));
     assert.equal((await f.http('cooperatives')).status, 401);
     assert.equal((await f.http(`cooperatives/${other.id}`, 'GET', undefined, manager)).status, 404);
     const list = await f.http('cooperatives?q=Demo&limit=1', 'GET', undefined, manager);
@@ -112,8 +112,8 @@ test('HTX HTTP scopes reads, protects certificate/Manager fields, rejects null/u
     assert.equal((await f.http(`cooperatives/${f.coop.id}`, 'PATCH', { address: 'Updated' }, admin)).status, 200);
     assert.equal(f.store.get(f.coop.id).cooperative_name, input.cooperative_name);
     assert.equal(f.store.get(f.coop.id).certificate_number, input.certificate_number);
-    assert.throws(() => f.service.update(f.admin.id, f.coop.id, { certificate_number: 'COOP-002' }), status(409));
-    const copy = f.service.get(f.admin.id, f.coop.id);
+    await assert.rejects(f.service.update(f.admin.id, f.coop.id, { certificate_number: 'COOP-002' }), status(409));
+    const copy = (await f.service.get(f.admin.id, f.coop.id));
     copy.address = 'Mutated response';
     assert.equal(f.store.get(f.coop.id).address, 'Updated');
   } finally { await f.app.close(); }
@@ -137,8 +137,8 @@ test('Manager updates require email then SMS to account contacts, commit only af
     assert.equal((await f.http(`cooperative-update-requests/${request.id}/email/verify`, 'POST', { otp: f.mails[0].code }, manager)).status, 201);
     assert.equal(f.store.get(f.coop.id).address, input.address);
     assert.equal((await f.http(`cooperative-update-requests/${request.id}/sms/send`, 'POST', {}, manager)).status, 201);
-    const code = f.smsCode(request.id);
-    assert.equal(f.service.testSms(f.manager.id, request.id).messages[0].phone_number, f.manager.phone_number);
+    const code = (await f.smsCode(request.id));
+    assert.equal((await f.service.testSms(f.manager.id, request.id)).messages[0].phone_number, f.manager.phone_number);
     await assert.rejects(f.service.verifySms(f.manager.id, request.id, wrong(code)), status(400));
     assert.equal(f.store.get(f.coop.id).address, input.address);
     const result = await f.http(`cooperative-update-requests/${request.id}/sms/verify`, 'POST', { otp: code }, manager);
@@ -147,9 +147,9 @@ test('Manager updates require email then SMS to account contacts, commit only af
     assert.equal(f.store.get(f.coop.id).contact_number, '0900000008');
     assert.equal(f.store.get(f.coop.id).certificate_number, input.certificate_number);
     await assert.rejects(f.service.verifySms(f.manager.id, request.id, code), status(409));
-    assert.equal(f.service.getRequest(f.manager.id, request.id).status, 'Accepted');
+    assert.equal((await f.service.getRequest(f.manager.id, request.id)).status, 'Accepted');
     assert.equal(f.sms.messages(f.manager.phone_number).length, 0);
-    const serialized = JSON.stringify(f.service.getRequest(f.admin.id, request.id));
+    const serialized = JSON.stringify((await f.service.getRequest(f.admin.id, request.id)));
     assert.equal(/emailDigest|emailSalt|smsProof|tokenVersion|cooperativeVersion/.test(serialized), false);
   } finally { await f.app.close(); }
 });
@@ -162,25 +162,25 @@ test('Each verification step gets a fresh window; exact email/SMS deadlines and 
     await f.attach();
     const request = await f.service.createUpdateRequest(f.manager.id, f.coop.id, { address: 'Late update' });
     now += 9 * 60000 + 59000;
-    f.service.verifyEmail(f.manager.id, request.id, f.mails.at(-1)!.code);
+    (await f.service.verifyEmail(f.manager.id, request.id, f.mails.at(-1)!.code));
     now += 9 * 60000 + 59000;
     await f.service.sendSms(f.manager.id, request.id);
     now += 4 * 60000 + 59000;
-    await f.service.verifySms(f.manager.id, request.id, f.smsCode(request.id));
+    await f.service.verifySms(f.manager.id, request.id, (await f.smsCode(request.id)));
     assert.equal(f.store.get(f.coop.id).address, 'Late update');
     const expiredEmail = await f.service.createUpdateRequest(f.manager.id, f.coop.id, { address: 'Never committed' });
     now += 10 * 60000;
-    assert.throws(() => f.service.verifyEmail(f.manager.id, expiredEmail.id, f.mails.at(-1)!.code), status(409));
+    await assert.rejects(f.service.verifyEmail(f.manager.id, expiredEmail.id, f.mails.at(-1)!.code), status(409));
     const expiredSms = await f.emailStep();
     await f.service.sendSms(f.manager.id, expiredSms.id);
-    const code = f.smsCode(expiredSms.id);
+    const code = (await f.smsCode(expiredSms.id));
     now += 5 * 60000;
     await assert.rejects(f.service.verifySms(f.manager.id, expiredSms.id, code), status(409));
     const attempts = await f.emailStep();
     await f.service.sendSms(f.manager.id, attempts.id);
-    const bad = wrong(f.smsCode(attempts.id));
+    const bad = wrong((await f.smsCode(attempts.id)));
     for (let index = 0; index < 5; index++) { await assert.rejects(f.service.verifySms(f.manager.id, attempts.id, bad), status(400)); }
-    assert.equal(f.service.getRequest(f.manager.id, attempts.id).status, 'Failed');
+    assert.equal((await f.service.getRequest(f.manager.id, attempts.id)).status, 'Failed');
     assert.equal(f.store.get(f.coop.id).address, 'Late update');
   } finally { await f.app.close(); }
 });
@@ -196,13 +196,13 @@ test('Email attempts, resend cooldown, cancellation and a single active request 
     await assert.rejects(f.service.resendEmail(f.manager.id, request.id), status(429));
     now += 60000;
     await f.service.resendEmail(f.manager.id, request.id);
-    for (let index = 0; index < 5; index++) { assert.throws(() => f.service.verifyEmail(f.manager.id, request.id, wrong(f.mails.at(-1)!.code)), status(400)); }
-    assert.equal(f.service.getRequest(f.manager.id, request.id).status, 'Failed');
+    for (let index = 0; index < 5; index++) { await assert.rejects(f.service.verifyEmail(f.manager.id, request.id, wrong(f.mails.at(-1)!.code)), status(400)); }
+    assert.equal((await f.service.getRequest(f.manager.id, request.id)).status, 'Failed');
     const next = await f.emailStep();
     await f.service.sendSms(f.manager.id, next.id);
     await assert.rejects(f.service.sendSms(f.manager.id, next.id), status(429));
-    f.service.cancel(f.manager.id, next.id);
-    assert.equal(f.service.getRequest(f.manager.id, next.id).status, 'Cancelled');
+    (await f.service.cancel(f.manager.id, next.id));
+    assert.equal((await f.service.getRequest(f.manager.id, next.id)).status, 'Cancelled');
     await assert.rejects(f.service.verifySms(f.manager.id, next.id, '000000'), status(409));
     assert.equal(f.store.get(f.coop.id).address, input.address);
   } finally { await f.app.close(); }
@@ -214,16 +214,16 @@ test('Admin edits and account changes invalidate pending Manager proofs, includi
     await f.attach();
     let request = await f.emailStep();
     await f.service.sendSms(f.manager.id, request.id);
-    const code = f.smsCode(request.id);
+    const code = (await f.smsCode(request.id));
     const verify = f.sms.verify.bind(f.sms);
     context.mock.method(f.sms, 'verify', async (proof: OtpProof, otp: string) => {
       const matches = await verify(proof, otp);
-      f.service.update(f.admin.id, f.coop.id, { address: 'Admin wins' });
+      (await f.service.update(f.admin.id, f.coop.id, { address: 'Admin wins' }));
       return matches;
     });
     await assert.rejects(f.service.verifySms(f.manager.id, request.id, code), status(409));
     assert.equal(f.store.get(f.coop.id).address, 'Admin wins');
-    assert.equal(f.service.getRequest(f.manager.id, request.id).status, 'Failed');
+    assert.equal((await f.service.getRequest(f.manager.id, request.id)).status, 'Failed');
     request = await f.emailStep();
     f.users.revokeTokens(f.manager.id);
     await assert.rejects(f.service.sendSms(f.manager.id, request.id), status(409));
@@ -244,18 +244,21 @@ test('In-flight sending/checking cannot be cancelled, duplicated or committed tw
     await f.attach();
     let release!: () => void;
     const sending = new Promise<void>((resolve) => { release = resolve; });
-    context.mock.method(f.sender, 'sendVerification', async (to: string, code: string) => { f.mails.push({ to, code }); await sending; });
+    let emailStarted!: () => void;
+    const started = new Promise<void>((resolve) => { emailStarted = resolve; });
+    context.mock.method(f.sender, 'sendVerification', async (to: string, code: string) => { f.mails.push({ to, code }); emailStarted(); await sending; });
     const promise = f.service.createUpdateRequest(f.manager.id, f.coop.id, { address: 'Once' });
-    const pending = f.service.listRequests(f.manager.id, page).items[0];
+    await started;
+    const pending = (await f.service.listRequests(f.manager.id, page)).items[0];
     assert.equal(pending.status, 'EmailSending');
-    assert.throws(() => f.service.verifyEmail(f.manager.id, pending.id, f.mails[0].code), status(409));
-    assert.throws(() => f.service.cancel(f.manager.id, pending.id), status(409));
+    await assert.rejects(f.service.verifyEmail(f.manager.id, pending.id, f.mails[0].code), status(409));
+    await assert.rejects(f.service.cancel(f.manager.id, pending.id), status(409));
     await assert.rejects(f.service.createUpdateRequest(f.manager.id, f.coop.id, { address: 'Duplicate' }), status(409));
     release();
     const request = await promise;
-    f.service.verifyEmail(f.manager.id, request.id, f.mails[0].code);
+    (await f.service.verifyEmail(f.manager.id, request.id, f.mails[0].code));
     await f.service.sendSms(f.manager.id, request.id);
-    const code = f.smsCode(request.id);
+    const code = (await f.smsCode(request.id));
     const verify = f.sms.verify.bind(f.sms);
     let releaseVerify!: () => void;
     const checking = new Promise<void>((resolve) => { releaseVerify = resolve; });
@@ -274,11 +277,11 @@ test('Provider failures/uncertain checks never change HTX; live mode hides mock 
     await f.attach();
     context.mock.method(f.sender, 'sendVerification', async () => { throw new ServiceUnavailableException('Email unavailable'); });
     await assert.rejects(f.service.createUpdateRequest(f.manager.id, f.coop.id, { address: 'No' }), status(503));
-    assert.equal(f.service.listRequests(f.manager.id, page).items[0].status, 'Failed');
+    assert.equal((await f.service.listRequests(f.manager.id, page)).items[0].status, 'Failed');
     context.mock.restoreAll();
     const request = await f.emailStep();
     await f.service.sendSms(f.manager.id, request.id);
-    const code = f.smsCode(request.id);
+    const code = (await f.smsCode(request.id));
     context.mock.method(f.sms, 'verify', async () => { throw new ServiceUnavailableException('Uncertain check'); });
     await assert.rejects(f.service.verifySms(f.manager.id, request.id, code), status(503));
     await assert.rejects(f.service.verifySms(f.manager.id, request.id, code), status(409));
@@ -287,7 +290,7 @@ test('Provider failures/uncertain checks never change HTX; live mode hides mock 
     const hidden = await f.emailStep();
     await f.service.sendSms(f.manager.id, hidden.id);
     context.mock.getter(f.sms, 'mode', () => 'twilio');
-    assert.throws(() => f.service.testSms(f.manager.id, hidden.id), status(404));
+    await assert.rejects(f.service.testSms(f.manager.id, hidden.id), status(404));
     await assert.rejects(new DisabledCooperativeOtpProvider().issue(), status(503));
   } finally { await f.app.close(); }
 });
@@ -298,7 +301,7 @@ test('HTX and password reset keep independent challenges and consuming one prese
     await f.attach();
     const request = await f.emailStep();
     await f.service.sendSms(f.manager.id, request.id);
-    const code = f.smsCode(request.id);
+    const code = (await f.smsCode(request.id));
     const auth = f.app.get(AuthService);
     await assert.rejects(auth.resetPassword(f.manager.phone_number, code, 'NewPassword123!'), status(400));
     await auth.forgotPassword(f.manager.phone_number);
@@ -316,24 +319,24 @@ test('Day 7 warns once, day 30 deletes unmanaged/unreferenced HTX; assignment ca
   const f = await fixture();
   try {
     now += 7 * DAY - 1;
-    assert.equal(f.service.listNotifications(f.admin.id, page).total, 0);
+    assert.equal((await f.service.listNotifications(f.admin.id, page)).total, 0);
     now++;
-    f.service.sweep();
-    f.service.sweep();
-    assert.equal(f.service.listNotifications(f.admin.id, page).total, 1);
-    const managed = f.service.create(f.admin.id, { ...input, certificate_number: 'MANAGED' });
+    (await f.service.sweep());
+    (await f.service.sweep());
+    assert.equal((await f.service.listNotifications(f.admin.id, page)).total, 1);
+    const managed = (await f.service.create(f.admin.id, { ...input, certificate_number: 'MANAGED' }));
     await f.app.get(UsersService).approve(f.admin.id, f.manager.id, { cooperative_id: managed.id });
     now += 23 * DAY - 1;
-    f.service.sweep();
+    (await f.service.sweep());
     assert.equal(f.store.get(f.coop.id).manager_id, null);
     now++;
-    f.service.sweep();
+    (await f.service.sweep());
     assert.throws(() => f.store.get(f.coop.id), status(404));
     assert.equal(f.store.get(managed.id).manager_id, f.manager.id);
-    const notices = f.service.listNotifications(f.admin.id, page).items;
+    const notices = (await f.service.listNotifications(f.admin.id, page)).items;
     assert.deepEqual(notices.map((item) => item.type), ['ManagerMissing', 'CooperativeDeleted']);
-    f.service.sweep();
-    assert.equal(f.service.listNotifications(f.admin.id, page).total, 2);
+    (await f.service.sweep());
+    assert.equal((await f.service.listNotifications(f.admin.id, page)).total, 2);
     assert.equal(notices[1].cooperative_name, input.cooperative_name);
   } finally { await f.app.close(); }
 });
@@ -345,14 +348,14 @@ test('Business references block automatic HTX deletion and warning is retained w
   try {
     context.mock.method(f.app.get(FarmsService), 'hasCooperativeReferences', (id: string) => id === f.coop.id);
     now += 30 * DAY;
-    f.service.sweep();
+    (await f.service.sweep());
     assert.equal(f.store.get(f.coop.id).manager_id, null);
-    assert.deepEqual(f.service.listNotifications(f.admin.id, page).items.map((item) => item.type), ['ManagerMissing', 'DeletionBlocked']);
-    f.service.sweep();
-    assert.equal(f.service.listNotifications(f.admin.id, page).total, 2);
+    assert.deepEqual((await f.service.listNotifications(f.admin.id, page)).items.map((item) => item.type), ['ManagerMissing', 'DeletionBlocked']);
+    (await f.service.sweep());
+    assert.equal((await f.service.listNotifications(f.admin.id, page)).total, 2);
     await f.attach();
     now += 30 * DAY;
-    f.service.sweep();
+    (await f.service.sweep());
     assert.equal(f.store.get(f.coop.id).manager_id, f.manager.id);
   } finally { await f.app.close(); }
 });
@@ -367,20 +370,24 @@ test('Expiry during SMS send blocks new requests until provider returns; late re
     const issue = f.sms.issue.bind(f.sms);
     let release!: () => void;
     const sending = new Promise<void>((resolve) => { release = resolve; });
+    let smsStarted!: () => void;
+    const started = new Promise<void>((resolve) => { smsStarted = resolve; });
     context.mock.method(f.sms, 'issue', async (phone: string, expiresAt: number) => {
+      smsStarted();
       await sending;
       return issue(phone, expiresAt);
     });
     const pending = f.service.sendSms(f.manager.id, request.id);
+    await started;
     now += 5 * 60000;
-    f.service.sweep();
-    assert.equal(f.service.getRequest(f.manager.id, request.id).status, 'Expired');
+    (await f.service.sweep());
+    assert.equal((await f.service.getRequest(f.manager.id, request.id)).status, 'Expired');
     await assert.rejects(f.service.createUpdateRequest(f.manager.id, f.coop.id, { address: 'Concurrent' }), status(409));
     release();
     await assert.rejects(pending, status(409));
     assert.equal(f.sms.messages(f.manager.phone_number).length, 0);
-    assert.equal(f.service.getRequest(f.manager.id, request.id).status, 'Expired');
-    assert.equal(f.service.getRequest(f.manager.id, request.id).resolved_at, new Date(now).toISOString());
+    assert.equal((await f.service.getRequest(f.manager.id, request.id)).status, 'Expired');
+    assert.equal((await f.service.getRequest(f.manager.id, request.id)).resolved_at, new Date(now).toISOString());
     assert.equal(f.store.get(f.coop.id).address, input.address);
     await f.service.createUpdateRequest(f.manager.id, f.coop.id, { address: 'New request' });
   } finally { await f.app.close(); }

@@ -1,5 +1,7 @@
 # USERS — đăng ký và duyệt Manager trong bộ nhớ
 
+Tiếp nối2026-10-10: HTX workflow email→SMS/history/service async đã có adapter PG cùng registry/pool với USERS; **226 backend/51 DB** và checks đạt. [Guide mới nhất và cấu hình DI](POSTGRES_COOPERATIVE_WORKFLOWS_IMPLEMENTATION.md). AppModule vẫn RAM; không đổi Users routes/DTO/rules hoặc Postman. Phần Users/approval phía dưới đã hoàn tất, tiếp catalog persistence.
+
 ## Mốc hiện hành: async Users/email và PostgreSQL 2026-10-10
 
 Nhánh feat/postgres-users-cooperatives từcb2a4d6: UsersService dùng UserManagement async; EmailVerificationService giữ lease committing trong await ghi, xử lý rollback xác định và kết quả commit chưa rõ. Memory adapter dùng đúng shared stores; PG adapter duyệt/từ chối Manager với User status/version + HTX + audit cùng transaction. PG Auth/Users HTTP registration/approval và dựng lại ứng dụng riêng đã kiểm thử; **226 backend/37 DB/8 web/29 browser**, checks đạt. [Source/contracts/luồng/lệnh/giới hạn](POSTGRES_USERS_COOPERATIVES_IMPLEMENTATION.md). **AppModule vẫn RAM**, chưa chuyển toàn bộ domain. Không đổi route/DTO/Postman/.env. Mốc callback đồng bộ fix/registration-proof-atomicity phía dưới đã được thay bằng lease async trong UsersService; consumeForRegistration đồng bộ còn phục vụ tương thích kiểm thử cũ.

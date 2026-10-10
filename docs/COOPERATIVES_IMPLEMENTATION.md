@@ -1,5 +1,9 @@
 # COOPERATIVES — HTX độc lập và xác minh thay đổi của Manager
 
+## Mốc hiện hành: workflow persistence 2026-10-10
+
+feat/postgres-cooperative-workflows từ9c328a4 đã có CooperativeRecords async và PG Manager email→SMS workflow/history, atomic HTX/version/Accepted/audit, worker async/bootstrap/60s, expiry/restart và lỗi commit response. Migration004 active request/Manager UNIQUE Applied; **226 backend/51 DB**, checks đạt. [Source, workflow, commands, limits và tái lập](POSTGRES_COOPERATIVE_WORKFLOWS_IMPLEMENTATION.md). **AppModule vẫn memory adapter**, dùng shared stores như cũ; PostgreSQL được kiểm thử riêng Auth/Users/HTX với fresh app/pool/providers. Chưa bật DB toàn ứng dụng hoặc nghiệm thu hardware/SMS thật. Nội dung API/OTP/fields dưới đây giữ nguyên; các mô tả “service chưa async”, “chưa UNIQUE DB”, “chỉ RAM metadata” là mốc trước persistence và được guide mới thay thế.
+
 ## Cập nhật persistence 2026-10-10
 
 feat/postgres-users-cooperatives từcb2a4d6 đã có PG registry Admin create/update, scoped reads, Admin duyệt Manager atomic với User/HTX/version/audit, lifecycle7/30 ngày/notifications dedup và migration003 certificate UNIQUE. HTTP Auth/Users restart riêng, audit rollback/concurrency/deletion races đã kiểm thử; **226 backend/37 DB/8 web/29 browser** và checks đạt. [Guide chi tiết](POSTGRES_USERS_COOPERATIVES_IMPLEMENTATION.md). **CooperativesService và AppModule vẫn RAM**; workflow Manager sửa HTX email→SMS, lịch sử và scheduler chưa wiring PG, là phần tiếp theo. Không đổi quy tắc nghiệp vụ dưới đây hoặc hỏi lại các quyết định đã chốt. Scheduler repository chỉ là hook chưa auto chạy.

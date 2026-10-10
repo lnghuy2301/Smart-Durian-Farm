@@ -58,7 +58,7 @@ test('Users/email and Cooperative registry persist with real PostgreSQL transact
       assert.equal((await sql.query('SELECT count(*) FROM public.cooperatives')).rows[0].count, '2');
       // Remove only our duplicate fixture in this randomly named test database.
       await sql.query('DELETE FROM public.cooperatives WHERE id=$1', [rows.rows[1].id]);
-      assert.deepEqual(await runMigrations(sql, mongo.db(name)), ['003_cooperative_certificate']);
+      assert.deepEqual(await runMigrations(sql, mongo.db(name)), ['003_cooperative_certificate', '004_cooperative_workflow']);
       await sql.query('DELETE FROM public.cooperatives WHERE id=$1', [rows.rows[0].id]);
     });
     const seed = await seedDemo(sql, readSeedConfig({ NODE_ENV: 'test', AUTH_TEST_PHONE: config.phoneNumber, AUTH_TEST_PASSWORD: config.password,
