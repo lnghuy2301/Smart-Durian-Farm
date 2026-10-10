@@ -15,7 +15,9 @@ Người dùng xác nhận ngày 2026-10-10:
 
 1. station_id ESP32 thật là `E08CFE41DCAC`. Đã điền vào khóa DEMO_DEVICE_STATION_ID trước đó trống trong .env local, giữ nguyên mọi byte ngoài giá trị này. Mã station là định danh, không phải secret/token. .env.example giữ giá trị trống để từng installation cấu hình riêng.
 2. Farmer chính dùng AUTH_TEST_PHONE/AUTH_TEST_PASSWORD hiện có, làm chủ Farm chứa hardware thật. Không cần gửi lại thông tin đăng nhập trong chat.
-3. Người dùng cho phép chọn ngày/giờ lắp hợp lý và chi phí khoảng10 triệu với số lẻ. Profile demo dùng `installed_at=2026-10-01T08:30:00+07:00` (01/10/2026 lúc08:30 giờ Việt Nam; UTC `2026-10-01T01:30:00.000Z`) và `cost=10237500` (10.237.500 VNĐ). Đây là metadata minh họa cho hồ sơ Device nối hardware thật, không tuyên bố là ngày lắp/hóa đơn thực tế. Ngày cố định trước ngày chốt10/10/2026, không lấy thời điểm chạy seed; chi phí là số VNĐ nguyên trong giới hạn decimal(10,2).
+3. Người dùng cho phép chọn ngày/giờ lắp hợp lý và chi phí khoảng10 triệu với số lẻ. Profile demo dùng `installed_at=2026-09-01T08:30:00+07:00` (01/09/2026 lúc08:30 giờ Việt Nam; UTC `2026-09-01T01:30:00.000Z`) và `cost=10237500` (10.237.500 VNĐ). Đây là metadata minh họa cho hồ sơ Device nối hardware thật, không tuyên bố là ngày lắp/hóa đơn thực tế. Ngày cố định trước ngày chốt10/10/2026, không lấy thời điểm chạy seed; chi phí là số VNĐ nguyên trong giới hạn decimal(10,2).
+
+Theo yêu cầu dời ngày sớm hơn, profile đã đổi từ01/10 sang01/09/2026; giờ08:30 và cost10237500 giữ nguyên. Đây là cập nhật cấu hình trước khi có seed, không sửa dữ liệu database đã tồn tại; seed chạy lại sau này vẫn không được ghi đè Device đã có.
 
 Các thông tin đầu vào của bộ thật đã đủ; không hỏi lại station/tài khoản/ngày lắp/chi phí. Đã thêm DEMO_DEVICE_INSTALLED_AT và DEMO_DEVICE_COST với các giá trị trên vào .env local/.env.example, giữ nguyên nội dung local trước đó. Ba khóa DEMO_DEVICE_* hiện chỉ là cấu hình tham khảo cho demo; runtime chưa đọc hai khóa mới, không tự đăng ký Device hoặc tạo quan hệ database. Foundation tiếp theo phải triển khai parser/preflight cho seed riêng; seed runtime chưa triển khai và chưa ghi database.
 
