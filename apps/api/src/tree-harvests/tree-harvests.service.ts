@@ -51,6 +51,16 @@ export class TreeHarvestsService {
     return record;
   }
 
+  // Pending sửa vẫn giữ dữ liệu đã Confirmed; đề xuất nằm trong requests.
+  // Dùng everConfirmed để không public Pending xác nhận lần đầu. Chỉ trả các
+  // field nội dung, không trả actor/UUID/request hoặc dữ liệu chờ duyệt.
+  confirmedForTrace(treeId: string): HarvestDetails[] {
+    this.trees.getRecord(treeId);
+    return [...this.records.values()].filter((record) => record.tree_id === treeId && this.metadata.get(record.id)?.everConfirmed)
+      .map((record) => ({ season_name: record.season_name, harvest_date: record.harvest_date,
+        fruit_count: record.fruit_count, total_weight_kg: record.total_weight_kg, batch_code: record.batch_code }));
+  }
+
   create(actorId: string, input: CreateHarvestDto): TestTreeHarvest {
     this.allowedFields(input, [...DETAIL_FIELDS, 'tree_id']);
     const { farm, zone } = this.context(input.tree_id);

@@ -19,7 +19,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ["test/e2e.mjs"],
+    files: ["test/e2e.mjs", "test/traceability-browser.mjs"],
     languageOptions: {
       globals: {
         document: "readonly",

@@ -6,6 +6,7 @@ import { spawnSync } from "node:child_process";
 import { createServer } from "vite";
 import { chromium } from "playwright-core";
 import { loopbackBroker } from "./loopback-broker.mjs";
+import { checkTraceability } from "./traceability-browser.mjs";
 
 // Backend thật, RAM cô lập, không đọc .env root và không gửi SMTP/SMS thật.
 const webRoot = fileURLToPath(new URL("..", import.meta.url));
@@ -1262,6 +1263,18 @@ try {
       assert.equal(await page.evaluate(() => sessionStorage.length), 0);
     },
   );
+  await checkTraceability({
+    app,
+    apiModule,
+    browser,
+    origin,
+    check,
+    ownerId,
+    adminId,
+    zone,
+    screenshots,
+    errors,
+  });
   assert.deepEqual(errors, [], "Uncaught browser errors");
   writeFileSync(
     `${screenshots}/report.json`,
@@ -1280,6 +1293,8 @@ try {
           "iot-desktop.png",
           "manager-desktop.png",
           "manager-mobile.png",
+          "trace-desktop.png",
+          "trace-mobile.png",
         ],
       },
       null,

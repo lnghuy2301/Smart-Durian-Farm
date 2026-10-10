@@ -1,5 +1,7 @@
 # Tree Harvests — nhập, xác nhận và duyệt chỉnh sửa
 
+Tích hợp QR2026-10-10: [public traceability](QR_TRACEABILITY_IMPLEMENTATION.md) lấy confirmedForTrace từ cùng service/metadata everConfirmed. Draft/Pending lần đầu ẩn; Pending sửa bản từng Confirmed vẫn public các nội dung đã duyệt trong record, không proposed_changes/reason/reviewer. Public confirmation_state=Confirmed mô tả nội dung được duyệt, không thay status workflow. Nội dung đổi sau Manager HTX/Admin Farm độc lập duyệt đúng rule; quyền sửa/xóa private không đổi.
+
 Xác nhận lại 2026-10-07 khi rà soát toàn dự án: người dùng chốt **chỉ cho xóa Draft chưa từng Confirmed**. Giữ nguyên code hiện tại; không xóa Pending/Confirmed hoặc bản ghi từng Confirmed. Quyết định này thay thế câu trao đổi cũ cấm xóa mọi bản ghi.
 
 Cập nhật 2026-10-05. Nhánh local `feat/tree-harvests-management`, base Trees `d39c5ce`. Kế thừa Auth/Users/HTX/Farm/Zones/Trees/Assignments đã hoàn tất. Đọc MODULE_HANDOFF.md và TREE_HARVESTS_WORKFLOW_DESIGN.md cho quyết định cuối cùng, không áp các đề xuất đã bị thay thế trong trao đổi trước.

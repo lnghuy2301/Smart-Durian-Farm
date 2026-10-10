@@ -22,6 +22,8 @@ import { MqttTransportModule } from './mqtt/mqtt-transport.module';
 import { ActuatorTasksModule } from './actuator-tasks/actuator-tasks.module';
 import { readActuatorTasksConfig } from './actuator-tasks/actuator-tasks.config';
 import { CultivationEventsModule } from './cultivation-events/cultivation-events.module';
+import { TraceabilityModule } from './traceability/traceability.module';
+import { readTraceabilityConfig } from './traceability/traceability.config';
 
 @Module({})
 export class AppModule {
@@ -46,6 +48,9 @@ export class AppModule {
       const transportModule = MqttTransportModule.register(config.mqtt ?? readMqttConfig({}));
       const taskModule = ActuatorTasksModule.register(config.actuatorTasks ?? readActuatorTasksConfig({}),
         [authModule, farmsModule, zonesModule, devicesModule, actuatorsModule, assignmentsModule, transportModule]);
+      const harvestsModule = TreeHarvestsModule.forMock(authModule, usersModule, farmsModule, zonesModule, treesModule);
+      const cultivationModule = CultivationEventsModule.forMock([authModule, farmsModule, zonesModule, treesModule, assignmentsModule,
+        materialsModule, standardsModule, standardMaterialsModule]);
       imports.push(
         usersModule,
         materialsModule,
@@ -61,10 +66,11 @@ export class AppModule {
         telemetryModule,
         taskModule,
         MqttModule.register(authModule, devicesModule, sensorsModule, telemetryModule, transportModule, taskModule),
-        TreeHarvestsModule.forMock(authModule, usersModule, farmsModule, zonesModule, treesModule),
+        harvestsModule,
         assignmentsModule,
-        CultivationEventsModule.forMock([authModule, farmsModule, zonesModule, treesModule, assignmentsModule,
-          materialsModule, standardsModule, standardMaterialsModule]),
+        cultivationModule,
+        TraceabilityModule.register(config.traceability ?? readTraceabilityConfig({}),
+          [usersModule, farmsModule, zonesModule, treesModule, standardsModule, harvestsModule, cultivationModule]),
       );
     }
     return { module: AppModule, imports };

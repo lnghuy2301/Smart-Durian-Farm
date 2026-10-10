@@ -145,6 +145,16 @@ export class CultivationEventsService implements OnModuleInit, OnModuleDestroy {
     return { zone_id: zoneId, algorithm: 'SHA-256', ...this.store.verify(zoneId), checked_at: new Date().toISOString() };
   }
 
+  // Adapter nội bộ nhận nguyên lịch sử Locked trong Zone để dựng lineage rồi
+  // mới xét target. Không expose raw records này qua route public hoặc bỏ guard
+  // ở controller Cultivation; TraceabilityService có whitelist riêng.
+  lockedForTrace(zoneId: string): CultivationEvent[] {
+    this.zones.getRecord(zoneId);
+    this.store.lockDue();
+    return this.store.list().filter((event) => event.status === 'Locked'
+      && this.store.context(event._id).zone_id === zoneId).sort(compareEvents);
+  }
+
   private newEvent(actorId: string, input: CreateEventDto, now: number): CultivationEvent {
     const zone = this.resolveTarget(input);
     return { _id: new ObjectId().toHexString(), farmer_id: actorId,

@@ -239,10 +239,16 @@ export const treeDefinition: Definition<Tree> = {
     },
   ],
   links: (x) => (
-    <Link className="button secondary" to={`/tree-harvests?tree_id=${x.id}`}>
-      Thu hoạch của cây
-      <ArrowUpRight size={16} />
-    </Link>
+    <>
+      <Link className="button secondary" to={`/tree-harvests?tree_id=${x.id}`}>
+        Thu hoạch của cây
+        <ArrowUpRight size={16} />
+      </Link>
+      <Link className="button secondary" to={`/trace/${x.tree_code}`}>
+        Truy xuất / mã QR
+        <ArrowUpRight size={16} />
+      </Link>
+    </>
   ),
   extra: (x) => <TreeHistory id={x.id} />,
 };

@@ -1,5 +1,7 @@
 # Tài nguyên thương hiệu và mẫu frontend
 
+QR2026-10-10: web public `/trace/{tree_code}` và link từ trang cây đã có trên feat/qr-traceability, cùng brand kit hiện có; không cần asset mới. Public page ngoài AuthProvider, không gửi JWT; lịch sử correction Locked có nhãn target/latest/applicability và giữ approved harvest lúc Pending sửa. [Cấu hình/demo/API/test/tái lập](../QR_TRACEABILITY_IMPLEMENTATION.md). Browser29/29 và web8 unit/lint/typecheck/build đạt; các mốc22 browser phía dưới là lịch sử.
+
 Ngày 2026-10-08, người dùng chọn **Smart Durian — Brand Kit v1.0 / Durian Connect** cho toàn dự án. Nguồn chuẩn nằm tại [assets/brand/Smart_Durian_Brand_Kit/](../../assets/brand/Smart_Durian_Brand_Kit/); xem [quy ước tích hợp web/mobile](../../assets/brand/README.md). Web React/TypeScript/Vite đã có dashboard Farmer, Admin và Manager theo mẫu đã được xác nhận, nối API hiện có. Đọc [hướng dẫn chạy và tái lập](WEB_FOUNDATION_IMPLEMENTATION.md), [thích nghi thiết kế](DESIGN_ADAPTATION.md) và [module Manager](modules/MANAGER_DASHBOARD.md). React Native là đợt riêng sau này.
 
 | Thư mục | Nội dung |

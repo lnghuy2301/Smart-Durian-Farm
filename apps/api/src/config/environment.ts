@@ -4,6 +4,7 @@ import { isEmail } from 'class-validator';
 import { SmtpConfig } from '../users/email/email.sender';
 import { MqttConfig, readMqttConfig } from '../mqtt/mqtt.config';
 import { ActuatorTasksConfig, readActuatorTasksConfig } from '../actuator-tasks/actuator-tasks.config';
+import { TraceabilityConfig, readTraceabilityConfig } from '../traceability/traceability.config';
 
 export interface MockAuthConfig {
   mode: 'mock';
@@ -23,6 +24,7 @@ export interface Environment {
   auth?: MockAuthConfig;
   mqtt?: MqttConfig;
   actuatorTasks?: ActuatorTasksConfig;
+  traceability?: TraceabilityConfig;
 }
 
 export function readEnvironment(env: NodeJS.ProcessEnv): Environment {
@@ -149,5 +151,6 @@ export function readEnvironment(env: NodeJS.ProcessEnv): Environment {
   }
   const mqtt = readMqttConfig(env);
   if (mqtt.enabled && !auth) { throw new Error('MQTT_ENABLED requires the current application metadata modules (AUTH_MODE=mock)'); }
-  return { port, corsOrigins, database: { postgresUrl, mongoUri, timeoutMs }, auth, mqtt, actuatorTasks: readActuatorTasksConfig(env) };
+  return { port, corsOrigins, database: { postgresUrl, mongoUri, timeoutMs }, auth, mqtt,
+    actuatorTasks: readActuatorTasksConfig(env), traceability: readTraceabilityConfig(env) };
 }
