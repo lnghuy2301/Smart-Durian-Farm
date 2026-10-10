@@ -9,14 +9,15 @@ Ngày 2026-10-10, bổ sung theo yêu cầu người dùng vào [thiết kế pe
 - Dữ liệu phải phù hợp bối cảnh vườn sầu riêng, quan hệ/diện tích/ngày/status hợp lệ. Seed chạy lại không ghi đè dữ liệu hiện có.
 - Không đưa số điện thoại/mật khẩu/credentials thực vào source, collection Postman hoặc tài liệu. Không tự gửi OTP/email/SMS hay lệnh MQTT trong seed.
 
-## Thông tin đã xác nhận và còn thiếu
+## Thông tin đã chốt
 
 Người dùng xác nhận ngày 2026-10-10:
 
 1. station_id ESP32 thật là `E08CFE41DCAC`. Đã điền vào khóa DEMO_DEVICE_STATION_ID trước đó trống trong .env local, giữ nguyên mọi byte ngoài giá trị này. Mã station là định danh, không phải secret/token. .env.example giữ giá trị trống để từng installation cấu hình riêng.
 2. Farmer chính dùng AUTH_TEST_PHONE/AUTH_TEST_PASSWORD hiện có, làm chủ Farm chứa hardware thật. Không cần gửi lại thông tin đăng nhập trong chat.
+3. Người dùng cho phép chọn ngày/giờ lắp hợp lý và chi phí khoảng10 triệu với số lẻ. Profile demo dùng `installed_at=2026-10-01T08:30:00+07:00` (01/10/2026 lúc08:30 giờ Việt Nam; UTC `2026-10-01T01:30:00.000Z`) và `cost=10237500` (10.237.500 VNĐ). Đây là metadata minh họa cho hồ sơ Device nối hardware thật, không tuyên bố là ngày lắp/hóa đơn thực tế. Ngày cố định trước ngày chốt10/10/2026, không lấy thời điểm chạy seed; chi phí là số VNĐ nguyên trong giới hạn decimal(10,2).
 
-Còn chờ **installed_at thực tế (ngày/giờ Việt Nam) và cost (VNĐ)**. Hai trường đều NOT NULL theo quyết định đã chốt; không tự lấy ngày chạy seed hoặc chi phí mẫu cho Device thật. Câu hỏi bổ sung đã gửi; bộ thật chưa được seed. DEMO_DEVICE_STATION_ID hiện chỉ là cấu hình tham khảo cho demo, không tự đăng ký Device hoặc tạo quan hệ database; seed runtime chưa triển khai.
+Các thông tin đầu vào của bộ thật đã đủ; không hỏi lại station/tài khoản/ngày lắp/chi phí. Đã thêm DEMO_DEVICE_INSTALLED_AT và DEMO_DEVICE_COST với các giá trị trên vào .env local/.env.example, giữ nguyên nội dung local trước đó. Ba khóa DEMO_DEVICE_* hiện chỉ là cấu hình tham khảo cho demo; runtime chưa đọc hai khóa mới, không tự đăng ký Device hoặc tạo quan hệ database. Foundation tiếp theo phải triển khai parser/preflight cho seed riêng; seed runtime chưa triển khai và chưa ghi database.
 
 Kết quả đối chiếu cấu hình local chỉ ghi trạng thái, không ghi giá trị: broker host/port đã điền; SMS_PROVIDER=twilio; AUTH_TEST_PHONE khớp SMS_ALLOWED_PHONE sau chuẩn hóa. Đây không phải bằng chứng SMS đã gửi hoặc hardware đã kết nối trong lượt này. Khi triển khai seed mới, phải hướng dẫn và điền đầy đủ các khóa còn cần trong .env/.env.example, giữ nguyên giá trị cũ.
 
@@ -26,7 +27,7 @@ Một Device thật có đúng station_id ESP32 do người dùng cung cấp, UU
 
 | Bảng | Định danh giao tiếp | Nội dung |
 |---|---|---|
-| DEVICES | station_id từ cấu hình local | Active về quản trị lắp đặt; installed_at/cost theo thông tin thực |
+| DEVICES | station_id E08CFE41DCAC từ cấu hình local | Active về quản trị lắp đặt; installed_at/cost minh họa được người dùng cho phép chọn như trên |
 | SENSORS | data_stream_id="301" | air_temperature, unit C |
 | SENSORS | data_stream_id="302" | air_humidity, unit % |
 | SENSORS | data_stream_id="303" | soil_moisture, unit % |
@@ -36,7 +37,7 @@ Một Device thật có đúng station_id ESP32 do người dùng cung cấp, UU
 
 Sensors/Actuators tham chiếu Device UUID bằng device_id; không FK bằng station_id. Gateway đổi numeric dataStreamId MQTT thành mã string metadata, command đổi capability_id thành taskingCapabilityId như protocolv1 hiện có. UUID record không phải stream/capability/taskId. Seed không sửa topic, không thêm token firmware, không tái gán Zone hoặc thay station_id đã đăng ký.
 
-Device và ba Sensors/Actuators thật được đặt metadata khả dụng khi lắp đặt hoàn tất theo thông tin xác nhận. last_seen_at bắt đầu null nếu chưa nhận message thật, connectivity Unknown; không seed Online hoặc timestamp mới chỉ vì đã tạo row. Sensor ngưỡng chưa có cấu hình thực giữ cả min/max null, có thể cấu hình qua API sau; không tự đặt ngưỡng canh tác chưa được chốt.
+Device và ba Sensors/Actuators của bộ thật được đặt metadata khả dụng theo profile demo đã chốt. last_seen_at bắt đầu null nếu chưa nhận message thật, connectivity Unknown; không seed Online hoặc timestamp mới chỉ vì đã tạo row. Sensor ngưỡng chưa có cấu hình thực giữ cả min/max null, có thể cấu hình qua API sau; không tự đặt ngưỡng canh tác chưa được chốt.
 
 Luồng nghiệm thu sau khi repositories hoạt động: seed metadata → đăng nhập tài khoản chính → bật MQTT bằng cấu hình broker đã có → nhận packet station thật → tìm đúng Device UUID và ba Sensors → đọc Telemetry trên API/web. Control vẫn theo quyền chủ/Accepted assignment, bơm2/van3/4, receipt ACK đúng Device/taskId/action, timeout10s và Reset trước Start khi Unknown. Seed không tạo ACK/Confirmed task/Telemetry giả cho Device thật hoặc tự bật bơm/van.
 
