@@ -1,5 +1,7 @@
 # PostgreSQL Users/Auth — adapter và hợp đồng bất đồng bộ
 
+**Tiếp nối hiện hành2026-10-10:** feat/postgres-users-cooperatives từcb2a4d6 đã hoàn tất UserManagement async/email lease và PG registration/Admin approve–reject Manager atomic với HTX; isolated Auth+Users HTTP restart, registry/lifecycle/notifications và migration003 đã kiểm thử. **226 backend/37 DB/8 web/29 browser**, checks đạt. [Guide mới thay phần “session tiếp theo” tương ứng của mốc này](POSTGRES_USERS_COOPERATIVES_IMPLEMENTATION.md). AppModule vẫn RAM; Manager email→SMS edit workflow/scheduler và các domain phụ thuộc còn chưa wiring. Những mô tả UsersService/email “chưa async”, “chưa test HTTP registration/approval” phía dưới chỉ áp dụng mốc cb2a4d6; không áp dụng adapter mới. test:persistence hiện chạy ba suites.
+
 Ngày 2026-10-10. Nhánh **feat/postgres-users-auth**, base **2b6db5f** (persistence foundation). Đọc cùng [thiết kế persistence](PERSISTENCE_DESIGN.md), [migration/seed](PERSISTENCE_FOUNDATION_IMPLEMENTATION.md), [Users](USERS_IMPLEMENTATION.md) và [Auth](AUTH_IMPLEMENTATION.md).
 
 ## Phạm vi thực tế

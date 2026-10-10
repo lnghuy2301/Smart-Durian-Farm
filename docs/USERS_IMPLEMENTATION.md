@@ -1,5 +1,9 @@
 # USERS — đăng ký và duyệt Manager trong bộ nhớ
 
+## Mốc hiện hành: async Users/email và PostgreSQL 2026-10-10
+
+Nhánh feat/postgres-users-cooperatives từcb2a4d6: UsersService dùng UserManagement async; EmailVerificationService giữ lease committing trong await ghi, xử lý rollback xác định và kết quả commit chưa rõ. Memory adapter dùng đúng shared stores; PG adapter duyệt/từ chối Manager với User status/version + HTX + audit cùng transaction. PG Auth/Users HTTP registration/approval và dựng lại ứng dụng riêng đã kiểm thử; **226 backend/37 DB/8 web/29 browser**, checks đạt. [Source/contracts/luồng/lệnh/giới hạn](POSTGRES_USERS_COOPERATIVES_IMPLEMENTATION.md). **AppModule vẫn RAM**, chưa chuyển toàn bộ domain. Không đổi route/DTO/Postman/.env. Mốc callback đồng bộ fix/registration-proof-atomicity phía dưới đã được thay bằng lease async trong UsersService; consumeForRegistration đồng bộ còn phục vụ tương thích kiểm thử cũ.
+
 ## Cập nhật persistence 2026-10-10
 
 PostgresUsersRepository đã có đọc snapshot user/token-version, lookup email, preflight availability, primitive tạo Active Farmer/Pending verified Manager và atomic password/version/audit. Auth đã dùng hợp đồng async và **221 backend/26 DB tests +lint/typecheck/build đạt**. [Guide/source/tái lập/giới hạn](POSTGRES_USERS_AUTH_IMPLEMENTATION.md). **UsersService/email/duyệt Manager–HTX qua HTTP vẫn RAM**; lease proof email và transaction User Active + tạo/gắn HTX là phần kế tiếp. verifiedEmail của primitive là kết quả service xác minh nội bộ, không nhận từ client. Không dùng UUID seed với Users HTTP RAM hoặc tạo store khác trong DI.

@@ -304,7 +304,7 @@ test('Farms shares USERS registration/approval stores and enforces one Manager p
     const proof = verification.verify({ phone_number: phone, gmail, verification_id: issued.verification_id, otp: email.code });
     const registered = await usersService.register({ phone_number: phone, password: env.AUTH_TEST_PASSWORD, user_name: 'New Manager',
       role: 'Manager', gmail, email_verification_token: proof.email_verification_token });
-    const approval = usersService.approve(admin.id, registered.user.id, { cooperative_id: unassigned.id });
+    const approval = await usersService.approve(admin.id, registered.user.id, { cooperative_id: unassigned.id });
     assert.equal(approval.cooperative.id, unassigned.id);
     const managerToken = await login(phone);
     const coopList = await request('cooperatives', 'GET', undefined, managerToken);

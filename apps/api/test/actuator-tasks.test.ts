@@ -274,11 +274,16 @@ test('ACK exactly at deadline is expired and cannot revive a failed Reset', asyn
   } finally { await f.app.close(); }
 });
 
-test('Every step gets a new ACK timeout even when total Reset duration exceeds one timeout', async () => {
+test('Every step gets a new ACK timeout even when total Reset duration exceeds one timeout', async (context) => {
   const f = await fixture(150);
   try {
+    // Đồng hồ giả giữ test150ms độc lập với scheduling/CPU. Vẫn chứng minh
+    // tổng Reset240ms vượt một timeout, nhưng mỗi ACK chỉ mất80ms.
+    let now = Date.now();
+    context.mock.method(Date, 'now', () => now);
+    context.mock.timers.enable({ apis: ['setTimeout'] });
     const task = f.tasks.command(f.owner.id, f.device.id, 'Watering').task; await turn();
-    for (let i = 0; i < 3; i++) { await delay(80); await f.acknowledge(); }
+    for (let i = 0; i < 3; i++) { now += 80; context.mock.timers.tick(80); await f.acknowledge(); }
     assert.equal(f.get(task.response_payload.reset_task_id!).status, 'Confirmed');
     assert.equal(f.get(task._id).status, 'Pending');
     await f.acknowledge(); await f.acknowledge(); assert.equal(f.get(task._id).status, 'Confirmed');

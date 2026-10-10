@@ -1,18 +1,18 @@
-import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { MockUserStore, normalizeEmail, TestUser } from '../auth/mock-user.store';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { normalizeEmail } from '../auth/account-identity';
+import { publicUser } from '../auth/user-accounts';
 import { hashPassword } from '../auth/password';
 import { WindowRateLimiter } from '../auth/rate-limiter';
 import { EmailVerificationService } from './email/email-verification.service';
-import { MockCooperativeStore } from './mock-cooperative.store';
+import { UserManagement } from './user-management';
 import { ApproveManagerDto, RegisterUserDto } from './users.dto';
 
 @Injectable()
 export class UsersService {
   private readonly limiter = new WindowRateLimiter();
   constructor(
-    @Inject(MockUserStore) private readonly store: MockUserStore,
+    @Inject(UserManagement) private readonly store: UserManagement,
     @Inject(EmailVerificationService) private readonly emailVerification: EmailVerificationService,
-    @Inject(MockCooperativeStore) private readonly cooperatives: MockCooperativeStore,
   ) {}
 
   async register(input: RegisterUserDto) {
@@ -28,84 +28,44 @@ export class UsersService {
     if (token && !gmail) {
       throw new BadRequestException('Bằng chứng xác minh phải đi kèm email');
     }
-    this.store.assertAvailable(input.phone_number, gmail);
+    await this.store.assertAvailable(input.phone_number, gmail);
     if (token && gmail) { this.emailVerification.requireProof(input.phone_number, gmail, token); }
     const passwordHash = await hashPassword(input.password);
-    // Sau await, proof và uniqueness được kiểm tra trong cùng khối commit đồng bộ.
-    const createAccount = () => this.store.add({
+    // Lease giữ proof không thể dùng/gửi lại khi adapter đang await database.
+    const createAccount = () => this.store.createRegisteredUser({
       user_name: input.user_name,
       phone_number: input.phone_number,
-      password: passwordHash,
+      passwordHash,
       gmail,
-      gmail_verify: Boolean(token),
       role: input.role,
-      status: input.role === 'Manager' ? 'Pending' : 'Active',
-      is_owner: false,
-    });
+    }, token ? gmail : null);
     const user = token && gmail
-      ? this.emailVerification.consumeForRegistration(input.phone_number, gmail, token, createAccount)
-      : createAccount();
+      ? await this.emailVerification.consumeForRegistrationAsync(input.phone_number, gmail, token, createAccount)
+      : await createAccount();
     return {
       message: user.status === 'Pending' ? 'Tài khoản đang chờ Admin duyệt' : 'Đăng ký thành công',
-      user: this.store.publicUser(user),
+      user: publicUser(user),
     };
   }
 
-  pendingManagers(adminId: string) {
-    this.requireAdmin(adminId);
-    return { users: this.store.pendingManagers().map((user) => this.store.publicUser(user)) };
+  async pendingManagers(adminId: string) {
+    return { users: await this.store.pendingManagers(adminId) };
   }
 
-  listCooperatives(adminId: string) {
-    this.requireAdmin(adminId);
-    return { cooperatives: this.cooperatives.list() };
+  async listCooperatives(adminId: string) {
+    return { cooperatives: await this.store.listCooperatives(adminId) };
   }
 
-  approve(adminId: string, userId: string, input: ApproveManagerDto) {
-    this.requireAdmin(adminId);
-    const user = this.pendingManager(userId);
-    if (!user.gmail || !user.gmail_verify) {
-      throw new ConflictException('Manager chưa xác minh email');
-    }
-    if (Boolean(input.cooperative_id) === Boolean(input.cooperative)) {
-      throw new BadRequestException('Chọn đúng một cách: cooperative_id hoặc cooperative');
-    }
-    // Tạo/gắn HTX trước; lỗi/va chạm giữ nguyên Pending. Cả khối đồng bộ nên không có ghi nửa chừng.
-    const cooperative = input.cooperative_id
-      ? this.cooperatives.assign(input.cooperative_id, user.id)
-      : this.cooperatives.create(input.cooperative!, user.id);
-    user.status = 'Active';
-    this.store.revokeTokens(user.id);
+  async approve(adminId: string, userId: string, input: ApproveManagerDto) {
+    const { user, cooperative } = await this.store.approve(adminId, userId, input);
     return {
       message: 'Đã duyệt Manager và gắn HTX',
-      user: this.store.publicUser(user),
+      user,
       cooperative: { ...cooperative },
     };
   }
 
-  reject(adminId: string, userId: string) {
-    this.requireAdmin(adminId);
-    const user = this.pendingManager(userId);
-    user.status = 'Reject';
-    this.store.revokeTokens(user.id);
-    return { message: 'Đã từ chối tài khoản Manager', user: this.store.publicUser(user) };
-  }
-
-  private pendingManager(id: string): TestUser {
-    const user = this.store.findById(id);
-    if (!user) {
-      throw new NotFoundException('Không tìm thấy tài khoản');
-    }
-    if (user.role !== 'Manager' || user.status !== 'Pending') {
-      throw new ConflictException('Chỉ xử lý Manager đang Pending');
-    }
-    return user;
-  }
-
-  private requireAdmin(id: string): void {
-    const admin = this.store.findById(id);
-    if (admin?.role !== 'Admin' || admin.status !== 'Active') {
-      throw new ForbiddenException('Chỉ Admin được duyệt tài khoản');
-    }
+  async reject(adminId: string, userId: string) {
+    return { message: 'Đã từ chối tài khoản Manager', user: await this.store.reject(adminId, userId) };
   }
 }

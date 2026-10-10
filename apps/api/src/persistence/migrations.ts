@@ -3,6 +3,7 @@ import { Db } from 'mongodb';
 import { Pool, PoolClient } from 'pg';
 import { POSTGRES_SCHEMA_V1 } from './postgres-schema';
 import { applyMongoSchema, MONGO_SCHEMA_V1 } from './mongo-schema';
+import { COOPERATIVE_SCHEMA_V2 } from './cooperative-schema';
 
 export interface MigrationDefinition {
   id: string;
@@ -15,6 +16,8 @@ export const MIGRATIONS: MigrationDefinition[] = [
     apply: async (client) => { await client.query(POSTGRES_SCHEMA_V1); } },
   { id: '002_mongo_core', store: 'mongo', source: JSON.stringify(MONGO_SCHEMA_V1),
     apply: async (_client, db) => { await applyMongoSchema(db); } },
+  { id: '003_cooperative_certificate', store: 'postgres', source: COOPERATIVE_SCHEMA_V2,
+    apply: async (client) => { await client.query(COOPERATIVE_SCHEMA_V2); } },
 ];
 export function migrationChecksum(source: string): string { return createHash('sha256').update(source).digest('hex'); }
 

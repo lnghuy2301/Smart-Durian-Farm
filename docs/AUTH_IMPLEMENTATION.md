@@ -1,5 +1,7 @@
 # Auth — đăng nhập và OTP ở chế độ test
 
+Mốc mới2026-10-10: Users/email đã dùng UserManagement async và proof lease; Auth+Users HTTP với PG registration/Manager approval đã kiểm thử dựng lại instances, giữ dữ liệu đã commit và bỏ proof chưa hoàn tất. **226 backend/37 DB/8 web/29 browser**, checks đạt. [Guide](POSTGRES_USERS_COOPERATIVES_IMPLEMENTATION.md). AppModule vẫn dùng shared memory adapters tới khi mọi domain chuyển xong; không đổi OTP/provider/route/.env hoặc coi test isolated là nghiệm thu SMS/full-process restart. Nội dung local/mock dưới đây tiếp tục áp dụng.
+
 ## Cập nhật persistence 2026-10-10
 
 AuthService hiện await hợp đồng UserAccounts, đọc snapshot và recheck version/status sau scrypt; OTP gắn version lúc gửi, password reset ghi qua adapter. Adapter PostgreSQL đã kiểm thử Auth HTTP riêng qua restart với password/revocation giữ nguyên, OTP cũ mất; **221 backend/26 DB integration tests +lint/typecheck/build đạt**. [Source, transaction, lệnh và giới hạn](POSTGRES_USERS_AUTH_IMPLEMENTATION.md). **AppModule/AUTH_MODE=mock vẫn dùng cùng MockUserStore với các module khác**; chưa bật database runtime toàn ứng dụng. Không cần thêm .env key hoặc đổi Postman/DTO, không gửi SMS thật trong test. Nội dung hướng dẫn local phía dưới vẫn áp dụng cho mode hiện tại.

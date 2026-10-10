@@ -1,6 +1,8 @@
 import { BadRequestException, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { createHash, randomBytes, randomInt, randomUUID, timingSafeEqual } from 'node:crypto';
-import { MockUserStore, normalizeEmail, TestUser } from '../../auth/mock-user.store';
+import { normalizeEmail } from '../../auth/account-identity';
+import { TestUser } from '../../auth/mock-user.store';
+import { UserManagement } from '../user-management';
 import { WindowRateLimiter } from '../../auth/rate-limiter';
 import { EmailSender } from './email.sender';
 import { VerifyRegistrationEmailDto } from '../users.dto';
@@ -15,7 +17,7 @@ interface EmailChallenge {
   expiresAt: number;
   nextSendAt: number;
   attempts: number;
-  state: 'sending' | 'sent' | 'verified' | 'consumed' | 'failed';
+  state: 'sending' | 'sent' | 'verified' | 'committing' | 'consumed' | 'failed';
   tokenDigest?: Buffer;
 }
 
@@ -26,19 +28,19 @@ export class EmailVerificationService {
 
   constructor(
     @Inject(EmailSender) private readonly sender: EmailSender,
-    @Inject(MockUserStore) private readonly store: MockUserStore,
+    @Inject(UserManagement) private readonly store: UserManagement,
   ) {}
 
   async request(phone: string, gmail: string) {
     this.limiter.take('email-send', 5);
     const email = normalizeEmail(gmail);
-    this.store.assertAvailable(phone, email);
+    await this.store.assertAvailable(phone, email);
     const now = Date.now();
     for (const [key, challenge] of this.challenges) {
-      if (challenge.expiresAt <= now && challenge.state !== 'sending') { this.challenges.delete(key); }
+      if (challenge.expiresAt <= now && !['sending', 'committing'].includes(challenge.state)) { this.challenges.delete(key); }
     }
     const previous = this.challenges.get(email);
-    if (previous && (previous.state === 'sending' || now < previous.nextSendAt)) {
+    if (previous && (['sending', 'committing'].includes(previous.state) || now < previous.nextSendAt)) {
       throw new HttpException('Đợi 60 giây trước khi gửi lại email', HttpStatus.TOO_MANY_REQUESTS);
     }
     if (!previous && this.challenges.size >= 100) { throw new HttpException('Quá nhiều yêu cầu xác minh; thử lại sau', HttpStatus.TOO_MANY_REQUESTS); }
@@ -108,6 +110,25 @@ export class EmailVerificationService {
     const user = createAccount();
     challenge.state = 'consumed';
     return user;
+  }
+
+  async consumeForRegistrationAsync<T>(phone: string, gmail: string, token: string, createAccount: () => Promise<T>): Promise<T> {
+    const challenge = this.requireProof(phone, gmail, token);
+    // Proof phải còn hạn tại reservation sau hash. Một lần commit đã bắt đầu
+    // không bị báo lỗi chỉ vì deadline đi qua trong lúc DB chờ/ghi.
+    challenge.state = 'committing';
+    try {
+      const result = await createAccount();
+      challenge.state = 'consumed';
+      return result;
+    } catch (error) {
+      // Chỉ lỗi validation/unique/capacity đã xác định không ghi account mới
+      // mới cho thử lại proof còn hạn. 503/connection/commit không rõ kết quả
+      // phải xác minh lại, tránh replay một proof có thể đã tạo tài khoản.
+      const knownRejection = error instanceof HttpException && [400, 409, 429].includes(error.getStatus());
+      challenge.state = knownRejection ? 'verified' : 'consumed';
+      throw error;
+    }
   }
 
   private digest(value: string): Buffer {

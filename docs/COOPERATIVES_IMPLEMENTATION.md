@@ -1,5 +1,9 @@
 # COOPERATIVES — HTX độc lập và xác minh thay đổi của Manager
 
+## Cập nhật persistence 2026-10-10
+
+feat/postgres-users-cooperatives từcb2a4d6 đã có PG registry Admin create/update, scoped reads, Admin duyệt Manager atomic với User/HTX/version/audit, lifecycle7/30 ngày/notifications dedup và migration003 certificate UNIQUE. HTTP Auth/Users restart riêng, audit rollback/concurrency/deletion races đã kiểm thử; **226 backend/37 DB/8 web/29 browser** và checks đạt. [Guide chi tiết](POSTGRES_USERS_COOPERATIVES_IMPLEMENTATION.md). **CooperativesService và AppModule vẫn RAM**; workflow Manager sửa HTX email→SMS, lịch sử và scheduler chưa wiring PG, là phần tiếp theo. Không đổi quy tắc nghiệp vụ dưới đây hoặc hỏi lại các quyết định đã chốt. Scheduler repository chỉ là hook chưa auto chạy.
+
 Nhánh `feat/cooperatives-management`, base `feat/zone-assignments` (c9dbe67). Kế thừa toàn bộ modules đã hoàn tất. Không triển khai Trees/Cultivation/IoT trong đợt này. Đọc MODULE_HANDOFF.md đầu session.
 
 ## Quy tắc đã chốt

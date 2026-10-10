@@ -72,12 +72,12 @@ test('Cooperatives share USERS/Farms store; Admin creates unmanaged HTX and exis
   const f = await fixture();
   try {
     assert.equal(f.coop.manager_id, null);
-    assert.equal(f.app.get(UsersService).listCooperatives(f.admin.id).cooperatives[0].id, f.coop.id);
+    assert.equal((await f.app.get(UsersService).listCooperatives(f.admin.id)).cooperatives[0].id, f.coop.id);
     assert.equal(f.app.get(FarmsService).listCooperatives(f.farmer.id, page).items[0].id, f.coop.id);
-    f.attach();
+    await f.attach();
     assert.equal(f.store.get(f.coop.id).manager_id, f.manager.id);
     assert.equal(f.users.findById(f.manager.id)!.status, 'Active');
-    assert.throws(() => f.app.get(UsersService).approve(f.admin.id, f.otherManager.id, { cooperative_id: f.coop.id }), status(409));
+    await assert.rejects(f.app.get(UsersService).approve(f.admin.id, f.otherManager.id, { cooperative_id: f.coop.id }), status(409));
     assert.equal(f.users.findById(f.otherManager.id)!.status, 'Pending');
     assert.equal(f.service.get(f.manager.id, f.coop.id).lifecycle.deletion_due_at, null);
   } finally { await f.app.close(); }
@@ -86,7 +86,7 @@ test('Cooperatives share USERS/Farms store; Admin creates unmanaged HTX and exis
 test('HTX HTTP scopes reads, protects certificate/Manager fields, rejects null/unknown fields and isolates responses', async () => {
   const f = await fixture();
   try {
-    f.attach();
+    await f.attach();
     const admin = await f.login(env.AUTH_TEST_ADMIN_PHONE, env.AUTH_TEST_ADMIN_PASSWORD);
     const manager = await f.login(f.manager.phone_number);
     const farmer = await f.login(f.farmer.phone_number);
@@ -122,7 +122,7 @@ test('HTX HTTP scopes reads, protects certificate/Manager fields, rejects null/u
 test('Manager updates require email then SMS to account contacts, commit only after both and cannot replay', async () => {
   const f = await fixture();
   try {
-    f.attach();
+    await f.attach();
     const manager = await f.login(f.manager.phone_number);
     const admin = await f.login(env.AUTH_TEST_ADMIN_PHONE, env.AUTH_TEST_ADMIN_PASSWORD);
     const response = await f.http(`cooperatives/${f.coop.id}/update-requests`, 'POST',
@@ -159,7 +159,7 @@ test('Each verification step gets a fresh window; exact email/SMS deadlines and 
   context.mock.method(Date, 'now', () => now);
   const f = await fixture();
   try {
-    f.attach();
+    await f.attach();
     const request = await f.service.createUpdateRequest(f.manager.id, f.coop.id, { address: 'Late update' });
     now += 9 * 60000 + 59000;
     f.service.verifyEmail(f.manager.id, request.id, f.mails.at(-1)!.code);
@@ -190,7 +190,7 @@ test('Email attempts, resend cooldown, cancellation and a single active request 
   context.mock.method(Date, 'now', () => now);
   const f = await fixture();
   try {
-    f.attach();
+    await f.attach();
     const request = await f.service.createUpdateRequest(f.manager.id, f.coop.id, { address: 'Pending' });
     await assert.rejects(f.service.createUpdateRequest(f.manager.id, f.coop.id, { address: 'Second' }), status(409));
     await assert.rejects(f.service.resendEmail(f.manager.id, request.id), status(429));
@@ -211,7 +211,7 @@ test('Email attempts, resend cooldown, cancellation and a single active request 
 test('Admin edits and account changes invalidate pending Manager proofs, including changes during provider await', async (context) => {
   const f = await fixture();
   try {
-    f.attach();
+    await f.attach();
     let request = await f.emailStep();
     await f.service.sendSms(f.manager.id, request.id);
     const code = f.smsCode(request.id);
@@ -241,7 +241,7 @@ test('Admin edits and account changes invalidate pending Manager proofs, includi
 test('In-flight sending/checking cannot be cancelled, duplicated or committed twice', async (context) => {
   const f = await fixture();
   try {
-    f.attach();
+    await f.attach();
     let release!: () => void;
     const sending = new Promise<void>((resolve) => { release = resolve; });
     context.mock.method(f.sender, 'sendVerification', async (to: string, code: string) => { f.mails.push({ to, code }); await sending; });
@@ -271,7 +271,7 @@ test('In-flight sending/checking cannot be cancelled, duplicated or committed tw
 test('Provider failures/uncertain checks never change HTX; live mode hides mock OTP and fails without HTX configuration', async (context) => {
   const f = await fixture();
   try {
-    f.attach();
+    await f.attach();
     context.mock.method(f.sender, 'sendVerification', async () => { throw new ServiceUnavailableException('Email unavailable'); });
     await assert.rejects(f.service.createUpdateRequest(f.manager.id, f.coop.id, { address: 'No' }), status(503));
     assert.equal(f.service.listRequests(f.manager.id, page).items[0].status, 'Failed');
@@ -295,7 +295,7 @@ test('Provider failures/uncertain checks never change HTX; live mode hides mock 
 test('HTX and password reset keep independent challenges and consuming one preserves the other', async () => {
   const f = await fixture();
   try {
-    f.attach();
+    await f.attach();
     const request = await f.emailStep();
     await f.service.sendSms(f.manager.id, request.id);
     const code = f.smsCode(request.id);
@@ -322,7 +322,7 @@ test('Day 7 warns once, day 30 deletes unmanaged/unreferenced HTX; assignment ca
     f.service.sweep();
     assert.equal(f.service.listNotifications(f.admin.id, page).total, 1);
     const managed = f.service.create(f.admin.id, { ...input, certificate_number: 'MANAGED' });
-    f.app.get(UsersService).approve(f.admin.id, f.manager.id, { cooperative_id: managed.id });
+    await f.app.get(UsersService).approve(f.admin.id, f.manager.id, { cooperative_id: managed.id });
     now += 23 * DAY - 1;
     f.service.sweep();
     assert.equal(f.store.get(f.coop.id).manager_id, null);
@@ -350,7 +350,7 @@ test('Business references block automatic HTX deletion and warning is retained w
     assert.deepEqual(f.service.listNotifications(f.admin.id, page).items.map((item) => item.type), ['ManagerMissing', 'DeletionBlocked']);
     f.service.sweep();
     assert.equal(f.service.listNotifications(f.admin.id, page).total, 2);
-    f.attach();
+    await f.attach();
     now += 30 * DAY;
     f.service.sweep();
     assert.equal(f.store.get(f.coop.id).manager_id, f.manager.id);
@@ -362,7 +362,7 @@ test('Expiry during SMS send blocks new requests until provider returns; late re
   context.mock.method(Date, 'now', () => now);
   const f = await fixture();
   try {
-    f.attach();
+    await f.attach();
     const request = await f.emailStep();
     const issue = f.sms.issue.bind(f.sms);
     let release!: () => void;
@@ -391,7 +391,7 @@ test('Deletion reference checks retain real Farm join/reject/leave history and n
   try {
     const farms = f.app.get(FarmsService);
     assert.equal(farms.hasCooperativeReferences(f.coop.id), false);
-    f.attach();
+    await f.attach();
     const proposal = farms.createRequest(f.farmer.id, { area_size: 1, address: 'Farm', certificate_number: 'FARM', longitude: 106, latitude: 10 });
     const farmId = farms.approve(f.admin.id, proposal.id).farm_id!;
     const firstJoin = farms.joinRequest(f.farmer.id, farmId, f.coop.id);

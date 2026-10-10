@@ -46,7 +46,7 @@ test('persistence foundation on isolated PostgreSQL17/Mongo8', async (t) => {
       const altered = MIGRATIONS.map((migration, index) => index ? migration : { ...migration, source: `${migration.source}\n-- changed` });
       await assert.rejects(runMigrations(sql, db, altered), /history mismatch/);
       await assert.rejects(runMigrations(sql, db, MIGRATIONS.slice(0, 1)), /history mismatch/);
-      assert.equal((await sql.query('SELECT count(*) FROM technical.schema_migrations')).rows[0].count, '2');
+      assert.equal((await sql.query('SELECT count(*) FROM technical.schema_migrations')).rows[0].count, String(MIGRATIONS.length));
     });
     await t.test('a failed SQL migration rolls back DDL and releases migration lock', async () => {
       const broken = { id: '003_test_rollback', store: 'postgres' as const, source: 'fixture', apply: async (client: import('pg').PoolClient) => {

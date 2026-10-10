@@ -8,6 +8,9 @@ import { MockCooperativeStore } from './mock-cooperative.store';
 import { RegistrationController } from './registration.controller';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
+import { MockUserStore } from '../auth/mock-user.store';
+import { UserManagement } from './user-management';
+import { MemoryUserManagement } from './memory-user-management';
 
 @Module({})
 export class UsersModule {
@@ -16,9 +19,11 @@ export class UsersModule {
       module: UsersModule,
       imports: [authModule],
       controllers: [RegistrationController, UsersController],
-      exports: [MockCooperativeStore, EmailSender],
+      exports: [MockCooperativeStore, EmailSender, UserManagement],
       providers: [
         UsersService, MockCooperativeStore, EmailVerificationService, AdminGuard,
+        { provide: UserManagement, inject: [MockUserStore, MockCooperativeStore],
+          useFactory: (users: MockUserStore, cooperatives: MockCooperativeStore) => new MemoryUserManagement(users, cooperatives) },
         {
           provide: EmailSender,
           useFactory: () => config.email ? new SmtpEmailSender(config.email) : new DisabledEmailSender(),

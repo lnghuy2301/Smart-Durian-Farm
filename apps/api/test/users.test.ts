@@ -269,19 +269,19 @@ test('Approval failures leave Manager Pending; existing HTX assignment cannot re
       user_name: 'Manager', role: 'Manager', password, email_verification_token: await proof(phone, email) })).user;
     const first = await createManager('0900000002', 'first@example.net');
     const existing = cooperatives.create(cooperative, null);
-    assert.throws(() => users.approve(admin.id, first.id, { cooperative_id: first.id }));
-    assert.throws(() => users.approve(admin.id, first.id, { cooperative }));
+    await assert.rejects(users.approve(admin.id, first.id, { cooperative_id: first.id }));
+    await assert.rejects(users.approve(admin.id, first.id, { cooperative }));
     assert.equal(store.findById(first.id)!.status, 'Pending');
     assert.equal(existing.manager_id, null);
-    users.approve(admin.id, first.id, { cooperative_id: existing.id });
+    await users.approve(admin.id, first.id, { cooperative_id: existing.id });
     // Store trả bản sao; đọc lại dữ liệu chính thức để kiểm tra việc gắn Manager.
     assert.equal(cooperatives.get(existing.id).manager_id, first.id);
     const second = await createManager('0900000003', 'second@example.net');
-    assert.throws(() => users.approve(admin.id, second.id, { cooperative_id: existing.id }));
+    await assert.rejects(users.approve(admin.id, second.id, { cooperative_id: existing.id }));
     assert.equal(store.findById(second.id)!.status, 'Pending');
     assert.equal(cooperatives.get(existing.id).manager_id, first.id);
     admin.status = 'Locked';
-    assert.throws(() => users.reject(admin.id, second.id));
+    await assert.rejects(users.reject(admin.id, second.id));
   } finally { await app.close(); }
 });
 

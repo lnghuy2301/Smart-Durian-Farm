@@ -11,10 +11,9 @@ import { EmailSender } from '../users/email/email.sender';
 import { COOPERATIVE_OTP_PROVIDER } from './cooperative-otp.provider';
 import { CooperativeListDto, CooperativePageDto, ManagerCooperativeUpdateDto, UpdateCooperativeDto } from './cooperatives.dto';
 import { CooperativeNotification, CooperativeUpdateStatus, StoredCooperativeUpdate } from './cooperatives.types';
+import { COOPERATIVE_WARNING_DAYS, COOPERATIVE_DELETE_DAYS, COOPERATIVE_DAY_MS as DAY_MS } from './cooperative-lifecycle';
+export { COOPERATIVE_WARNING_DAYS, COOPERATIVE_DELETE_DAYS } from './cooperative-lifecycle';
 
-export const COOPERATIVE_WARNING_DAYS = 7;
-export const COOPERATIVE_DELETE_DAYS = 30;
-const DAY_MS = 24 * 60 * 60 * 1000;
 const EMAIL_TTL_MS = 10 * 60 * 1000;
 const SMS_TTL_MS = 5 * 60 * 1000;
 const TERMINAL: CooperativeUpdateStatus[] = ['Accepted', 'Cancelled', 'Expired', 'Failed'];

@@ -1,5 +1,7 @@
 # Persistence foundation — migration, schema và seed demo
 
+Tiếp nối hiện hành2026-10-10: **feat/postgres-users-cooperatives** từcb2a4d6 đã có async Users/email lease, PG registration/Manager approval HTTP restart riêng và cooperative registry/lifecycle/version/audit/notifications. **226 backend/37 DB/8 web/29 browser**, checks đạt. Migration003 certificate UNIQUE bổ sung đã Applied local, giữ nguyên001/002 và dữ liệu demo, không chạy seed lại. [Guide hiện hành](POSTGRES_USERS_COOPERATIVES_IMPLEMENTATION.md). AppModule còn RAM; Manager email→SMS workflows/scheduler/các repositories khác chưa wiring. Hướng dẫn foundation/số216/16 bên dưới là kết quả lịch sử, lệnh test:persistence hiện đã chạy cả ba suites.
+
 Tiếp nối2026-10-10: adapter Users/Auth đã triển khai trên **feat/postgres-users-auth** từ2b6db5f, kiểm thử221 backend/26 DB integration tests và Auth HTTP restart riêng. [Guide và phạm vi](POSTGRES_USERS_AUTH_IMPLEMENTATION.md). AppModule toàn dự án vẫn RAM; Users/email/HTX và domain repositories chưa wiring. Các số216/16 và giới hạn của foundation dưới đây là kết quả của đợt foundation, chưa bao gồm adapter mới.
 
 Ngày 2026-10-10. Nhánh **feat/persistence-foundation**, base **622a189** từ docs/persistence-design; kế thừa QR/Cultivation/backend/frontend hiện có. Đọc cùng [thiết kế đã chốt](PERSISTENCE_DESIGN.md), [profile seed](PERSISTENCE_SEED_SPEC.md) và [handoff](MODULE_HANDOFF.md).

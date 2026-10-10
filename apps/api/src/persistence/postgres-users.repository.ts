@@ -43,6 +43,12 @@ export class PostgresUsersRepository extends UserAccounts {
     return this.run(async () => this.first((await this.pool.query<UserRow>(`${READ} WHERE u.phone_number=$1`, [phone])).rows));
   }
 
+  // Dùng cùng client của transaction duyệt Manager–HTX; caller khóa users rồi
+  // metadata trước. Không gọi pool.query tách khỏi transaction đang chạy.
+  async loadOnClient(client: PoolClient, id: string): Promise<AccountSnapshot | null> {
+    return this.first((await client.query<UserRow>(`${READ} WHERE u.id=$1`, [id])).rows);
+  }
+
   async findByEmail(email: string): Promise<AccountSnapshot | null> {
     return this.run(async () => this.first((await this.pool.query<UserRow>(`${READ} WHERE u.gmail=$1`, [normalizeEmail(email)])).rows));
   }
