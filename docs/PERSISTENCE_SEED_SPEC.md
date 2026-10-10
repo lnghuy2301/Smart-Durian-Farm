@@ -9,12 +9,14 @@ Ngày 2026-10-10, bổ sung theo yêu cầu người dùng vào [thiết kế pe
 - Dữ liệu phải phù hợp bối cảnh vườn sầu riêng, quan hệ/diện tích/ngày/status hợp lệ. Seed chạy lại không ghi đè dữ liệu hiện có.
 - Không đưa số điện thoại/mật khẩu/credentials thực vào source, collection Postman hoặc tài liệu. Không tự gửi OTP/email/SMS hay lệnh MQTT trong seed.
 
-## Các thông tin còn chờ người dùng
+## Thông tin đã xác nhận và còn thiếu
 
-Hai câu hỏi đã gửi, không tự suy câu trả lời:
+Người dùng xác nhận ngày 2026-10-10:
 
-1. station_id thật, installed_at thực tế và cost của thiết bị. DEMO_DEVICE_STATION_ID hiện có nhưng trống; không lấy mã ví dụ trong tài liệu làm mã thật. installed_at/cost đều NOT NULL theo quyết định đã chốt.
-2. Xác nhận dùng Farmer chính từ AUTH_TEST_PHONE/AUTH_TEST_PASSWORD làm chủ Farm chứa hardware thật, hoặc chỉ định tài khoản chính khác. Không cần gửi password/token trong chat.
+1. station_id ESP32 thật là `E08CFE41DCAC`. Đã điền vào khóa DEMO_DEVICE_STATION_ID trước đó trống trong .env local, giữ nguyên mọi byte ngoài giá trị này. Mã station là định danh, không phải secret/token. .env.example giữ giá trị trống để từng installation cấu hình riêng.
+2. Farmer chính dùng AUTH_TEST_PHONE/AUTH_TEST_PASSWORD hiện có, làm chủ Farm chứa hardware thật. Không cần gửi lại thông tin đăng nhập trong chat.
+
+Còn chờ **installed_at thực tế (ngày/giờ Việt Nam) và cost (VNĐ)**. Hai trường đều NOT NULL theo quyết định đã chốt; không tự lấy ngày chạy seed hoặc chi phí mẫu cho Device thật. Câu hỏi bổ sung đã gửi; bộ thật chưa được seed. DEMO_DEVICE_STATION_ID hiện chỉ là cấu hình tham khảo cho demo, không tự đăng ký Device hoặc tạo quan hệ database; seed runtime chưa triển khai.
 
 Kết quả đối chiếu cấu hình local chỉ ghi trạng thái, không ghi giá trị: broker host/port đã điền; SMS_PROVIDER=twilio; AUTH_TEST_PHONE khớp SMS_ALLOWED_PHONE sau chuẩn hóa. Đây không phải bằng chứng SMS đã gửi hoặc hardware đã kết nối trong lượt này. Khi triển khai seed mới, phải hướng dẫn và điền đầy đủ các khóa còn cần trong .env/.env.example, giữ nguyên giá trị cũ.
 
@@ -48,7 +50,7 @@ Mặc định metadata seed không phát sinh MQTT publish; các bài test MQTT 
 
 ## Tài khoản demo chính và tài khoản mẫu
 
-Đề xuất Farmer chính dùng cấu hình điện thoại/password hiện có, role Farmer/Active; khi tạo Farm Accepted làm chủ, cập nhật is_owner đúng nghiệp vụ. ID/account name giữ nguyên khi đã tồn tại. Cần người dùng xác nhận vai trò/identity như câu hỏi trên trước khi seed tài khoản chính.
+Đã chốt Farmer chính dùng cấu hình điện thoại/password hiện có, role Farmer/Active; khi tạo Farm Accepted làm chủ, cập nhật is_owner đúng nghiệp vụ. ID/account name giữ nguyên khi đã tồn tại. Không hỏi lại lựa chọn tài khoản; không đưa số điện thoại/password thật vào tài liệu.
 
 Lần tạo đầu hash password, chuẩn hóa identity chống trùng số0/84/+84, giữ quy ước login hiện tại. Chạy seed lại không reset password đã đổi, không sửa role/status/email_verify, không tạo user khác chỉ vì khác dạng viết số điện thoại. Nếu identity đã có nhưng role/liên kết không phù hợp profile, báo conflict để xử lý rõ ràng, không ghi đè.
 
