@@ -1,5 +1,7 @@
 # Tiêu chuẩn canh tác — bàn giao module
 
+Persistence checkpoint2026-10-10: **feat/postgres-catalogs** từ007834f bổ sung StandardRecords async/shared memory wrapper và PostgreSQL adapter/version/audit, **227 backend/65 DB** +checks đạt. Code/name vẫn không UNIQUE theo migrations001/ERD, Active/Inactive/description rỗng và API giữ nguyên. [Source/tái lập/phạm vi database](POSTGRES_CATALOGS_IMPLEMENTATION.md). AppModule vẫn RAM, isolated PG HTTP fresh app/pool test đạt; Zone/QR lookup chưa chuyển async. Store1000/restart mô tả RAM, PG không áp hạn đó và giữ dữ liệu. Các câu “UNIQUE khi migrations/chưa tạo bảng” dưới đây là checkpoint ban đầu, không yêu cầu thêm constraint mới.
+
 Nhánh `feat/farming-standards` kế thừa `feat/agricultural-materials`. Đã đọc ERD XML/JSON: FARMING_STANDARDS có id UUID, code varchar(40), name varchar(100), description text, certifying_body varchar(120), status Active/Inactive. Không tự thêm field/bảng hoặc gắn tiêu chuẩn ở cấp Farm; tiêu chuẩn gắn Zone ở module Zones kế thừa.
 
 Phạm vi của nhánh này: danh mục tiêu chuẩn bộ nhớ, Admin tạo/sửa/Inactive, mọi user Active đọc. Bridge, Farm, Zones và Assignments đã có trên các nhánh kế thừa; nhánh tích hợp local feat/zone-assignments đạt 55/55 tests. Zone phải gắn tiêu chuẩn Active khi tạo/đổi; Inactive giữ liên kết cũ. Đọc MODULE_HANDOFF.md và ZONES_IMPLEMENTATION.md. Kết quả kiểm thử bên dưới là của riêng đợt Standards.

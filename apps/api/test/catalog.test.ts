@@ -9,6 +9,8 @@ import { MockUserStore } from '../src/auth/mock-user.store';
 import { UsersService } from '../src/users/users.service';
 import { MaterialsService } from '../src/materials/materials.service';
 import { StandardsService } from '../src/standards/standards.service';
+import { MaterialRecords, StandardRecords, StandardMaterialRecords } from '../src/catalog/catalog-records';
+import { MaterialListDto } from '../src/materials/materials.dto';
 
 const env = {
   DATABASE_URL: 'postgresql://test:test@127.0.0.1:1/test', MONGODB_URI: 'mongodb://127.0.0.1:1/test',
@@ -21,6 +23,25 @@ const material = {
   unit: 'kg', quarantine_days: 0,
 };
 const standard = { code: 'DEMO', name: 'Tiêu chuẩn demo', description: '', certifying_body: 'Tổ chức demo' };
+
+test('Async catalog ports share existing domain stores and recheck Active/Admin outside controllers', async () => {
+  const { app } = await setup();
+  try {
+    const accounts = app.get(MockUserStore);
+    const admin = (await accounts.loadByPhone(env.AUTH_TEST_ADMIN_PHONE))!.user.id;
+    const farmer = (await accounts.loadByPhone(env.AUTH_TEST_PHONE))!.user.id;
+    const materials = app.get(MaterialRecords), standards = app.get(StandardRecords), links = app.get(StandardMaterialRecords);
+    const m = await materials.create(admin, material), s = await standards.create(admin, standard);
+    assert.equal(app.get(MaterialsService).get(m.id).name, material.name);
+    app.get(MaterialsService).update(m.id, { name: 'Shared domain update' });
+    await links.add(admin, s.id, m.id);
+    assert.equal((await links.list(farmer, s.id, new MaterialListDto())).items[0].name, 'Shared domain update');
+    await assert.rejects(materials.update(farmer, m.id, { name: 'Forbidden' }), (error: unknown) => (error as { getStatus(): number }).getStatus() === 403);
+    const user = accounts.findById(farmer)!;
+    user.status = 'Locked';
+    await assert.rejects(standards.get(farmer, s.id), (error: unknown) => (error as { getStatus(): number }).getStatus() === 403);
+  } finally { await app.close(); }
+});
 
 async function setup() {
   const app = await createApplication(readEnvironment(env), false);

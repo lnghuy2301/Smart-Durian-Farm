@@ -1,5 +1,7 @@
 # Liên kết tiêu chuẩn–vật tư — bàn giao module
 
+Persistence checkpoint2026-10-10: **feat/postgres-catalogs** từ007834f đã có StandardMaterialRecords async/shared RAM wrapper và PG bridge repository, **227 backend/65 DB** +checks đạt. Composite PK, N:N, Inactive bridge và API không đổi; unlink tăng version/giữ metadata +seed manifest, không xóa catalog/snapshots. PG config/list dùng cùng repository/pool và count+page snapshot. [Source/tái lập/concurrency/seed conflict](POSTGRES_CATALOGS_IMPLEMENTATION.md). AppModule vẫn RAM; PG HTTP fresh app/pool test riêng. Hạn10000/restart bên dưới chỉ áp dụng RAM; các “chưa persistence/seed” là ghi nhận đợt bridge ban đầu.
+
 Nhánh `feat/standard-materials` kế thừa `feat/farming-standards`. Đã đọc STANDARD_MATERIALS trong cả ERD XML/JSON: chỉ standard_id UUID và material_id UUID, bridge N:N. Không thêm id, liều lượng, ngày hoặc status vào bảng bridge.
 
 Phạm vi: cấu hình danh mục trong bộ nhớ. Admin thêm/bỏ liên kết; user Active xem vật tư của một tiêu chuẩn. Chỉ dùng identity tồn tại; mỗi cặp một liên kết. Không quyết định quyền ghi canh tác hay liều thực tế từ bridge này.
