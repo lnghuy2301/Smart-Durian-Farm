@@ -4,6 +4,9 @@ import { useSession } from "../auth/session";
 import { queryString } from "../api/client";
 import { Badge, DataState, Field, Notice, PageHeader, Pagination, dateTime } from "../components/ui";
 import { ConfirmDialog, Diff, EditorDialog, useGet } from "../workflows/shared";
+import { useCollection } from "../workflows/shared";
+import { HarvestPrepare } from "../workflows/HarvestTools";
+import type { Cooperative, Tree } from "../types/api";
 import type { Page } from "../types/api";
 
 export interface ChangeRequest {
@@ -19,6 +22,7 @@ export const requestKinds: Record<string, { label: string; path: string }> = {
   zone: { label: "Khu vực", path: "zone-requests" },
   assignment: { label: "Phân công", path: "assignment-requests" },
   tree: { label: "Cây sầu riêng", path: "tree-requests" },
+  harvest: { label: "Thu hoạch", path: "harvest-requests" },
 };
 export const fieldLabels: Record<string, string> = { area_size: "Diện tích", address: "Địa chỉ", certificate_number: "Số chứng nhận", longitude: "Kinh độ", latitude: "Vĩ độ", standard_id: "Tiêu chuẩn", zone_name: "Tên khu vực", variety: "Giống cây", plant_date: "Ngày trồng", status: "Trạng thái", installed_at: "Ngày lắp đặt", cost: "Chi phí", station_id: "Mã trạm", name: "Tên", unit: "Đơn vị", min_threshold: "Ngưỡng tối thiểu", max_threshold: "Ngưỡng tối đa", season_name: "Mùa vụ", harvest_date: "Ngày thu hoạch", batch_code: "Mã lô", fruit_count: "Số quả", total_weight_kg: "Khối lượng (kg)" };
 const actionLabels: Record<string, string> = { Create: "Tạo mới", Update: "Cập nhật", Join: "Gia nhập HTX", Leave: "Rời HTX", Assign: "Mời phụ trách", End: "Kết thúc phân công", Confirm: "Xác nhận thu hoạch", Correct: "Sửa thu hoạch" };
@@ -45,13 +49,16 @@ function RequestDetail({ kind, id, onClose, onChanged }: { kind: string; id: str
   const { user } = useSession();
   const config = requestKinds[kind];
   const resource = useGet<ChangeRequest>(`${config.path}/${id}`);
+  const cooperatives = useCollection<Cooperative>("cooperatives");
+  const trees = useCollection<Tree>("trees");
   const [action, setAction] = useState<"approve" | "reject">();
   function saved() { setAction(undefined); resource.reload(); onChanged(); }
   return <section className="panel workflow-summary"><div className="panel-heading"><h2>Nội dung đề xuất</h2><div className="actions"><button className="button secondary" onClick={() => { setAction(undefined); resource.reload(); onChanged(); }}>Kiểm tra trạng thái</button><button className="button secondary" onClick={onClose}>Đóng chi tiết</button></div></div>
     <DataState resource={resource}>{(request) => {
       const pending = request.status === "Pending";
-      const approve = pending && (request.required_approvals ? request.required_approvals.some((x) => !x.approved_at && (x.user_id === user.id || (x.user_id === null && x.role === user.role))) : request.owner_id === user.id);
-      const reject = pending && (kind === "farm" ? approve : kind === "assignment" ? request.owner_id === user.id || request.proposed_by === user.id || request.user_id === user.id && request.action === "Assign" : request.owner_id === user.id);
+      const harvestReviewer = request.action === "Confirm" ? request.owner_id === user.id : request.cooperative_id ? user.role === "Manager" && cooperatives.data?.some((x) => x.id === request.cooperative_id && x.manager_id === user.id) : user.role === "Admin";
+      const approve = pending && (kind === "harvest" ? harvestReviewer : request.required_approvals ? request.required_approvals.some((x) => !x.approved_at && (x.user_id === user.id || (x.user_id === null && x.role === user.role))) : request.owner_id === user.id);
+      const reject = pending && (kind === "farm" ? approve : kind === "harvest" ? harvestReviewer || request.owner_id === user.id || request.requested_by === user.id : kind === "assignment" ? request.owner_id === user.id || request.proposed_by === user.id || request.user_id === user.id && request.action === "Assign" : request.owner_id === user.id);
       const snapshot = request.farm_snapshot ?? request.zone_snapshot ?? request.tree_snapshot ?? request.device_snapshot ?? request.sensor_snapshot ?? request.actuator_snapshot ?? request.harvest_snapshot;
       return <><p className="muted break-word">{request.id} · {dateTime(request.created_at)}</p><Badge status={request.status} /><h3 className="workflow-subheading">{actionLabels[request.action]}</h3>
         {snapshot && <><h3 className="workflow-subheading">Hồ sơ tại thời điểm gửi</h3><Diff changes={snapshot} labels={fieldLabels} /></>}
@@ -60,7 +67,7 @@ function RequestDetail({ kind, id, onClose, onChanged }: { kind: string; id: str
         {request.reason && <Notice>Lý do: {request.reason}</Notice>}
         {request.required_approvals && <div className="workflow-timeline">{request.required_approvals.map((x, index) => <article key={index}><strong>{x.role ?? (x.purpose === "Owner" ? "Chủ vườn" : "Người được phân công")}</strong><p>{x.approved_at ? `Đã đồng ý · ${dateTime(x.approved_at)}` : "Chờ chấp nhận"}</p></article>)}</div>}
         {request.rejection_reason && <Notice kind="warning">Lý do từ chối: {request.rejection_reason}</Notice>}
-        <div className="workflow-form-actions">{reject && <button className="button secondary" onClick={() => setAction("reject")}>Từ chối / rút đề xuất</button>}{approve && <button className="button" onClick={() => setAction("approve")}>Chấp nhận đề xuất</button>}</div>
+        <div className="workflow-form-actions">{kind === "harvest" && request.action === "Correct" && request.harvest_snapshot && <HarvestPrepare id={id} snapshot={request.harvest_snapshot} allowed={pending && user.role === "Farmer" && (request.owner_id === user.id || request.requested_by === user.id) && !!trees.data?.some((x) => x.id === request.harvest_snapshot?.tree_id)} onSaved={saved} />}{reject && <button className="button secondary" onClick={() => setAction("reject")}>Từ chối / rút đề xuất</button>}{approve && <button className="button" onClick={() => setAction("approve")}>Chấp nhận đề xuất</button>}</div>
         {action === "approve" && <ConfirmDialog title="Chấp nhận đề xuất" path={`${config.path}/${id}/approve`} onClose={() => setAction(undefined)} onSaved={saved}><p>Xác nhận đồng ý với nội dung đã đối chiếu. Các đề xuất nhiều bên chỉ có hiệu lực khi đủ chữ ký.</p></ConfirmDialog>}
         {action === "reject" && <EditorDialog allowEmpty title="Từ chối / rút đề xuất" fields={[{ key: "reason", label: "Lý do", type: "textarea", maxLength: 500, required: false }]} initial={{ reason: "" }} path={`${config.path}/${id}/reject`} method="PATCH" onClose={() => setAction(undefined)} onSaved={saved} />}
       </>;

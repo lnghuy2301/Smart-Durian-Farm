@@ -6,6 +6,7 @@ import { useSession } from "../auth/session";
 import { useResource } from "../hooks/useResource";
 import { RecordTools, recordConfigs } from "../workflows/RecordTools";
 import { RelationSelect, type Values } from "../workflows/shared";
+import { HarvestTools } from "../workflows/HarvestTools";
 import {
   Badge,
   DataState,
@@ -377,6 +378,7 @@ export function ResourceList<T extends { id: string }>({
     <>
       {title}
       {!nested && recordConfigs[def.path] && <RecordTools key={def.path} path={def.path} onSaved={resource.reload} />}
+      {!nested && def.path === "tree-harvests" && <HarvestTools onSaved={resource.reload} />}
       <section className="panel">
         <form
           className="toolbar"
@@ -524,6 +526,7 @@ function ResourceDetail<T extends { id: string }>({
             <section className="panel">
               <h2 className="break-word">{def.name(data)}</h2>
               {recordConfigs[def.path] && <RecordTools key={`${def.path}/${id}`} path={def.path} item={data} onSaved={resource.reload} />}
+              {def.path === "tree-harvests" && <HarvestTools item={data as unknown as Harvest} onSaved={resource.reload} />}
               <dl className="details">
                 {def.detail.map((field) => (
                   <div key={field.label}>
