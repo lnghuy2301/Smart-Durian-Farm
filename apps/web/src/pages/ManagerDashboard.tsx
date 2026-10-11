@@ -399,7 +399,10 @@ function ManagerContent({
           farms={records.farms}
         />
       </div>
-      <RecentJournals zoneIds={view.zones.map((zone) => zone.id)} period={period} />
+      <RecentJournals
+        zoneIds={view.zones.map((zone) => zone.id)}
+        period={period}
+      />
       <section className="panel">
         <div className="panel-heading">
           <div>

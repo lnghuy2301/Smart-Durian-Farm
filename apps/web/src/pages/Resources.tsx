@@ -7,10 +7,12 @@ import { useResource } from "../hooks/useResource";
 import { RecordTools, recordConfigs } from "../workflows/RecordTools";
 import { RelationSelect, type Values } from "../workflows/shared";
 import { HarvestTools } from "../workflows/HarvestTools";
+import { WorkflowStats } from "../workflows/WorkflowStats";
 import {
   Badge,
   DataState,
   Field,
+  Notice,
   PageHeader,
   Pagination,
   dateTime,
@@ -354,6 +356,7 @@ export function ResourceList<T extends { id: string }>({
       if (value) next.set(`${prefix}${key}`, value);
       else next.delete(`${prefix}${key}`);
       if (key !== "offset") next.delete(`${prefix}offset`);
+      if (key === "zone_id") next.delete(`${prefix}tree_id`);
       return next;
     });
   }
@@ -379,8 +382,22 @@ export function ResourceList<T extends { id: string }>({
   return (
     <>
       {title}
-      {!nested && recordConfigs[def.path] && <RecordTools key={def.path} path={def.path} onSaved={resource.reload} />}
-      {!nested && def.path === "tree-harvests" && <HarvestTools onSaved={resource.reload} />}
+      {!nested &&
+        ["farms", "zones", "trees", "tree-harvests", "devices"].includes(
+          def.path,
+        ) && (
+          <WorkflowStats
+            key={path}
+            kind={def.path}
+            path={`${def.path}${queryString({ ...filters, limit: undefined, offset: undefined })}`}
+          />
+        )}
+      {!nested && recordConfigs[def.path] && (
+        <RecordTools key={def.path} path={def.path} onSaved={resource.reload} />
+      )}
+      {!nested && def.path === "tree-harvests" && (
+        <HarvestTools onSaved={resource.reload} />
+      )}
       <section className="panel">
         <form
           className="toolbar"
@@ -389,14 +406,16 @@ export function ResourceList<T extends { id: string }>({
             change("q", search.trim());
           }}
         >
-          {def.search && <Field label={def.search}>
-            <input
-              aria-label={def.search}
-              maxLength={100}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </Field>}
+          {def.search && (
+            <Field label={def.search}>
+              <input
+                aria-label={def.search}
+                maxLength={100}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </Field>
+          )}
           {def.filters?.map((filter) => (
             <Field key={filter.key} label={filter.label}>
               <select
@@ -412,14 +431,56 @@ export function ResourceList<T extends { id: string }>({
               </select>
             </Field>
           ))}
-          {def.search && <button className="button secondary" type="submit">
-            <Search size={17} />
-            Tìm kiếm
-          </button>}
-          {!nested && def.relationships?.map((key) => {
-            const relationship = key === "farm_id" ? { label: "Vườn trồng", path: "farms", name: (x: Values) => `${x.certificate_number} · ${x.address}` } : key === "zone_id" ? { label: "Khu vực", path: "zones", name: (x: Values) => String(x.zone_name) } : key === "device_id" ? { label: "Trạm IoT", path: "devices", name: (x: Values) => String(x.station_id) } : { label: "Cây", path: `trees${queryString({ zone_id: typeof filters.zone_id === "string" ? filters.zone_id : undefined })}`, name: (x: Values) => `${x.tree_code} · ${x.variety}` };
-            return <RelationSelect key={key} field={{ key, label: relationship.label, required: false, relation: { path: relationship.path, label: relationship.name } }} value={String(filters[key] ?? "")} onChange={(value) => change(key, value)} />;
-          })}
+          {def.search && (
+            <button className="button secondary" type="submit">
+              <Search size={17} />
+              Tìm kiếm
+            </button>
+          )}
+          {!nested &&
+            def.relationships?.map((key) => {
+              const relationship =
+                key === "farm_id"
+                  ? {
+                      label: "Vườn trồng",
+                      path: "farms",
+                      name: (x: Values) =>
+                        `${x.certificate_number} · ${x.address}`,
+                    }
+                  : key === "zone_id"
+                    ? {
+                        label: "Khu vực",
+                        path: "zones",
+                        name: (x: Values) => String(x.zone_name),
+                      }
+                    : key === "device_id"
+                      ? {
+                          label: "Trạm IoT",
+                          path: "devices",
+                          name: (x: Values) => String(x.station_id),
+                        }
+                      : {
+                          label: "Cây",
+                          path: `trees${queryString({ zone_id: typeof filters.zone_id === "string" ? filters.zone_id : undefined })}`,
+                          name: (x: Values) => `${x.tree_code} · ${x.variety}`,
+                        };
+              return (
+                <RelationSelect
+                  key={key}
+                  field={{
+                    key,
+                    label: relationship.label,
+                    required: false,
+                    relation: {
+                      path: relationship.path,
+                      label: relationship.name,
+                    },
+                  }}
+                  value={String(filters[key] ?? "")}
+                  onChange={(value) => change(key, value)}
+                />
+              );
+            })}
           {def.relationships?.some((key) => params.has(key)) && (
             <button
               type="button"
@@ -442,7 +503,13 @@ export function ResourceList<T extends { id: string }>({
           empty={resource.data?.items.length === 0}
         >
           {(data) => (
-            <div className="table-scroll">
+            <div
+              className={
+                recordConfigs[def.path] || def.path === "tree-harvests"
+                  ? "table-scroll workflow-record-scroll"
+                  : "table-scroll"
+              }
+            >
               <table>
                 <thead>
                   <tr>
@@ -504,7 +571,8 @@ function ResourceDetail<T extends { id: string }>({
   definition: Definition<T>;
   id: string;
 }) {
-  const { api } = useSession();
+  const { api, user } = useSession();
+  const [message, setMessage] = useState("");
   const path = `${def.path}/${id}`;
   const load = useCallback(
     (signal: AbortSignal) => api.request<T>(path, { signal }),
@@ -522,13 +590,33 @@ function ResourceDetail<T extends { id: string }>({
           </Link>
         }
       />
+      {message && <Notice kind="success">{message}</Notice>}
       <DataState resource={resource}>
         {(data) => (
           <>
             <section className="panel">
               <h2 className="break-word">{def.name(data)}</h2>
-              {recordConfigs[def.path] && <RecordTools key={`${def.path}/${id}`} path={def.path} item={data} onSaved={resource.reload} />}
-              {def.path === "tree-harvests" && <HarvestTools item={data as unknown as Harvest} onSaved={resource.reload} />}
+              {recordConfigs[def.path] && (
+                <RecordTools
+                  key={`${def.path}/${id}`}
+                  path={def.path}
+                  item={data}
+                  onSaved={() => {
+                    setMessage(
+                      def.path === "farms" || user.role === "Admin"
+                        ? "Đã gửi đề xuất. Mở Phiếu đề xuất để theo dõi phê duyệt."
+                        : "Đã lưu thông tin.",
+                    );
+                    resource.reload();
+                  }}
+                />
+              )}
+              {def.path === "tree-harvests" && (
+                <HarvestTools
+                  item={data as unknown as Harvest}
+                  onSaved={resource.reload}
+                />
+              )}
               <dl className="details">
                 {def.detail.map((field) => (
                   <div key={field.label}>

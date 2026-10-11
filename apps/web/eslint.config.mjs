@@ -19,7 +19,11 @@ export default tseslint.config(
     },
   },
   {
-    files: ["test/e2e.mjs", "test/traceability-browser.mjs"],
+    files: [
+      "test/e2e.mjs",
+      "test/traceability-browser.mjs",
+      "test/workflows-browser.mjs",
+    ],
     languageOptions: {
       globals: {
         document: "readonly",

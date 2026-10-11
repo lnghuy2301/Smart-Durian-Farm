@@ -1,5 +1,7 @@
 # Đối chiếu thiết kế Stitch với backend — 2026-10-08
 
+Hiện hành2026-10-11: [các mẫu quản lý mới](REFERENCE_WORKFLOWS_IMPLEMENTATION.md) đã được yêu cầu và triển khai; nhật ký/thu hoạch/IoT metadata/HTX xác minh có API. Những dòng “Cultivation/QR chưa có” dưới đây mô tả checkpoint2026-10-08, đã được thay thế bởi guide mới và QR đã triển khai trước đó. AI/directory/điều khiển relay trên màn metadata vẫn không được giả lập.
+
 ## Nguồn và quyết định triển khai
 
 HTML/ảnh do người dùng cung cấp tại `references/stitch_smart_durian_farmer_dashboard/`; manifest giải thích bản trùng đã bỏ. Logo, màu, pattern theo assets/brand; font Be Vietnam Pro tự phục vụ từ package Fontsource. Không dùng Tailwind CDN, Google Fonts, ảnh/avatar bên ngoài hoặc script điều khiển demo của HTML trong app.

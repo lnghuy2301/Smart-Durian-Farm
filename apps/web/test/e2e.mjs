@@ -7,6 +7,7 @@ import { createServer } from "vite";
 import { chromium } from "playwright-core";
 import { loopbackBroker } from "./loopback-broker.mjs";
 import { checkTraceability } from "./traceability-browser.mjs";
+import { checkWorkflows } from "./workflows-browser.mjs";
 
 // Backend thật, RAM cô lập, không đọc .env root và không gửi SMTP/SMS thật.
 const webRoot = fileURLToPath(new URL("..", import.meta.url));
@@ -1234,6 +1235,21 @@ try {
         .waitFor();
     },
   );
+  await checkWorkflows({
+    browser,
+    origin,
+    http,
+    check,
+    app,
+    apiModule,
+    ownerToken,
+    adminToken,
+    ownerId,
+    standard,
+    codes,
+    screenshots,
+    errors,
+  });
   await check(
     "expired stored JWT is discarded before protected pages render",
     async () => {
@@ -1295,6 +1311,12 @@ try {
           "manager-mobile.png",
           "trace-desktop.png",
           "trace-mobile.png",
+          "workflow-dialog-1440.png",
+          "workflow-dialog-1366.png",
+          "workflow-dialog-390.png",
+          "workflow-iot-1440.png",
+          "workflow-iot-1366.png",
+          "workflow-iot-390.png",
         ],
       },
       null,

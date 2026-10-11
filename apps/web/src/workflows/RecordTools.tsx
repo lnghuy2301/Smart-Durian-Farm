@@ -1,51 +1,241 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Pencil } from "lucide-react";
+import { Notice } from "../components/ui";
 import { useSession } from "../auth/session";
 import { farmFields, zoneFields } from "./farmZoneConfig";
 import { treeFields } from "./treeConfig";
 import { actuatorFields, deviceFields, sensorFields } from "./iotConfig";
-import { EditorDialog, WorkflowLinks, useCollection, uuidPattern, type InputField, type Values } from "./shared";
+import {
+  EditorDialog,
+  WorkflowLinks,
+  useCollection,
+  uuidPattern,
+  type InputField,
+  type Values,
+} from "./shared";
 import type { Device, Farm, Zone } from "../types/api";
 
-interface Config { title: string; requestKind: string; fields: InputField[]; parent?: "farm_id" | "zone_id" | "device_id" }
+interface Config {
+  title: string;
+  requestKind: string;
+  fields: InputField[];
+  parent?: "farm_id" | "zone_id" | "device_id";
+}
 export const recordConfigs: Record<string, Config> = {
   farms: { title: "vườn", requestKind: "farm", fields: farmFields },
-  zones: { title: "khu vực", requestKind: "zone", fields: zoneFields, parent: "farm_id" },
-  trees: { title: "cây sầu riêng", requestKind: "tree", fields: treeFields, parent: "zone_id" },
-  devices: { title: "trạm IoT", requestKind: "device", fields: deviceFields, parent: "zone_id" },
-  sensors: { title: "cảm biến", requestKind: "sensor", fields: sensorFields, parent: "device_id" },
-  actuators: { title: "bơm / van", requestKind: "actuator", fields: actuatorFields, parent: "device_id" },
+  zones: {
+    title: "khu vực",
+    requestKind: "zone",
+    fields: zoneFields,
+    parent: "farm_id",
+  },
+  trees: {
+    title: "cây sầu riêng",
+    requestKind: "tree",
+    fields: treeFields,
+    parent: "zone_id",
+  },
+  devices: {
+    title: "trạm IoT",
+    requestKind: "device",
+    fields: deviceFields,
+    parent: "zone_id",
+  },
+  sensors: {
+    title: "cảm biến",
+    requestKind: "sensor",
+    fields: sensorFields,
+    parent: "device_id",
+  },
+  actuators: {
+    title: "bơm / van",
+    requestKind: "actuator",
+    fields: actuatorFields,
+    parent: "device_id",
+  },
 };
-export function RecordTools({ path, item, context, onSaved }: { path: string; item?: object; context?: Values; onSaved: () => void }) {
+export function RecordTools({
+  path,
+  item,
+  context,
+  onSaved,
+}: {
+  path: string;
+  item?: object;
+  context?: Values;
+  onSaved: () => void;
+}) {
   const { user } = useSession();
-  const farms = useCollection<Farm>("farms");
-  const zones = useCollection<Zone>("zones");
-  const devices = useCollection<Device>("devices");
+  const farms = useCollection<Farm>("farms", user.role === "Farmer");
+  const zones = useCollection<Zone>(
+    "zones",
+    user.role === "Farmer" && !["farms", "zones"].includes(path),
+  );
+  const devices = useCollection<Device>(
+    "devices",
+    user.role === "Farmer" && ["sensors", "actuators"].includes(path),
+  );
   const [editing, setEditing] = useState(false);
+  const [savedMessage, setSavedMessage] = useState("");
   const config = recordConfigs[path];
   if (!config) return null;
   const record = item as (Values & { id: string }) | undefined;
-  const zoneId = config.parent === "device_id" ? devices.data?.find((x) => x.id === record?.device_id)?.zone_id : record?.zone_id;
-  const farmId = path === "farms" ? record?.id : config.parent === "farm_id" ? record?.farm_id : zones.data?.find((x) => x.id === zoneId)?.farm_id;
-  const owns = farms.data?.some((farm) => farm.id === farmId && farm.owner_id === user.id);
-  const writable = user.role === "Admin" || (user.role === "Farmer" && (record ? owns : path === "farms" || farms.data?.some((farm) => farm.owner_id === user.id)));
+  const zoneId =
+    config.parent === "device_id"
+      ? devices.data?.find((x) => x.id === record?.device_id)?.zone_id
+      : record?.zone_id;
+  const farmId =
+    path === "farms"
+      ? record?.id
+      : config.parent === "farm_id"
+        ? record?.farm_id
+        : zones.data?.find((x) => x.id === zoneId)?.farm_id;
+  const owns = farms.data?.some(
+    (farm) => farm.id === farmId && farm.owner_id === user.id,
+  );
+  const writable =
+    user.role === "Admin" ||
+    (user.role === "Farmer" &&
+      (record
+        ? owns
+        : path === "farms" ||
+          farms.data?.some((farm) => farm.owner_id === user.id)));
   let fields = config.fields;
-  if (user.role === "Farmer") fields = fields.map((field) => field.relation?.path === "farms" ? { ...field, relation: { ...field.relation, filter: (x: Values) => x.owner_id === user.id } } : field.relation?.path === "zones" ? { ...field, relation: { ...field.relation, filter: (x: Values) => !!farms.data?.some((farm) => farm.id === x.farm_id && farm.owner_id === user.id) } } : field.relation?.path === "devices" ? { ...field, relation: { ...field.relation, filter: (x: Values) => !!zones.data?.some((zone) => zone.id === x.zone_id && farms.data?.some((farm) => farm.id === zone.farm_id && farm.owner_id === user.id)) } } : field);
-  if (!record && path === "farms" && user.role === "Admin") fields = [{ key: "owner_id", label: "Mã tài khoản chủ vườn", pattern: uuidPattern, hint: "Chủ vườn phải là tài khoản Farmer đang hoạt động." }, ...fields];
+  if (user.role === "Farmer")
+    fields = fields.map((field) =>
+      field.relation?.path === "farms"
+        ? {
+            ...field,
+            relation: {
+              ...field.relation,
+              filter: (x: Values) => x.owner_id === user.id,
+            },
+          }
+        : field.relation?.path === "zones"
+          ? {
+              ...field,
+              relation: {
+                ...field.relation,
+                filter: (x: Values) =>
+                  !!farms.data?.some(
+                    (farm) =>
+                      farm.id === x.farm_id && farm.owner_id === user.id,
+                  ),
+              },
+            }
+          : field.relation?.path === "devices"
+            ? {
+                ...field,
+                relation: {
+                  ...field.relation,
+                  filter: (x: Values) =>
+                    !!zones.data?.some(
+                      (zone) =>
+                        zone.id === x.zone_id &&
+                        farms.data?.some(
+                          (farm) =>
+                            farm.id === zone.farm_id &&
+                            farm.owner_id === user.id,
+                        ),
+                    ),
+                },
+              }
+            : field,
+    );
+  if (!record && path === "farms" && user.role === "Admin")
+    fields = [
+      {
+        key: "owner_id",
+        label: "Mã tài khoản chủ vườn",
+        pattern: uuidPattern,
+        hint: "Chủ vườn phải là tài khoản Farmer đang hoạt động.",
+      },
+      ...fields,
+    ];
   const proposal = path === "farms" || user.role === "Admin";
-  const endpoint = record ? `${path}/${record.id}${proposal ? "/update-requests" : ""}` : `${path}${proposal ? "/requests" : ""}`;
-  return <>
-    <WorkflowLinks kind={config.requestKind}>
-      {writable && <button className="button" onClick={() => setEditing(true)}>{record ? <Pencil size={16} /> : <Plus size={16} />}{record ? proposal ? "Đề xuất chỉnh sửa" : "Chỉnh sửa" : proposal ? `Đề xuất tạo ${config.title}` : `Thêm ${config.title}`}</button>}
-      {record && path === "farms" && writable && <Link className="button secondary" to={`/farms/${record.id}/membership`}>Gia nhập / rời HTX</Link>}
-      {record && path === "zones" && <Link className="button secondary" to={`/assignments?zone_id=${record.id}`}>Phân công khu vực</Link>}
-    </WorkflowLinks>
-    {editing && <EditorDialog title={`${record ? "Chỉnh sửa" : "Tạo"} ${config.title}${proposal ? " · Gửi đề xuất" : ""}`} fields={fields} initial={record ?? { status: "Active", ...context }} before={record} path={endpoint} method={record && !proposal ? "PATCH" : "POST"} transform={(body) => {
-      if (path === "sensors") { const next = { min_threshold: null, max_threshold: null, ...record, ...body }; if ((next.min_threshold === null) !== (next.max_threshold === null) || next.min_threshold !== null && Number(next.min_threshold) >= Number(next.max_threshold)) throw new Error("Hai ngưỡng phải cùng để trống hoặc có tối thiểu nhỏ hơn tối đa."); }
-      return body;
-    }} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); onSaved(); }}>
-      <p className="muted">{proposal ? "Thông tin chỉ có hiệu lực khi các bên liên quan chấp nhận đề xuất." : "Thông tin được cập nhật sau khi kiểm tra quyền và dữ liệu."}</p>
-    </EditorDialog>}
-  </>;
+  const endpoint = record
+    ? `${path}/${record.id}${proposal ? "/update-requests" : ""}`
+    : `${path}${proposal ? "/requests" : ""}`;
+  return (
+    <>
+      {savedMessage && <Notice kind="success">{savedMessage}</Notice>}
+      <WorkflowLinks kind={config.requestKind}>
+        {writable && (
+          <button className="button" onClick={() => setEditing(true)}>
+            {record ? <Pencil size={16} /> : <Plus size={16} />}
+            {record
+              ? proposal
+                ? "Đề xuất chỉnh sửa"
+                : "Chỉnh sửa"
+              : proposal
+                ? `Đề xuất tạo ${config.title}`
+                : `Thêm ${config.title}`}
+          </button>
+        )}
+        {record && path === "farms" && writable && (
+          <Link
+            className="button secondary"
+            to={`/farms/${record.id}/membership`}
+          >
+            Gia nhập / rời HTX
+          </Link>
+        )}
+        {record && path === "zones" && (
+          <Link
+            className="button secondary"
+            to={`/assignments?zone_id=${record.id}`}
+          >
+            Phân công khu vực
+          </Link>
+        )}
+      </WorkflowLinks>
+      {editing && (
+        <EditorDialog
+          title={`${record ? "Chỉnh sửa" : "Tạo"} ${config.title}${proposal ? " · Gửi đề xuất" : ""}`}
+          fields={fields}
+          initial={record ?? { status: "Active", ...context }}
+          before={record}
+          path={endpoint}
+          method={record && !proposal ? "PATCH" : "POST"}
+          transform={(body) => {
+            if (path === "sensors") {
+              const next = {
+                min_threshold: null,
+                max_threshold: null,
+                ...record,
+                ...body,
+              };
+              if (
+                (next.min_threshold === null) !==
+                  (next.max_threshold === null) ||
+                (next.min_threshold !== null &&
+                  Number(next.min_threshold) >= Number(next.max_threshold))
+              )
+                throw new Error(
+                  "Hai ngưỡng phải cùng để trống hoặc có tối thiểu nhỏ hơn tối đa.",
+                );
+            }
+            return body;
+          }}
+          onClose={() => setEditing(false)}
+          onSaved={() => {
+            setEditing(false);
+            setSavedMessage(
+              proposal
+                ? "Đã gửi đề xuất. Xem Phiếu đề xuất để theo dõi và hoàn tất phê duyệt."
+                : "Đã lưu thông tin.",
+            );
+            onSaved();
+          }}
+        >
+          <p className="muted">
+            {proposal
+              ? "Thông tin chỉ có hiệu lực khi các bên liên quan chấp nhận đề xuất."
+              : "Thông tin được cập nhật sau khi kiểm tra quyền và dữ liệu."}
+          </p>
+        </EditorDialog>
+      )}
+    </>
+  );
 }

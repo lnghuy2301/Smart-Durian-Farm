@@ -21,7 +21,7 @@ Farmer chỉ sửa vườn của mình; quyền dựa trên `farm.owner_id`, kh�
 
 Phân công là lời mời; người nhận chấp nhận, thêm chữ ký chủ nếu Admin đề xuất. Chủ kết thúc trực tiếp, Admin đề xuất kết thúc. Một khu vực không có khoảng phân công chồng lấn. Backend quyết định thời hạn và quyền đính chính sau khi kết thúc.
 
-Không có API danh sách Farmer ở checkpoint triển khai: các thao tác yêu cầu tài khoản khác nhận mã UUID v4, có nhãn rõ và backend kiểm tra Farmer Active. Không giả danh sách người dùng hoặc đoán tên từ UUID.
+Không có API danh sách Farmer ở checkpoint triển khai: người dùng xác nhận giữ nhập mã tài khoản tạm thời. Các thao tác yêu cầu tài khoản khác nhận mã UUID v4, có nhãn rõ và backend kiểm tra Farmer Active. Farmer mở tên tài khoản trên sidebar → `/account` để chọn/sao chép mã của mình. Không giả danh sách người dùng hoặc đoán tên từ UUID.
 
 ## Tái lập và kiểm tra
 

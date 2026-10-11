@@ -98,6 +98,7 @@ export function Badge({ status }: { status: string }) {
     Inactive: "Ngừng sử dụng",
     Pending: "Chờ duyệt",
     Reject: "Đã từ chối",
+    Rejected: "Đã từ chối",
     Accepted: "Đã chấp nhận",
     Confirmed: "Đã xác nhận",
     Draft: "Bản nháp",

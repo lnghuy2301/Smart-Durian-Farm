@@ -1,6 +1,6 @@
 # Nhật ký canh tác
 
-Nhánh `feat/web-cultivation-journals`, mẫu `cultivation_event/code.html` và `screen.png`. `/cultivation-events` có danh sách thẻ, phạm vi được đọc/Do tôi ghi, bộ lọc khu vực/hoạt động/trạng thái, phân trang 20. `/cultivation-events/:id` hiển thị nội dung, snapshot tiêu chuẩn/vật tư, hạn khóa và lịch sử đính chính. Dashboard cả ba vai trò có nhật ký gần đây lấy đủ các trang, sắp theo thời gian; Manager lọc theo vườn và khoảng ngày lịch Việt Nam đã chọn.
+Nhánh `feat/web-cultivation-journals`, mẫu `cultivation_event/code.html` và `screen.png`. `/cultivation-events` có danh sách thẻ, phạm vi được đọc/Do tôi ghi, bộ lọc khu vực/hoạt động/loại đối tượng/cây/trạng thái, phân trang 20. Đổi khu vực hoặc loại đối tượng xóa bộ lọc cây cũ. `/cultivation-events/:id` hiển thị nội dung, snapshot tiêu chuẩn/vật tư, hạn khóa và lịch sử đính chính. Dashboard cả ba vai trò có nhật ký gần đây lấy đủ các trang, sắp theo thời gian; Manager lọc theo vườn và khoảng ngày lịch Việt Nam đã chọn.
 
 API GET danh sách, `/mine`, `/:id`, `/:id/corrections`; POST tạo; PATCH sửa Pending; DELETE Pending; POST `/:id/corrections`; GET `/zones/:zoneId/chain/verify`. ID nhật ký là ObjectId, không dùng UUID parser cho route này. Chỉ Farmer ghi; chỉ tác giả sửa/xóa/đính chính. Admin và Manager chỉ đọc. Backend xác định quyền theo phân công gốc và thời hạn đính chính sau kết thúc.
 

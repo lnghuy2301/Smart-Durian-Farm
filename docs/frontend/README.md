@@ -1,5 +1,7 @@
 # Tài nguyên thương hiệu và mẫu frontend
 
+2026-10-11: đã triển khai các mẫu mới quản lý Farm/Zone/Tree/Harvest/Cultivation/IoT/HTX bằng API hiện tại, trên nhánh riêng từng module. Đọc [phạm vi, nhánh, hợp đồng, kiểm thử và tái lập](REFERENCE_WORKFLOWS_IMPLEMENTATION.md) cùng các guide domain trong `modules/`. Thiết kế auth đã duyệt giữ nguyên; AppModule backend vẫn RAM.
+
 QR2026-10-10: web public `/trace/{tree_code}` và link từ trang cây đã có trên feat/qr-traceability, cùng brand kit hiện có; không cần asset mới. Public page ngoài AuthProvider, không gửi JWT; lịch sử correction Locked có nhãn target/latest/applicability và giữ approved harvest lúc Pending sửa. [Cấu hình/demo/API/test/tái lập](../QR_TRACEABILITY_IMPLEMENTATION.md). Browser29/29 và web8 unit/lint/typecheck/build đạt; các mốc22 browser phía dưới là lịch sử.
 
 Ngày 2026-10-08, người dùng chọn **Smart Durian — Brand Kit v1.0 / Durian Connect** cho toàn dự án. Nguồn chuẩn nằm tại [assets/brand/Smart_Durian_Brand_Kit/](../../assets/brand/Smart_Durian_Brand_Kit/); xem [quy ước tích hợp web/mobile](../../assets/brand/README.md). Web React/TypeScript/Vite đã có dashboard Farmer, Admin và Manager theo mẫu đã được xác nhận, nối API hiện có. Đọc [hướng dẫn chạy và tái lập](WEB_FOUNDATION_IMPLEMENTATION.md), [thích nghi thiết kế](DESIGN_ADAPTATION.md) và [module Manager](modules/MANAGER_DASHBOARD.md). React Native là đợt riêng sau này.

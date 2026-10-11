@@ -1,5 +1,7 @@
 # Smart Durian Web: triển khai và tái lập
 
+Cập nhật2026-10-11: người dùng cung cấp và yêu cầu triển khai các mẫu nghiệp vụ mới; Farm/Zone/Tree/Harvest/Cultivation/IoT metadata/HTX Manager OTP đã được nối API. [Hướng dẫn hiện hành](REFERENCE_WORKFLOWS_IMPLEMENTATION.md) thay thế các giới hạn “workflow frontend là đợt riêng” và “chưa có Cultivation/QR” ở những checkpoint lịch sử bên dưới. Auth được giữ nguyên; không đổi backend/persistence hoặc điều khiển phần cứng.
+
 Cập nhật2026-10-10: [QR traceability public](../QR_TRACEABILITY_IMPLEMENTATION.md) đã triển khai `/trace/{tree_code}`, SVG QR và link trên trang cây. Route trace nằm ngoài AuthProvider/ProtectedLayout, publicApi không JWT; các route Auth/dashboard/resources/Admin giữ flow cũ. Đã đạt web8 unit/29 browser/lint/typecheck/build; screenshot trace-desktop/mobile ở test-results ignored. TRACE_PUBLIC_BASE_URL thuộc backend, VITE_API_BASE_URL/proxy web giữ cấu hình cũ. Workflow ghi nhật ký/thu hoạch/control frontend vẫn là đợt riêng.
 
 Cập nhật 2026-10-08. Frontend React + TypeScript + Vite tại `apps/web`, kế thừa backend f20f6c1 và review 4a8bdd7; không tạo backend/API mới. Bộ nhận diện dùng nguyên nguồn `assets/brand/Smart_Durian_Brand_Kit`. Mẫu tham khảo chỉ nằm ở docs, không có demo script trong runtime. [Quyết định thích nghi mẫu](DESIGN_ADAPTATION.md) ghi rõ chỗ lệch hợp đồng.

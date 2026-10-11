@@ -159,8 +159,22 @@ function QuickLinks() {
       <span className="section-label">TRUY CẬP NHANH</span>
       <h2>Công việc tại vườn</h2>
       <p>Tra cứu thông tin và theo dõi dữ liệu canh tác.</p>
-      <Link to="/cultivation-events"><Leaf size={21} /><span><strong>Nhật ký canh tác</strong><small>Ghi chăm sóc và xem lịch sử đính chính</small></span><ArrowUpRight size={17} /></Link>
-      <Link to="/tree-harvests"><Sprout size={21} /><span><strong>Ghi nhận thu hoạch</strong><small>Nháp, xác nhận và đính chính hồ sơ</small></span><ArrowUpRight size={17} /></Link>
+      <Link to="/cultivation-events">
+        <Leaf size={21} />
+        <span>
+          <strong>Nhật ký canh tác</strong>
+          <small>Ghi chăm sóc và xem lịch sử đính chính</small>
+        </span>
+        <ArrowUpRight size={17} />
+      </Link>
+      <Link to="/tree-harvests">
+        <Sprout size={21} />
+        <span>
+          <strong>Ghi nhận thu hoạch</strong>
+          <small>Nháp, xác nhận và đính chính hồ sơ</small>
+        </span>
+        <ArrowUpRight size={17} />
+      </Link>
       <Link to="/trees">
         <Trees size={21} />
         <span>
