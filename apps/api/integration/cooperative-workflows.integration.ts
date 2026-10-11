@@ -80,7 +80,7 @@ test('Cooperative email→SMS workflows persist atomically across isolated HTTP 
       assert.equal((await sql.query('SELECT count(*) FROM technical.schema_migrations')).rows[0].count, '3');
       assert.equal((await sql.query('SELECT count(*) FROM technical.workflow_requests')).rows[0].count, '2');
       await sql.query('DELETE FROM technical.workflow_requests WHERE id=$1', [rows.rows[1].id]);
-      assert.deepEqual(await runMigrations(sql, mongo.db(name)), ['004_cooperative_workflow']);
+      assert.deepEqual(await runMigrations(sql, mongo.db(name)), ['004_cooperative_workflow', '005_farm_workflow']);
       await sql.query('DELETE FROM technical.workflow_requests WHERE id=$1', [rows.rows[0].id]);
     });
     await seedDemo(sql, readSeedConfig({ NODE_ENV: 'test', AUTH_TEST_PHONE: config.phoneNumber, AUTH_TEST_PASSWORD: config.password,

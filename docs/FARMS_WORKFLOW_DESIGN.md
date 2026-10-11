@@ -1,5 +1,7 @@
 # Thiết kế luồng duyệt Farm — đã chốt và triển khai
 
+Tiếp nối **2026-10-11**: storage đã được người dùng chốt trong PERSISTENCE_DESIGN.md, và **feat/postgres-farm-workflows** từbcf8715 đã triển khai adapter PostgreSQL +async/shared memory API seam, **228 backend/85 DB/29 browser** và checks đạt. [Rule không đổi/source/reproduction/giới hạn](POSTGRES_FARMS_IMPLEMENTATION.md). Requests/approvals/snapshots/version/audit/notifications dùng technical tables được duyệt; Farm độc lập giữ nullable membership như migration001 đã Applied. Migration005 chống Pending trùng Applied local. Không cần hỏi lại lựa chọn storage đã chốt; AppModule vẫn RAM đến khi adapters domain phụ thuộc hoàn tất. Các mô tả memory-only/cần chốt schema bên dưới là lịch sử đợt Farm ban đầu.
+
 ## Trạng thái bàn giao
 
 Ngày 2026-10-02, nhánh `feat/farm-approval-workflow` được tạo từ `feat/standard-materials` (113da8f). Nhánh này kế thừa chuỗi Auth/Twilio/USERS/catalogs chưa có đầy đủ trên main. Người dùng đã chốt hai câu hỏi và đồng ý store yêu cầu riêng trong bộ nhớ. Luồng Farm được triển khai theo FARMS_IMPLEMENTATION.md; không thay đổi ERD hoặc tạo database.

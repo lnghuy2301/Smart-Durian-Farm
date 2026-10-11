@@ -91,6 +91,6 @@ Mỗi lệnh phải đạt exit0 trước khi chốt. **Kết quả cuối: 227/
 ## Session kế tiếp
 
 1. Đọc AGENTS nếu có; kiểm tra git status/branch/log; guide này/handoff/notes/plan/buildspec/ERD và persistence design. Base nhánh tích hợp mới nhất, không main cũ. Không triển khai lại catalogs/Users/HTX đã hoàn tất.
-2. **Farm persistence**: đề xuất đối ứng Admin–chủ Farmer, join thêm Manager/rời chỉ notify, versions/history/notifications và parent HTX locks. Sau đó Zone/assignments, giữ tổng diện tích và [start,end)/correction context; chuyển catalog lookup sang async cùng các domain đó.
+2. **Farm persistence đã tiếp nối** trên feat/postgres-farm-workflows từbcf8715: [guide hiện hành](POSTGRES_FARMS_IMPLEMENTATION.md). Không làm lại Farm; tiếp Zone/assignments, giữ tổng diện tích và [start,end)/correction context; chuyển Farm/catalog lookup sang async cùng các domain đó. Migration005 mới Applied local; trạng thái không có migration005 trong phần trên mô tả riêng đợt catalog trước.
 3. Tree/Harvest và IoT metadata → Mongo telemetry/tasks/cultivation/head/context → wiring database toàn AppModule → full-process restart/hash-chain/retention/hardware thật → frontend database demo. Hai module AI tiếp tục để sau.
 4. Giữ .env và private ERD/MQTT/Postman/UI edits/deletions; chỉ stage files của đợt làm. Không tự push/merge. Business mới chưa rõ phải hỏi và chờ, không hỏi lại quyết định đã chốt.

@@ -1,5 +1,7 @@
 # FARMS — đề xuất thay đổi, duyệt đối ứng và thành viên HTX
 
+Persistence checkpoint **2026-10-11 feat/postgres-farm-workflows** từbcf8715: FarmRecords async/shared FarmsService và PostgreSQL records/workflows/signatures/history/leave notifications đã triển khai; **228 backend/85 DB/29 browser**, checks đạt. Migration005 Applied local; không thêm bảng/cột Farm nghiệp vụ hoặc UNIQUE certificate, không đổi API/duyệt/precision. [Source/mapping/locks/rule/tái lập](POSTGRES_FARMS_IMPLEMENTATION.md). AppModule hiện vẫn RAM; isolated Auth/Users/Farm PostgreSQL HTTP fresh app/pool giữ dữ liệu/chữ ký. Hạn1000/2000/restart mất dữ liệu bên dưới chỉ áp dụng memory runtime; các câu “chưa bảng/storage chưa chốt” mô tả mốc module ban đầu, persistence đã được người dùng chốt dùng technical tables.
+
 Nhánh `feat/farm-approval-workflow`, base `feat/standard-materials` (113da8f). Kế thừa Auth/Twilio/USERS/catalogs trong bộ nhớ. Đọc MODULE_HANDOFF.md trước khi tiếp tục session khác. Không tạo bảng, migration/seed hoặc sửa ERD. Không cần npm install thêm. Twilio vẫn đúng 4 request và .env hiện có được giữ nguyên.
 
 Cập nhật HTX: feat/cooperatives-management kế thừa Assignments và thêm quản lý HTX độc lập. GET `/api/cooperatives` chuyển sang controller HTX, giữ danh bạ/pagination/quyền cũ. Farm vẫn chỉ xin gia nhập HTX có Manager Active. Xóa HTX trống sau 30 ngày bị chặn nếu có Farm/yêu cầu (kể cả lịch sử/snapshot)/thông báo tham chiếu; không cascade hoặc tự làm Farm rời HTX. Xem COOPERATIVES_IMPLEMENTATION.md.

@@ -3,8 +3,9 @@ import { randomUUID } from 'node:crypto';
 import { MockUserStore, TestUser } from '../auth/mock-user.store';
 import { MockCooperativeStore } from '../users/mock-cooperative.store';
 import { CreateFarmRequestDto, FarmDetailsDto, FarmListDto, FarmPageDto, FarmRequestListDto, UpdateFarmRequestDto } from './farms.dto';
-import { FarmAction, FarmApproval, FarmChangeRequest, FarmLeaveNotification, TestFarm } from './farms.types';
+import { FarmAction, FarmChangeRequest, FarmLeaveNotification, TestFarm } from './farms.types';
 import { FarmAreaBudget } from './farm-area-budget';
+import { assertFarmApprovers, farmApprovals, farmReviewerIndex } from './farm-workflow';
 
 interface StoredRequest { value: FarmChangeRequest; farmVersion: number | null }
 
@@ -162,11 +163,7 @@ export class FarmsService {
       throw new ConflictException('Farm đã có yêu cầu đang chờ; hãy xử lý yêu cầu đó trước');
     }
     if (this.requests.size >= 2000) { throw new HttpException('Bộ nhớ yêu cầu test đã đầy; restart để bắt đầu lại', HttpStatus.TOO_MANY_REQUESTS); }
-    const approvals: FarmApproval[] = [{
-      role: actor.role === 'Admin' ? 'Farmer' : 'Admin', user_id: actor.role === 'Admin' ? ownerId : null,
-      approved_by: null, approved_at: null,
-    }];
-    if (managerId) { approvals.push({ role: 'Manager', user_id: managerId, approved_by: null, approved_at: null }); }
+    const approvals = farmApprovals(actor.role as 'Admin' | 'Farmer', ownerId, managerId);
     const value: FarmChangeRequest = {
       id: randomUUID(), action, status: 'Pending', farm_id: farm?.id ?? null, owner_id: ownerId,
       proposed_by: actor.id, proposed_role: actor.role as 'Admin' | 'Farmer', proposed_changes: structuredClone(changes),
@@ -205,12 +202,11 @@ export class FarmsService {
   }
 
   private validateApprovedUsers(request: FarmChangeRequest): void {
-    for (const approval of request.required_approvals) {
+    const users = new Map(request.required_approvals.flatMap((approval) => {
       const reviewer = this.users.findById(approval.approved_by!);
-      if (reviewer?.status !== 'Active' || reviewer.role !== approval.role || (approval.user_id && reviewer.id !== approval.user_id)) {
-        throw new ConflictException('Người đã duyệt không còn đủ quyền; Farm chưa được thay đổi');
-      }
-    }
+      return reviewer ? [[reviewer.id, reviewer] as const] : [];
+    }));
+    assertFarmApprovers(request, users);
   }
 
   private applyAccepted(request: FarmChangeRequest, now: string): void {
@@ -247,16 +243,10 @@ export class FarmsService {
   }
 
   private requireReviewer(actor: TestUser, request: FarmChangeRequest): number {
-    if (request.status !== 'Pending') { throw new ConflictException('Yêu cầu đã được xử lý'); }
-    if (actor.id === request.proposed_by) { throw new ForbiddenException('Không được tự duyệt hoặc tự từ chối yêu cầu của mình'); }
-    const index = request.required_approvals.findIndex((approval) => approval.role === actor.role
-      && (!approval.user_id || approval.user_id === actor.id));
-    if (index < 0) { throw new ForbiddenException('Bạn không thuộc bên cần duyệt yêu cầu này'); }
-    if (actor.role === 'Manager' && this.cooperatives.get(request.cooperative_id!).manager_id !== actor.id) {
-      throw new ForbiddenException('Bạn không còn quản lý HTX này');
-    }
-    if (request.required_approvals[index].approved_by) { throw new ConflictException('Bên của bạn đã duyệt yêu cầu'); }
-    return index;
+    // Giữ lazy lookup HTX cho Manager; Admin/Farmer không cần HTX để reject.
+    const currentManager = actor.role === 'Manager' && request.status === 'Pending' && request.cooperative_id
+      ? this.cooperatives.get(request.cooperative_id).manager_id : null;
+    return farmReviewerIndex(actor, request, currentManager);
   }
 
   private canReadFarm(actor: TestUser, farm: TestFarm): boolean {

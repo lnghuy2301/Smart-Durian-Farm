@@ -13,6 +13,7 @@ import { EmailSender } from '../src/users/email/email.sender';
 import { EmailVerificationService } from '../src/users/email/email-verification.service';
 import { MockCooperativeStore } from '../src/users/mock-cooperative.store';
 import { UsersService } from '../src/users/users.service';
+import { FarmRecords } from '../src/farms/farm-records';
 
 const env = {
   DATABASE_URL: 'postgresql://test:test@127.0.0.1:1/test', MONGODB_URI: 'mongodb://127.0.0.1:1/test',
@@ -22,6 +23,21 @@ const env = {
 };
 const details = { area_size: 1.25, address: 'Địa chỉ demo', certificate_number: 'FARM-DEMO', longitude: 106.1234567, latitude: 10.7654321 };
 const coopInput = { cooperative_name: 'HTX demo', director: 'Đại diện demo', certificate_number: 'COOP-DEMO', address: 'Địa chỉ HTX', contact_number: '0900000001' };
+
+test('Async Farm port shares proposals, owner flags and official records with existing domain service', async () => {
+  const { app, farms, farmer, admin, manager } = await setup();
+  try {
+    const records = app.get(FarmRecords), request = await records.createRequest(farmer.id, details);
+    assert.equal(farms.getRequest(admin.id, request.id).status, 'Pending');
+    const accepted = farms.approve(admin.id, request.id);
+    assert.equal((await records.get(farmer.id, accepted.farm_id!)).address, details.address);
+    const update = await records.updateRequest(farmer.id, accepted.farm_id!, { address: 'Async proposal' });
+    farms.approve(admin.id, update.id);
+    assert.equal((await records.get(farmer.id, accepted.farm_id!)).address, 'Async proposal');
+    await assert.rejects(records.updateRequest(manager.id, accepted.farm_id!, { address: 'Forbidden' }),
+      (error: unknown) => (error as { getStatus(): number }).getStatus() === 403);
+  } finally { await app.close(); }
+});
 
 class FakeEmailSender extends EmailSender {
   code = '';

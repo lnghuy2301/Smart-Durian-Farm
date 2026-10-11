@@ -141,6 +141,6 @@ Kết quả cuối: **226/226 backend**, **51/51 persistence** (=37 suites trư�
 ## Session tiếp theo
 
 1. Đọc AGENTS nếu có; git status/branch/log; guide này + handoff + persistence design/foundation. Base là nhánh tích hợp mới nhất, không main cũ. Không làm lại Users/HTX/workflow đã hoàn tất.
-2. **Catalog PostgreSQL đã tiếp nối** trên feat/postgres-catalogs từ007834f: [guide hiện hành](POSTGRES_CATALOGS_IMPLEMENTATION.md). Giữ tên/code được trùng, bridge composite PK/Inactive, default_dosage chuỗi và shared adapters; không cần migration mới. Không triển khai lại catalogs; phần tiếp theo là Farm persistence.
+2. **Catalog PostgreSQL và Farm đã tiếp nối**: [catalog guide](POSTGRES_CATALOGS_IMPLEMENTATION.md), [Farm guide hiện hành](POSTGRES_FARMS_IMPLEMENTATION.md). Catalog giữ tên/code được trùng, bridge composite PK/Inactive, default_dosage chuỗi và shared adapters. Farm bổ sung migration005 Pending uniqueness; không triển khai lại các module này, tiếp Zone persistence.
 3. Farm → Zone → assignments → Tree/Harvest → IoT metadata; đặc biệt parent locks/sum area, [start,end), assignment context/grace, batch Zone/ngày và everConfirmed. Sau đó Mongo telemetry/tasks/cultivation/context/head.
 4. Wiring database toàn AppModule khi mọi domain/read scopes đã chuyển, seed IDs dùng HTTP database, full-process restart/retention/chain checks và hardware thật; sau đó nối frontend database demo. AI để sau. Quyết định đã chốt không hỏi lại; có nghiệp vụ mới chưa rõ thì dừng hỏi và chờ người dùng.
