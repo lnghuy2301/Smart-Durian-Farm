@@ -24,12 +24,22 @@ import {
 import { PendingManagersPage } from "./pages/ManagerApproval";
 import { Dashboard } from "./pages/Dashboards";
 import { IotPage } from "./pages/Iot";
-import { actuatorDefinition, deviceDefinition, sensorDefinition } from "./pages/IotResources";
+import {
+  actuatorDefinition,
+  deviceDefinition,
+  sensorDefinition,
+} from "./pages/IotResources";
 import { TraceabilityPage } from "./pages/Traceability";
 import { RequestsPage } from "./pages/Requests";
+import { AccountPage } from "./pages/Account";
+import { CooperativeUpdatesPage } from "./pages/CooperativeUpdates";
 import { CultivationPage, JournalDetailPage } from "./pages/Cultivation";
 import { HarvestBackdatesPage } from "./pages/HarvestBackdates";
-import { AssignmentsPage, FarmNotificationsPage, MembershipPage } from "./pages/FarmWorkflows";
+import {
+  AssignmentsPage,
+  FarmNotificationsPage,
+  MembershipPage,
+} from "./pages/FarmWorkflows";
 export function App() {
   return (
     <BrowserRouter>
@@ -59,6 +69,11 @@ function SessionRoutes() {
       <Route element={<ProtectedLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="requests" element={<RequestsPage />} />
+        <Route path="account" element={<AccountPage />} />
+        <Route
+          path="cooperative-updates"
+          element={<CooperativeUpdatesPage />}
+        />
         <Route path="cultivation-events" element={<CultivationPage />} />
         <Route path="cultivation-events/:id" element={<JournalDetailPage />} />
         <Route path="harvest-backdates" element={<HarvestBackdatesPage />} />
@@ -116,12 +131,30 @@ function SessionRoutes() {
         <Route path="cooperatives" element={<CooperativeList />} />
         <Route path="cooperatives/:id" element={<CooperativeDetailPage />} />
         <Route path="iot" element={<IotPage />} />
-        <Route path="devices" element={<ResourcePage definition={deviceDefinition} />} />
-        <Route path="devices/:id" element={<ResourcePage definition={deviceDefinition} />} />
-        <Route path="sensors" element={<ResourcePage definition={sensorDefinition} />} />
-        <Route path="sensors/:id" element={<ResourcePage definition={sensorDefinition} />} />
-        <Route path="actuators" element={<ResourcePage definition={actuatorDefinition} />} />
-        <Route path="actuators/:id" element={<ResourcePage definition={actuatorDefinition} />} />
+        <Route
+          path="devices"
+          element={<ResourcePage definition={deviceDefinition} />}
+        />
+        <Route
+          path="devices/:id"
+          element={<ResourcePage definition={deviceDefinition} />}
+        />
+        <Route
+          path="sensors"
+          element={<ResourcePage definition={sensorDefinition} />}
+        />
+        <Route
+          path="sensors/:id"
+          element={<ResourcePage definition={sensorDefinition} />}
+        />
+        <Route
+          path="actuators"
+          element={<ResourcePage definition={actuatorDefinition} />}
+        />
+        <Route
+          path="actuators/:id"
+          element={<ResourcePage definition={actuatorDefinition} />}
+        />
         <Route element={<AdminGuard />}>
           <Route path="cooperatives/new" element={<CooperativeEditor />} />
           <Route path="cooperatives/:id/edit" element={<CooperativeEditor />} />

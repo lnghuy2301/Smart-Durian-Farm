@@ -25,9 +25,18 @@ const nav = [
   { to: "/zones", title: "Khu vực", icon: Map },
   { to: "/assignments", title: "Phân công", icon: Users },
   { to: "/requests", title: "Phiếu đề xuất", icon: ClipboardCheck },
-  { to: "/farm-notifications", title: "Thông báo HTX", icon: Building2, manager: true },
+  {
+    to: "/farm-notifications",
+    title: "Thông báo HTX",
+    icon: Building2,
+    manager: true,
+  },
   { to: "/trees", title: "Cây trồng", icon: Trees },
-  { to: "/cultivation-events", title: "Nhật ký canh tác", icon: ClipboardCheck },
+  {
+    to: "/cultivation-events",
+    title: "Nhật ký canh tác",
+    icon: ClipboardCheck,
+  },
   { to: "/tree-harvests", title: "Thu hoạch", icon: Sprout },
   { to: "/iot", title: "Giám sát IoT", icon: Radio },
   { to: "/devices", title: "Thiết bị IoT", icon: Radio },
@@ -89,7 +98,11 @@ function Shell() {
         </div>
         <nav aria-label="Điều hướng chính">
           {nav
-            .filter((item) => (!item.admin || user.role === "Admin") && (!item.manager || user.role === "Manager"))
+            .filter(
+              (item) =>
+                (!item.admin || user.role === "Admin") &&
+                (!item.manager || user.role === "Manager"),
+            )
             .map(({ to, title, icon: Icon }) => (
               <NavLink
                 key={to}
@@ -108,7 +121,9 @@ function Shell() {
               {user.user_name.slice(0, 1).toUpperCase()}
             </span>
             <div>
-              <strong>{user.user_name}</strong>
+              <Link to="/account" onClick={() => setOpen(false)}>
+                <strong>{user.user_name}</strong>
+              </Link>
               <small>{user.role}</small>
             </div>
           </div>

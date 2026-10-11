@@ -19,6 +19,7 @@ import { useSession } from "../auth/session";
 import { queryString } from "../api/client";
 import { useResource } from "../hooks/useResource";
 import { useTask } from "../hooks/useTask";
+import { ManagerCooperativeEdit } from "./CooperativeUpdates";
 import {
   Badge,
   DataState,
@@ -255,6 +256,11 @@ export function CooperativeList() {
         )}
       </div>
       {user.role === "Admin" && <CooperativeNotifications />}
+      {user.role !== "Farmer" && (
+        <Link className="button secondary" to="/cooperative-updates">
+          Yêu cầu cập nhật HTX
+        </Link>
+      )}
     </>
   );
 }
@@ -311,6 +317,10 @@ export function CooperativeDetailPage() {
                   </Link>
                 )}
               </div>
+              <ManagerCooperativeEdit
+                cooperative={coop}
+                onSaved={resource.reload}
+              />
               <dl className="details">
                 <div>
                   <dt>Người đại diện / giám đốc</dt>
