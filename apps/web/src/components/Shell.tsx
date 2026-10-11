@@ -23,6 +23,9 @@ const nav = [
   { to: "/", title: "Tổng quan", icon: LayoutDashboard },
   { to: "/farms", title: "Vườn trồng", icon: Leaf },
   { to: "/zones", title: "Khu vực", icon: Map },
+  { to: "/assignments", title: "Phân công", icon: Users },
+  { to: "/requests", title: "Phiếu đề xuất", icon: ClipboardCheck },
+  { to: "/farm-notifications", title: "Thông báo HTX", icon: Building2, manager: true },
   { to: "/trees", title: "Cây trồng", icon: Trees },
   { to: "/tree-harvests", title: "Thu hoạch", icon: Sprout },
   { to: "/iot", title: "Giám sát IoT", icon: Radio },
@@ -84,7 +87,7 @@ function Shell() {
         </div>
         <nav aria-label="Điều hướng chính">
           {nav
-            .filter((item) => !item.admin || user.role === "Admin")
+            .filter((item) => (!item.admin || user.role === "Admin") && (!item.manager || user.role === "Manager"))
             .map(({ to, title, icon: Icon }) => (
               <NavLink
                 key={to}

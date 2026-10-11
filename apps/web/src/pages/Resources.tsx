@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowUpRight, Search, RefreshCw } from "lucide-react";
 import { queryString } from "../api/client";
 import { useSession } from "../auth/session";
 import { useResource } from "../hooks/useResource";
+import { RecordTools, recordConfigs } from "../workflows/RecordTools";
 import {
   Badge,
   DataState,
@@ -374,6 +375,7 @@ export function ResourceList<T extends { id: string }>({
   return (
     <>
       {title}
+      {!nested && recordConfigs[def.path] && <RecordTools key={def.path} path={def.path} onSaved={resource.reload} />}
       <section className="panel">
         <form
           className="toolbar"
@@ -516,6 +518,7 @@ function ResourceDetail<T extends { id: string }>({
           <>
             <section className="panel">
               <h2 className="break-word">{def.name(data)}</h2>
+              {recordConfigs[def.path] && <RecordTools key={`${def.path}/${id}`} path={def.path} item={data} onSaved={resource.reload} />}
               <dl className="details">
                 {def.detail.map((field) => (
                   <div key={field.label}>

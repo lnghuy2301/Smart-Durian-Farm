@@ -86,14 +86,14 @@ export function serializeFields(fields: InputField[], values: Values, before?: V
     if (before && field.createOnly) continue;
     const raw = values[field.key];
     if ((raw === "" || raw === undefined || raw === null) && field.required === false && !field.nullable) continue;
-    const value = (raw === "" || raw === null) && field.nullable ? null : field.type === "number" ? Number(raw) : field.type === "datetime-local" ? new Date(String(raw)).toISOString() : String(raw ?? "").trim();
+    const value = (raw === "" || raw === null) && field.nullable ? null : field.type === "number" ? Number(raw) : field.type === "datetime-local" ? before?.[field.key] && String(raw) === localDateTime(String(before[field.key])) ? before[field.key] : new Date(String(raw)).toISOString() : String(raw ?? "").trim();
     if (!before || value !== before[field.key]) body[field.key] = value;
   }
   return body;
 }
-export function EditorDialog({ title, fields, initial = {}, before, path, method = "POST", onClose, onSaved, transform, children }: {
+export function EditorDialog({ title, fields, initial = {}, before, path, method = "POST", onClose, onSaved, transform, children, allowEmpty = false }: {
   title: string; fields: InputField[]; initial?: Values; before?: Values; path: string; method?: "POST" | "PATCH";
-  onClose: () => void; onSaved: (value: unknown) => void; transform?: (body: Values) => unknown; children?: ReactNode;
+  onClose: () => void; onSaved: (value: unknown) => void; transform?: (body: Values) => unknown; children?: ReactNode; allowEmpty?: boolean;
 }) {
   const { api } = useSession();
   const task = useTask();
@@ -108,7 +108,7 @@ export function EditorDialog({ title, fields, initial = {}, before, path, method
       if (uncertain) return;
       void task.run(async (signal) => {
         const body = serializeFields(fields, values, before);
-        if (!Object.keys(body).length) throw new Error("Cần ít nhất một thay đổi thực sự.");
+        if (!allowEmpty && !Object.keys(body).length) throw new Error("Cần ít nhất một thay đổi thực sự.");
         try { const result = await api.request(path, { method, body: transform ? transform(body) : body, signal }); if (!signal.aborted) onSaved(result); }
         catch (error) { if (error instanceof ApiError && (error.status === 0 || error.status === 409 || error.status >= 500)) setUncertain(true); throw error; }
       });
