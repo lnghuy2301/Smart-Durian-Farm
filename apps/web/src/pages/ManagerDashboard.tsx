@@ -40,6 +40,7 @@ import type {
 } from "../types/api";
 import { managerOverview, type Period } from "./managerOverview";
 import { Stat } from "../components/Stat";
+import { RecentJournals } from "./Cultivation";
 
 const periodLabels: Record<Period, string> = {
   today: "Hôm nay",
@@ -398,6 +399,7 @@ function ManagerContent({
           farms={records.farms}
         />
       </div>
+      <RecentJournals zoneIds={view.zones.map((zone) => zone.id)} period={period} />
       <section className="panel">
         <div className="panel-heading">
           <div>

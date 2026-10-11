@@ -27,6 +27,7 @@ const nav = [
   { to: "/requests", title: "Phiếu đề xuất", icon: ClipboardCheck },
   { to: "/farm-notifications", title: "Thông báo HTX", icon: Building2, manager: true },
   { to: "/trees", title: "Cây trồng", icon: Trees },
+  { to: "/cultivation-events", title: "Nhật ký canh tác", icon: ClipboardCheck },
   { to: "/tree-harvests", title: "Thu hoạch", icon: Sprout },
   { to: "/iot", title: "Giám sát IoT", icon: Radio },
   { to: "/cooperatives", title: "Hợp tác xã", icon: Building2 },

@@ -21,6 +21,7 @@ import {
   number,
 } from "../components/ui";
 import { ManagerDashboard } from "./ManagerDashboard";
+import { RecentJournals } from "./Cultivation";
 import { Stat } from "../components/Stat";
 import { IotMonitor } from "./Iot";
 import type {
@@ -97,6 +98,7 @@ function FarmerDashboard() {
               />
             </div>
             <EnvironmentPreview />
+            <RecentJournals />
             <div className="dashboard-columns">
               <section className="panel">
                 <div className="panel-heading">
@@ -157,6 +159,8 @@ function QuickLinks() {
       <span className="section-label">TRUY CẬP NHANH</span>
       <h2>Công việc tại vườn</h2>
       <p>Tra cứu thông tin và theo dõi dữ liệu canh tác.</p>
+      <Link to="/cultivation-events"><Leaf size={21} /><span><strong>Nhật ký canh tác</strong><small>Ghi chăm sóc và xem lịch sử đính chính</small></span><ArrowUpRight size={17} /></Link>
+      <Link to="/tree-harvests"><Sprout size={21} /><span><strong>Ghi nhận thu hoạch</strong><small>Nháp, xác nhận và đính chính hồ sơ</small></span><ArrowUpRight size={17} /></Link>
       <Link to="/trees">
         <Trees size={21} />
         <span>
@@ -378,6 +382,7 @@ function AdminDashboard() {
                 <Link to="/cooperatives">Đến danh sách HTX →</Link>
               </div>
             </section>
+            <RecentJournals />
             <div className="dashboard-columns">
               <section className="panel">
                 <span className="section-label">THIẾT BỊ VÀ MÔI TRƯỜNG</span>

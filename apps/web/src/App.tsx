@@ -26,6 +26,7 @@ import { Dashboard } from "./pages/Dashboards";
 import { IotPage } from "./pages/Iot";
 import { TraceabilityPage } from "./pages/Traceability";
 import { RequestsPage } from "./pages/Requests";
+import { CultivationPage, JournalDetailPage } from "./pages/Cultivation";
 import { HarvestBackdatesPage } from "./pages/HarvestBackdates";
 import { AssignmentsPage, FarmNotificationsPage, MembershipPage } from "./pages/FarmWorkflows";
 export function App() {
@@ -57,6 +58,8 @@ function SessionRoutes() {
       <Route element={<ProtectedLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="requests" element={<RequestsPage />} />
+        <Route path="cultivation-events" element={<CultivationPage />} />
+        <Route path="cultivation-events/:id" element={<JournalDetailPage />} />
         <Route path="harvest-backdates" element={<HarvestBackdatesPage />} />
         <Route path="assignments" element={<AssignmentsPage />} />
         <Route path="farm-notifications" element={<FarmNotificationsPage />} />
