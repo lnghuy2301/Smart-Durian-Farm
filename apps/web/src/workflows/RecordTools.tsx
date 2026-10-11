@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Plus, Pencil } from "lucide-react";
 import { useSession } from "../auth/session";
 import { farmFields, zoneFields } from "./farmZoneConfig";
+import { treeFields } from "./treeConfig";
 import { EditorDialog, WorkflowLinks, useCollection, uuidPattern, type InputField, type Values } from "./shared";
 import type { Farm, Zone } from "../types/api";
 
@@ -10,6 +11,7 @@ interface Config { title: string; requestKind: string; fields: InputField[]; par
 export const recordConfigs: Record<string, Config> = {
   farms: { title: "vườn", requestKind: "farm", fields: farmFields },
   zones: { title: "khu vực", requestKind: "zone", fields: zoneFields, parent: "farm_id" },
+  trees: { title: "cây sầu riêng", requestKind: "tree", fields: treeFields, parent: "zone_id" },
 };
 export function RecordTools({ path, item, onSaved }: { path: string; item?: object; onSaved: () => void }) {
   const { user } = useSession();

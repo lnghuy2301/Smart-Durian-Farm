@@ -5,6 +5,7 @@ import { queryString } from "../api/client";
 import { useSession } from "../auth/session";
 import { useResource } from "../hooks/useResource";
 import { RecordTools, recordConfigs } from "../workflows/RecordTools";
+import { RelationSelect, type Values } from "../workflows/shared";
 import {
   Badge,
   DataState,
@@ -411,6 +412,10 @@ export function ResourceList<T extends { id: string }>({
             <Search size={17} />
             Tìm kiếm
           </button>
+          {!nested && def.relationships?.map((key) => {
+            const relationship = key === "farm_id" ? { label: "Vườn trồng", path: "farms", name: (x: Values) => `${x.certificate_number} · ${x.address}` } : key === "zone_id" ? { label: "Khu vực", path: "zones", name: (x: Values) => String(x.zone_name) } : { label: "Cây", path: `trees${queryString({ zone_id: typeof filters.zone_id === "string" ? filters.zone_id : undefined })}`, name: (x: Values) => `${x.tree_code} · ${x.variety}` };
+            return <RelationSelect key={key} field={{ key, label: relationship.label, required: false, relation: { path: relationship.path, label: relationship.name } }} value={String(filters[key] ?? "")} onChange={(value) => change(key, value)} />;
+          })}
           {def.relationships?.some((key) => params.has(key)) && (
             <button
               type="button"
