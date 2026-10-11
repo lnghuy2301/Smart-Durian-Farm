@@ -23,6 +23,9 @@ export const requestKinds: Record<string, { label: string; path: string }> = {
   assignment: { label: "Phân công", path: "assignment-requests" },
   tree: { label: "Cây sầu riêng", path: "tree-requests" },
   harvest: { label: "Thu hoạch", path: "harvest-requests" },
+  device: { label: "Trạm IoT", path: "device-requests" },
+  sensor: { label: "Cảm biến", path: "sensor-requests" },
+  actuator: { label: "Bơm / van", path: "actuator-requests" },
 };
 export const fieldLabels: Record<string, string> = { area_size: "Diện tích", address: "Địa chỉ", certificate_number: "Số chứng nhận", longitude: "Kinh độ", latitude: "Vĩ độ", standard_id: "Tiêu chuẩn", zone_name: "Tên khu vực", variety: "Giống cây", plant_date: "Ngày trồng", status: "Trạng thái", installed_at: "Ngày lắp đặt", cost: "Chi phí", station_id: "Mã trạm", name: "Tên", unit: "Đơn vị", min_threshold: "Ngưỡng tối thiểu", max_threshold: "Ngưỡng tối đa", season_name: "Mùa vụ", harvest_date: "Ngày thu hoạch", batch_code: "Mã lô", fruit_count: "Số quả", total_weight_kg: "Khối lượng (kg)" };
 const actionLabels: Record<string, string> = { Create: "Tạo mới", Update: "Cập nhật", Join: "Gia nhập HTX", Leave: "Rời HTX", Assign: "Mời phụ trách", End: "Kết thúc phân công", Confirm: "Xác nhận thu hoạch", Correct: "Sửa thu hoạch" };

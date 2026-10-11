@@ -35,7 +35,7 @@ interface Filter {
   label: string;
   options: [string, string][];
 }
-interface Definition<T extends { id: string }> {
+export interface Definition<T extends { id: string }> {
   path: string;
   title: string;
   subtitle: string;
@@ -44,6 +44,7 @@ interface Definition<T extends { id: string }> {
   columns: Column<T>[];
   filters?: Filter[];
   relationships?: string[];
+  fixedFilters?: Record<string, string>;
   detail: Column<T>[];
   links?: (item: T) => ReactNode;
   extra?: (item: T) => ReactNode;
@@ -327,7 +328,8 @@ export function ResourceList<T extends { id: string }>({
   const [search, setSearch] = useState(q);
   useEffect(() => setSearch(q), [q]);
   const filters: Record<string, string | number | undefined> = {
-    q,
+    ...def.fixedFilters,
+    q: def.search ? q : undefined,
     limit: 20,
     offset,
   };
@@ -338,7 +340,7 @@ export function ResourceList<T extends { id: string }>({
   }
   for (const key of def.relationships ?? []) {
     const value = params.get(key);
-    if (value) filters[key] = value;
+    if (value && !def.fixedFilters?.[key]) filters[key] = value;
   }
   const path = `${def.path}${queryString(filters)}`;
   const load = useCallback(
@@ -387,14 +389,14 @@ export function ResourceList<T extends { id: string }>({
             change("q", search.trim());
           }}
         >
-          <Field label={def.search}>
+          {def.search && <Field label={def.search}>
             <input
               aria-label={def.search}
               maxLength={100}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-          </Field>
+          </Field>}
           {def.filters?.map((filter) => (
             <Field key={filter.key} label={filter.label}>
               <select
@@ -410,12 +412,12 @@ export function ResourceList<T extends { id: string }>({
               </select>
             </Field>
           ))}
-          <button className="button secondary" type="submit">
+          {def.search && <button className="button secondary" type="submit">
             <Search size={17} />
             Tìm kiếm
-          </button>
+          </button>}
           {!nested && def.relationships?.map((key) => {
-            const relationship = key === "farm_id" ? { label: "Vườn trồng", path: "farms", name: (x: Values) => `${x.certificate_number} · ${x.address}` } : key === "zone_id" ? { label: "Khu vực", path: "zones", name: (x: Values) => String(x.zone_name) } : { label: "Cây", path: `trees${queryString({ zone_id: typeof filters.zone_id === "string" ? filters.zone_id : undefined })}`, name: (x: Values) => `${x.tree_code} · ${x.variety}` };
+            const relationship = key === "farm_id" ? { label: "Vườn trồng", path: "farms", name: (x: Values) => `${x.certificate_number} · ${x.address}` } : key === "zone_id" ? { label: "Khu vực", path: "zones", name: (x: Values) => String(x.zone_name) } : key === "device_id" ? { label: "Trạm IoT", path: "devices", name: (x: Values) => String(x.station_id) } : { label: "Cây", path: `trees${queryString({ zone_id: typeof filters.zone_id === "string" ? filters.zone_id : undefined })}`, name: (x: Values) => `${x.tree_code} · ${x.variety}` };
             return <RelationSelect key={key} field={{ key, label: relationship.label, required: false, relation: { path: relationship.path, label: relationship.name } }} value={String(filters[key] ?? "")} onChange={(value) => change(key, value)} />;
           })}
           {def.relationships?.some((key) => params.has(key)) && (

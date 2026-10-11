@@ -122,6 +122,14 @@ export interface Sensor {
   sensor_type: "air_temperature" | "air_humidity" | "soil_moisture";
   data_stream_id: string;
 }
+export interface Actuator {
+  id: string;
+  device_id: string;
+  name: string;
+  purpose: "watering" | "spraying" | "shared";
+  capability_id: number;
+  status: CatalogStatus;
+}
 export interface AssignmentHistory {
   assignment: {
     id: string;

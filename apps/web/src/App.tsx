@@ -24,6 +24,7 @@ import {
 import { PendingManagersPage } from "./pages/ManagerApproval";
 import { Dashboard } from "./pages/Dashboards";
 import { IotPage } from "./pages/Iot";
+import { actuatorDefinition, deviceDefinition, sensorDefinition } from "./pages/IotResources";
 import { TraceabilityPage } from "./pages/Traceability";
 import { RequestsPage } from "./pages/Requests";
 import { CultivationPage, JournalDetailPage } from "./pages/Cultivation";
@@ -115,6 +116,12 @@ function SessionRoutes() {
         <Route path="cooperatives" element={<CooperativeList />} />
         <Route path="cooperatives/:id" element={<CooperativeDetailPage />} />
         <Route path="iot" element={<IotPage />} />
+        <Route path="devices" element={<ResourcePage definition={deviceDefinition} />} />
+        <Route path="devices/:id" element={<ResourcePage definition={deviceDefinition} />} />
+        <Route path="sensors" element={<ResourcePage definition={sensorDefinition} />} />
+        <Route path="sensors/:id" element={<ResourcePage definition={sensorDefinition} />} />
+        <Route path="actuators" element={<ResourcePage definition={actuatorDefinition} />} />
+        <Route path="actuators/:id" element={<ResourcePage definition={actuatorDefinition} />} />
         <Route element={<AdminGuard />}>
           <Route path="cooperatives/new" element={<CooperativeEditor />} />
           <Route path="cooperatives/:id/edit" element={<CooperativeEditor />} />
