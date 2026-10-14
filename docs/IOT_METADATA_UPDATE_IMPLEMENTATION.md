@@ -1,5 +1,7 @@
 # IoT metadata — cập nhật theo tài liệu 2026-10-07
 
+Tiếp nối2026-10-14: user chốt đủ6 Sensor theo MQTT_HARDWARE_PROTOCOL_VERIFIED.md. Nhánh feat/sensors-six-streams từfrontend024214b mở enum/API/UI/seed mới và migration006 CHECK, giữ units raw và mọi quy tắc identity/approval/status. **230 backend/85 DB/8 web unit/37 browser**, checks đạt; [guide/review/source/tái lập](MQTT_PROTOCOL_REVIEW_20261014.md). Private IOT_CORE/ERD còn enum3, không tự ghi đè. Mô tả giữ3 types bên dưới là checkpoint cũ; không đổi installed_at/cost bắt buộc hoặc recipe demo2/3/4 đã chốt.
+
 Metadata commit **939c350** (119 tests). Nhánh **feat/mqtt-communication** kế thừa commit này, đã có receiver/diagnostics (134 tests); xem [MQTT_COMMUNICATION_IMPLEMENTATION.md](MQTT_COMMUNICATION_IMPLEMENTATION.md). Các mô tả “đợt tiếp theo” dưới đây ghi phạm vi nhánh metadata, receiver đã có trên nhánh MQTT.
 
 Nhánh `feat/iot-core-metadata-update`, base Actuators `95c15fc`. Nguồn đã đọc đầy đủ: ERD_DIAGRAM.xml, IOT_CORE_TABLES_SPEC.md, MQTT_HARDWARE_PROTOCOL_VERIFIED.md. Tài liệu mới thay thế hướng dẫn Devices/Sensors/Actuators cũ; các file cũ người dùng đã xóa được giữ nguyên trạng thái, không phục hồi/stage.

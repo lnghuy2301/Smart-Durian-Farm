@@ -58,6 +58,9 @@ export const sensorFields: InputField[] = [
       ["air_temperature", "Nhiệt độ không khí"],
       ["air_humidity", "Độ ẩm không khí"],
       ["soil_moisture", "Độ ẩm đất"],
+      ["soil_temperature", "Nhiệt độ đất"],
+      ["soil_ph", "pH đất"],
+      ["soil_ec", "EC đất"],
     ],
   },
   {

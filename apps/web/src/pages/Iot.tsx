@@ -301,7 +301,8 @@ function ReadingCard({
   sensor?: Sensor;
 }) {
   const Icon =
-    sensor?.sensor_type === "air_temperature"
+    sensor?.sensor_type === "air_temperature" ||
+    sensor?.sensor_type === "soil_temperature"
       ? Thermometer
       : sensor
         ? Droplets
@@ -391,6 +392,9 @@ function SensorMetadata({
                         air_temperature: "Nhiệt độ không khí",
                         air_humidity: "Độ ẩm không khí",
                         soil_moisture: "Độ ẩm đất",
+                        soil_temperature: "Nhiệt độ đất",
+                        soil_ph: "pH đất",
+                        soil_ec: "EC đất",
                       }[sensor.sensor_type]
                     }
                   </td>

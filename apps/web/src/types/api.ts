@@ -119,7 +119,13 @@ export interface Sensor {
   min_threshold: number | null;
   max_threshold: number | null;
   status: CatalogStatus;
-  sensor_type: "air_temperature" | "air_humidity" | "soil_moisture";
+  sensor_type:
+    | "air_temperature"
+    | "air_humidity"
+    | "soil_moisture"
+    | "soil_temperature"
+    | "soil_ph"
+    | "soil_ec";
   data_stream_id: string;
 }
 export interface Actuator {

@@ -327,12 +327,21 @@ try {
     await heading("Đăng nhập");
     await page.getByLabel("Số điện thoại", { exact: true }).fill(phone);
     await page.getByLabel("Mật khẩu", { exact: true }).fill(password);
-    await page.getByRole("button", { name: "Đăng nhập", exact: true }).click();
-    await page.waitForFunction(
-      () =>
-        document.querySelector(".sidebar") ||
-        document.querySelector('.auth-card [role="alert"]'),
+    // Existing session-expiry alert is not a result of this login attempt.
+    // Wait for its HTTP response before deciding whether a session was established.
+    const response = page.waitForResponse(
+      (r) =>
+        new URL(r.url()).pathname.endsWith("/api/auth/login") &&
+        r.request().method() === "POST",
     );
+    await page.getByRole("button", { name: "Đăng nhập", exact: true }).click();
+    const status = (await response).status();
+    if (status === 200) {
+      await page.locator(".sidebar").waitFor();
+    } else {
+      await page.locator('.auth-card [role="alert"]').waitFor();
+    }
+    return status;
   }
   const logout = async () => {
     await page.getByRole("button", { name: "Đăng xuất", exact: true }).click();
@@ -1253,6 +1262,11 @@ try {
   await check(
     "expired stored JWT is discarded before protected pages render",
     async () => {
+      // These session scenarios belong to a fresh limiter window, independent
+      // of >20 logins in preceding workflows. Advance only this fixture's
+      // bucket timestamp; production still enforces20 attempts/minute.
+      const bucket = app.get(AuthService).rateLimits.buckets.get("login");
+      if (bucket) bucket.startedAt = Date.now() - 60001;
       await page.evaluate(() => {
         const token = sessionStorage.getItem("smart-durian.access-token");
         const parts = token.split(".");
@@ -1263,7 +1277,7 @@ try {
       await heading("Đăng nhập");
       assert.equal(await page.locator(".sidebar").count(), 0);
       assert.equal(await page.evaluate(() => sessionStorage.length), 0);
-      await login("0900000001", "LocalAdminOnly123!");
+      assert.equal(await login("0900000001", config.auth.admin.password), 200);
     },
   );
   await check(

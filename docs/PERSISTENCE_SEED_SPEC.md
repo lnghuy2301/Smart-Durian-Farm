@@ -1,5 +1,7 @@
 # Seed demo — dữ liệu mô phỏng và một bộ hardware thật
 
+Cập nhật2026-10-14 theo user chốt6 Sensor: fresh profile thêm304 soil_temperature/C,305 soil_ph/H+,306 soil_ec/μS/cm cho mỗi Device;303 mới dùng%RH. Fresh seed **108 business rows +4 bridges**,18 Sensors/9 Actuators/54 Trees; loops Sensor/Actuator đã tách để không sinh thêm relay. Migration006 đã Applied local nhưng **chưa seed lại demo**, mọi business/technical data hash giữ nguyên. Rerun giữ mutable units/thresholds/status của các Sensors đã có, không rewrite303 legacy%. [Mapping/rules/tái lập](MQTT_PROTOCOL_REVIEW_20261014.md). Các số99/9 sensors và ba streams dưới đây mô tả profile trước.
+
 Ngày 2026-10-10, bổ sung theo yêu cầu người dùng vào [thiết kế persistence](PERSISTENCE_DESIGN.md). Specification đã được triển khai trong **feat/persistence-foundation** từ622a189. [Lệnh migration/seed, manifest, kiểm thử và tái lập](PERSISTENCE_FOUNDATION_IMPLEMENTATION.md). Đã seed database demo local, nhưng API nghiệp vụ vẫn RAM cho tới đợt repositories.
 
 ## Yêu cầu đã chốt

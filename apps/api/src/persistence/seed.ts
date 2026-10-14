@@ -151,12 +151,15 @@ export async function seedDemo(pool: Pool, config: SeedConfig, now = new Date())
         cost: i === 0 ? config.device.cost : i === 1 ? 9847500 : 10682500, status: ['Active', 'Inactive', 'Maintenance'][i], last_seen_at: null }, ['station_id', 'zone_id'],
       { sql: 'SELECT * FROM public.devices WHERE station_id=$1', values: [station] });
       deviceIds.push(device);
-      for (let stream = 0; stream < 3; stream++) {
+      // Sensors và actuators có số lượng độc lập: thêm stream không tự tạo relay.
+      for (let stream = 0; stream < 6; stream++) {
         const dataStream = String(301 + stream);
-        await writer.row('sensors', `sensor-${i}-${stream}`, { device_id: device, name: ['Nhiệt độ không khí', 'Độ ẩm không khí', 'Độ ẩm đất'][stream],
-          sensor_type: ['air_temperature', 'air_humidity', 'soil_moisture'][stream], data_stream_id: dataStream,
-          unit: stream === 0 ? 'C' : '%', min_threshold: null, max_threshold: null, status: i === 1 ? 'Inactive' : 'Active' }, ['device_id', 'data_stream_id', 'sensor_type'],
+        await writer.row('sensors', `sensor-${i}-${stream}`, { device_id: device, name: ['Nhiệt độ không khí', 'Độ ẩm không khí', 'Độ ẩm đất', 'Nhiệt độ đất', 'pH đất', 'EC đất'][stream],
+          sensor_type: ['air_temperature', 'air_humidity', 'soil_moisture', 'soil_temperature', 'soil_ph', 'soil_ec'][stream], data_stream_id: dataStream,
+          unit: ['C', '%', '%RH', 'C', 'H+', 'μS/cm'][stream], min_threshold: null, max_threshold: null, status: i === 1 ? 'Inactive' : 'Active' }, ['device_id', 'data_stream_id', 'sensor_type'],
         { sql: 'SELECT * FROM public.sensors WHERE device_id=$1 AND data_stream_id=$2', values: [device, dataStream] }, { hardware_bundle: i === 0 ? 'Real' : 'Simulated' });
+      }
+      for (let stream = 0; stream < 3; stream++) {
         await writer.row('actuators', `actuator-${i}-${stream}`, { device_id: device, name: ['Bơm chung', 'Van tưới nước', 'Van phun thuốc'][stream],
           purpose: ['shared', 'watering', 'spraying'][stream], capability_id: 2 + stream, status: i === 1 ? 'Inactive' : 'Active' }, ['device_id', 'capability_id', 'purpose'],
         { sql: 'SELECT * FROM public.actuators WHERE device_id=$1 AND capability_id=$2', values: [device, 2 + stream] }, { hardware_bundle: i === 0 ? 'Real' : 'Simulated' });

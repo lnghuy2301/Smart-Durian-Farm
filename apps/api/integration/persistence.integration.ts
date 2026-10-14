@@ -60,7 +60,7 @@ test('persistence foundation on isolated PostgreSQL17/Mongo8', async (t) => {
     const config = readSeedConfig(env);
     const seed = await seedDemo(sql, config, new Date('2026-10-10T02:00:00.000Z'));
     await t.test('demo has coherent real/synthetic bundles,54 trees, pending Manager and no invented IoT', async () => {
-      for (const [table, count] of Object.entries({ users: 4, farms: 3, zones: 6, trees: 54, devices: 3, sensors: 9, actuators: 9, cooperatives: 1, users_zones: 2 })) {
+      for (const [table, count] of Object.entries({ users: 4, farms: 3, zones: 6, trees: 54, devices: 3, sensors: 18, actuators: 9, cooperatives: 1, users_zones: 2 })) {
         assert.equal(Number((await sql.query(`SELECT count(*) FROM public.${table}`)).rows[0].count), count);
       }
       const device = (await sql.query('SELECT * FROM public.devices WHERE id=$1', [seed.real_device_id])).rows[0];
@@ -70,7 +70,9 @@ test('persistence foundation on isolated PostgreSQL17/Mongo8', async (t) => {
       assert.equal(device.cost, '10237500.00');
       assert.equal((await sql.query("SELECT count(*) FROM public.trees WHERE tree_code<>'DRN-' || id::text")).rows[0].count, '0');
       assert.deepEqual((await sql.query('SELECT data_stream_id,sensor_type,unit FROM public.sensors WHERE device_id=$1 ORDER BY data_stream_id', [device.id])).rows,
-        [{ data_stream_id: '301', sensor_type: 'air_temperature', unit: 'C' }, { data_stream_id: '302', sensor_type: 'air_humidity', unit: '%' }, { data_stream_id: '303', sensor_type: 'soil_moisture', unit: '%' }]);
+        [{ data_stream_id: '301', sensor_type: 'air_temperature', unit: 'C' }, { data_stream_id: '302', sensor_type: 'air_humidity', unit: '%' },
+          { data_stream_id: '303', sensor_type: 'soil_moisture', unit: '%RH' }, { data_stream_id: '304', sensor_type: 'soil_temperature', unit: 'C' },
+          { data_stream_id: '305', sensor_type: 'soil_ph', unit: 'H+' }, { data_stream_id: '306', sensor_type: 'soil_ec', unit: 'μS/cm' }]);
       assert.deepEqual((await sql.query('SELECT capability_id,purpose FROM public.actuators WHERE device_id=$1 ORDER BY capability_id', [device.id])).rows,
         [{ capability_id: '2', purpose: 'shared' }, { capability_id: '3', purpose: 'watering' }, { capability_id: '4', purpose: 'spraying' }]);
       assert.deepEqual((await sql.query("SELECT status,gmail_verify FROM public.users WHERE role='Manager'")).rows[0], { status: 'Pending', gmail_verify: false });
@@ -81,6 +83,8 @@ test('persistence foundation on isolated PostgreSQL17/Mongo8', async (t) => {
       await sql.query("UPDATE public.users SET password=$1,status='Locked' WHERE id=$2", [changedHash, seed.primary_farmer_id]);
       await sql.query("UPDATE technical.entity_metadata SET data=data || '{\"token_version\":7}'::jsonb WHERE entity_type='users' AND entity_key=$1", [seed.primary_farmer_id]);
       await sql.query('UPDATE public.devices SET cost=11111234 WHERE id=$1', [seed.real_device_id]);
+      // Metadata đơn vị cũ/operator sửa phải được giữ; raw telemetry không convert.
+      await sql.query("UPDATE public.sensors SET unit='%' WHERE device_id=$1 AND data_stream_id='303'", [seed.real_device_id]);
       const rerun = await seedDemo(sql, config, new Date('2026-10-11T02:00:00.000Z'));
       assert.equal(rerun.inserted, 0);
       assert.equal(rerun.real_device_id, seed.real_device_id);
@@ -89,6 +93,7 @@ test('persistence foundation on isolated PostgreSQL17/Mongo8', async (t) => {
       assert.equal(user.password, changedHash);
       assert.equal(user.status, 'Locked');
       assert.equal((await sql.query('SELECT cost FROM public.devices WHERE id=$1', [seed.real_device_id])).rows[0].cost, '11111234.00');
+      assert.equal((await sql.query("SELECT unit FROM public.sensors WHERE device_id=$1 AND data_stream_id='303'", [seed.real_device_id])).rows[0].unit, '%');
       assert.equal((await sql.query("SELECT data->>'token_version' AS v FROM technical.entity_metadata WHERE entity_type='users' AND entity_key=$1", [seed.primary_farmer_id])).rows[0].v, '7');
       await assert.rejects(seedDemo(sql, { ...config, farmer: { ...config.farmer, phone: '0900000099' } }), /identity changed/);
       assert.equal((await sql.query('SELECT count(*) FROM public.users')).rows[0].count, '4');
