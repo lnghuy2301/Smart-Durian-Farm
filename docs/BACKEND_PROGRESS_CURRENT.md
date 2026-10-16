@@ -20,7 +20,9 @@ Cập nhật 2026-10-16. Đây là bảng hiện hành; các checkpoint theo ng�
 
 Đợt phân công: **feat/postgres-assignments-persistence** từcddede5, lưu lời mời/từng chữ ký/nhận việc/End/snapshot/history/version/audit. Quyền `[start,end)`, hai bên duyệt/tự nhận, Pending overlap, correction15 ngày từ phân công gốc và Manager Join/Leave đều đã test. Zone và Assignment dùng cùng persisted mapper để quyền không lệch nhau. [API/source/transaction/tái lập](POSTGRES_ASSIGNMENTS_IMPLEMENTATION.md).
 
-Đợt Tree: **feat/postgres-trees-persistence** từ87c069b. Có PG code bất biến, owner writes/Admin proposals, history snapshots append-only/version, shared parent locks và Zone/assignment scopes. Bounded UUID collision, stale/proposer revoke, audit rollback/metadata malformed và fresh HTTP app/pool đã test. [Source/API/tái lập](POSTGRES_TREES_IMPLEMENTATION.md).
+Đợt Tree: **5aca62a**, feat/postgres-trees-persistence từ87c069b. Có PG code bất biến, owner writes/Admin proposals, history snapshots append-only/version, shared parent locks và Zone/assignment scopes. Bounded UUID collision, stale/proposer revoke, audit rollback/metadata malformed và fresh HTTP app/pool đã test. [Source/API/tái lập](POSTGRES_TREES_IMPLEMENTATION.md).
+
+Nhánh Harvest **feat/postgres-harvests-persistence** từ5aca62a mới rà soát, chưa code adapter/migration. Đã tái lập được correction đổi ngày sang hôm nay trên cây Dead dù tạo mới bị chặn; đang chờ user thống nhất quy tắc trước khi port logic này. [Trường hợp, source, đề xuất và việc kỹ thuật còn lại](HARVEST_PERSISTENCE_REVIEW_20261016.md). Không coi nhánh này là module đã hoàn tất.
 
 Kiểm thử hiện hành **233/233 backend +131/131 persistence +8/8 web unit +37/37 browser**; API lint/typecheck/build và browser regression mới đạt; web source/checkpoint unit/lint/typecheck/build/format không đổi. Suite ACK timeout35/60ms dùng đồng hồ giả để kiểm tra đúng từng deadline thay vì phụ thuộc CPU/real sleeps; giữ nguyên production10s và toàn bộ assertions an toàn. Không SMS/email/MQTT command thật trong các tests. DB integration chạy random database fixture, không dùng database demo.
 
