@@ -71,6 +71,14 @@ export class PostgresCatalogRepository {
   }
 
   private fields(table: CatalogTable): readonly string[] { return table === 'agricultural_materials' ? MATERIAL_FIELDS : STANDARD_FIELDS; }
+  // Domain đã kiểm tra actor/parent locks dùng client của chính transaction;
+  // không gọi standards.get() mở transaction khác rồi chờ lại cùng user lock.
+  async loadStandardOnClient(client: PoolClient, id: string, sharedLock = false): Promise<FarmingStandard> {
+    catalogUuid(id);
+    const result = await client.query<FarmingStandard>(`SELECT id,${STANDARD_FIELDS.join(',')} FROM public.farming_standards WHERE id=$1${sharedLock ? ' FOR SHARE' : ''}`, [id]);
+    if (!result.rows[0]) { throw new NotFoundException('Không tìm thấy tiêu chuẩn'); }
+    return result.rows[0];
+  }
   private async read<T extends CatalogRecord>(client: PoolClient, table: CatalogTable, id: string, lock = false): Promise<T> {
     catalogUuid(id);
     // Table/columns đến từ whitelist nội bộ; mọi giá trị HTTP là parameters.

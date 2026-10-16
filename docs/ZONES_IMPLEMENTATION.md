@@ -1,5 +1,7 @@
 # ZONES — quản lý khu trồng
 
+Tiếp nối2026-10-16: [PostgreSQL Zones/async HTTP port/transaction/kiểm thử/tái lập](POSTGRES_ZONES_IMPLEMENTATION.md) đã triển khai trên feat/postgres-zone-persistence; [trạng thái hiện hành](BACKEND_PROGRESS_CURRENT.md). Nghiệp vụ/API bên dưới giữ nguyên; mô tả không có bảng/RAM ở checkpoint cũ chỉ phản ánh lúc module ban đầu bàn giao. AppModule chính vẫn RAM tới khi hoàn tất toàn bộ adapters phụ thuộc.
+
 Nhánh `feat/zones-management`, kế thừa `feat/farm-approval-workflow`. Đối chiếu ERD XML/JSON: `id`, `farm_id`, `standard_id`, `zone_name`, `area_size`, `longitude`, `latitude`. Không sửa ERD, không tạo bảng. Store và đề xuất đều trong bộ nhớ; restart xóa dữ liệu. Đọc MODULE_HANDOFF.md đầu session.
 
 ## Nghiệp vụ

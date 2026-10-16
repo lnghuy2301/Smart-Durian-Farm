@@ -1,5 +1,7 @@
 # PostgreSQL Farm — dữ liệu, duyệt đối ứng, lịch sử và thông báo
 
+Tiếp nối2026-10-16: [Zone persistence](POSTGRES_ZONES_IMPLEMENTATION.md) đã dùng cùng parent Farm lock trước SUM/ghi, có test race Farm shrink/Zone insert; **231 backend/103 DB** tổng hiện hành. [Progress/việc tiếp theo](BACKEND_PROGRESS_CURRENT.md): USERS_ZONES persistence; AppModule vẫn RAM. Các đoạn “Zone tiếp theo” và kết quả228/85 ở dưới là checkpoint Farm ban đầu.
+
 Ngày **2026-10-11**. Nhánh **feat/postgres-farm-workflows**, base **bcf8715** (PostgreSQL catalogs). Đọc cùng [handoff](MODULE_HANDOFF.md), [Farm API](FARMS_IMPLEMENTATION.md), [nghiệp vụ Farm đã chốt](FARMS_WORKFLOW_DESIGN.md), [persistence design](PERSISTENCE_DESIGN.md), [catalogs](POSTGRES_CATALOGS_IMPLEMENTATION.md) và [HTX workflow](POSTGRES_COOPERATIVE_WORKFLOWS_IMPLEMENTATION.md). Guides cũ mô tả checkpoint RAM; các câu “chưa tạo bảng/chưa chốt storage kỹ thuật” đã được thay thế bởi quyết định dùng bốn bảng technical trong đợt persistence.
 
 ## Phạm vi và giới hạn runtime
