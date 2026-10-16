@@ -1,5 +1,8 @@
 # Tree Harvests — nhập, xác nhận và duyệt chỉnh sửa
 
+**Hiện hành2026-10-17:** PG adapter/technical workflow metadata/migration010 đã hoàn tất và kiểm thử; [guide persistence](POSTGRES_HARVESTS_IMPLEMENTATION.md), [progress](BACKEND_PROGRESS_CURRENT.md). TREE_HARVESTS vẫn một bảng nghiệp vụ; các đề xuất/quyền nhập bù dùng bảng kỹ thuật chung đã được user chấp nhận. AppModule hiện vẫn RAM đến đợt wiring đồng bộ, mô tả chưa có schema/adapter bên dưới là lịch sử module RAM. Correction cây Dead/Removed không được đổi harvest_date sang hôm nay; giữ nguyên ngày được sửa kể cả ngày đó là hôm nay. Kiểm tra lại khi gửi/chuẩn bị/duyệt; Draft vẫn theo rule cũ. Chỉ xóa Draft chưa từng Confirmed, không xóa lịch sử request/audit.
+
+
 Tích hợp QR2026-10-10: [public traceability](QR_TRACEABILITY_IMPLEMENTATION.md) lấy confirmedForTrace từ cùng service/metadata everConfirmed. Draft/Pending lần đầu ẩn; Pending sửa bản từng Confirmed vẫn public các nội dung đã duyệt trong record, không proposed_changes/reason/reviewer. Public confirmation_state=Confirmed mô tả nội dung được duyệt, không thay status workflow. Nội dung đổi sau Manager HTX/Admin Farm độc lập duyệt đúng rule; quyền sửa/xóa private không đổi.
 
 Xác nhận lại 2026-10-07 khi rà soát toàn dự án: người dùng chốt **chỉ cho xóa Draft chưa từng Confirmed**. Giữ nguyên code hiện tại; không xóa Pending/Confirmed hoặc bản ghi từng Confirmed. Quyết định này thay thế câu trao đổi cũ cấm xóa mọi bản ghi.

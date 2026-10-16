@@ -1,12 +1,12 @@
 # Backend — trạng thái và việc tiếp theo
 
-Cập nhật 2026-10-16. Đây là bảng hiện hành; các checkpoint theo ngày trong README/handoff/notes vẫn giữ để truy vết lịch sử.
+Cập nhật 2026-10-17. Đây là bảng hiện hành; các checkpoint theo ngày trong README/handoff/notes vẫn giữ để truy vết lịch sử.
 
 | Phần | Đã có | Còn phải hoàn tất |
 | --- | --- | --- |
 | API nghiệp vụ | Auth/Users/duyệt Manager/HTX/catalogs/Farm/Zone/phân công/Tree/Harvest/IoT metadata/Cultivation/QR; frontend tương ứng đã có | Persistence toàn runtime và nghiệm thu kết hợp |
 | PostgreSQL foundation |13 bảng nghiệp vụ,4 bảng technical/ledger, migration/constraints, seed demo không ghi đè | Không cần tạo lại schema/seed từ đầu |
-| PostgreSQL adapters | Users/Auth; HTX registry/workflows; vật tư/tiêu chuẩn/bridge; Farm; Zone; USERS_ZONES; TREES —9/13 bảng nghiệp vụ |4 bảng: TREE_HARVESTS,DEVICES,SENSORS,ACTUATORS |
+| PostgreSQL adapters | Users/Auth; HTX registry/workflows; vật tư/tiêu chuẩn/bridge; Farm; Zone; USERS_ZONES; TREES; TREE_HARVESTS —10/13 bảng nghiệp vụ |3 bảng: DEVICES,SENSORS,ACTUATORS |
 | Mongo | Schema/validators/indexes/transaction helpers/hash mapping |3 adapters nghiệp vụ: telemetry,actuator tasks,cultivation cùng private context/state |
 | MQTT | Hợp đồng đã đối chiếu, parser/router/ACK/control an toàn và loopback tests;6 Sensor types đã được user duyệt | Durable task ID/recovery và nghiệm thu ESP32 trực tiếp với database runtime |
 | Frontend |37 browser checks,8 unit; form/workflow/dashboard/QR hiện có | Nối và nghiệm thu với backend dùng database toàn bộ |
@@ -22,10 +22,10 @@ Cập nhật 2026-10-16. Đây là bảng hiện hành; các checkpoint theo ng�
 
 Đợt Tree: **5aca62a**, feat/postgres-trees-persistence từ87c069b. Có PG code bất biến, owner writes/Admin proposals, history snapshots append-only/version, shared parent locks và Zone/assignment scopes. Bounded UUID collision, stale/proposer revoke, audit rollback/metadata malformed và fresh HTTP app/pool đã test. [Source/API/tái lập](POSTGRES_TREES_IMPLEMENTATION.md).
 
-Nhánh Harvest **feat/postgres-harvests-persistence** từ5aca62a mới rà soát, chưa code adapter/migration. Đã tái lập được correction đổi ngày sang hôm nay trên cây Dead dù tạo mới bị chặn; đang chờ user thống nhất quy tắc trước khi port logic này. [Trường hợp, source, đề xuất và việc kỹ thuật còn lại](HARVEST_PERSISTENCE_REVIEW_20261016.md). Không coi nhánh này là module đã hoàn tất.
+Đợt Harvest **feat/postgres-harvests-persistence** từ5aca62a hoàn tất adapter/async shared RAM port/migration010. User chốt chặn correction đổi ngày sang hôm nay khi Tree Dead/Removed, vẫn sửa nếu giữ nguyên ngày đã lưu (kể cả hôm nay), recheck propose/prepare/approve; RAM và PG cùng rule. Draft chưa từng Confirmed mới được xóa; requests/audit vẫn giữ lịch sử. Pending correction giữ nội dung đã duyệt cho QR; grant nhập bù đúng user/Zone/ngày/expiry/current Active Admin, version/audit/official/request atomic. [Source/API/locks/tests/tái lập](POSTGRES_HARVESTS_IMPLEMENTATION.md), [quyết định](HARVEST_PERSISTENCE_REVIEW_20261016.md).
 
-Kiểm thử hiện hành **233/233 backend +131/131 persistence +8/8 web unit +37/37 browser**; API lint/typecheck/build và browser regression mới đạt; web source/checkpoint unit/lint/typecheck/build/format không đổi. Suite ACK timeout35/60ms dùng đồng hồ giả để kiểm tra đúng từng deadline thay vì phụ thuộc CPU/real sleeps; giữ nguyên production10s và toàn bộ assertions an toàn. Không SMS/email/MQTT command thật trong các tests. DB integration chạy random database fixture, không dùng database demo.
+Kiểm thử hiện hành **235/235 backend +151/151 persistence +37/37 browser**; API lint/typecheck/build đạt. Web source không đổi, checkpoint8/8 unit và quality checks giữ nguyên. Persistence gồm10 suites; Harvest20 tests kể cả wrapper. Lượt máy ngủ dài gây TCP/JWT timeout đã chạy lại bằng process/phiên mới và đạt đủ151/37; không nới timeout hoặc quyền production. Suite ACK timeout dùng clock giả; production10s giữ nguyên. Không SMS/email/MQTT command thật; DB integration chạy random fixture, không database demo.
 
-Local demo migration001–009 đã **Applied**; Docker Desktop/container cũ được khởi động lại ngày16/10, không tạo lại volume.007/008/009 chỉ tạo indexes; từng lần đối chiếu hash/count13 bảng nghiệp vụ +4 bảng technical trước/sau giữ nguyên, không seed/ghi đè business data. Migration006 trước đó cũng giữ nguyên toàn bộ dữ liệu. Existing demo Sensors chưa tự thêm304–306 vì không reseed.
+Local demo migration001–010 đã **Applied**;010 ngày17/10 chỉ thêm indexes. Từng lần đối chiếu hash/count13 bảng nghiệp vụ +4 bảng technical trước/sau giữ nguyên, không seed/ghi đè business data hoặc tạo lại volume. Migration006 trước đó cũng giữ nguyên toàn bộ dữ liệu. Existing demo Sensors chưa tự thêm304–306 vì không reseed.
 
-Thứ tự thực hiện tiếp: **Harvest persistence** → Device/Sensor/Actuator PostgreSQL → telemetry/actuator-tasks/Cultivation Mongo → chuyển các lookup/guards/QR async và wiring database AppModule một lần đồng bộ → restart/API/frontend/hardware acceptance. Mỗi module một branch kế thừa nhánh mới nhất; comment logic khóa/quyền/recovery, guide API/giới hạn/tái lập và cập nhật bảng này. Nghiệp vụ đã chốt giữ nguyên, điểm mới chưa rõ phải hỏi và chờ. .env/ERD/MQTT/Postman/UI riêng giữ nguyên; không reset/clean/stage-all, không tự push/merge.
+Thứ tự thực hiện tiếp: **Device PostgreSQL** → Sensor/Actuator PostgreSQL → telemetry/actuator-tasks/Cultivation Mongo → chuyển các lookup/guards/QR async và wiring database AppModule một lần đồng bộ → restart/API/frontend/hardware acceptance. Mỗi module một branch kế thừa nhánh mới nhất; comment logic khóa/quyền/recovery, guide API/giới hạn/tái lập và cập nhật bảng này. Nghiệp vụ đã chốt giữ nguyên, điểm mới chưa rõ phải hỏi và chờ. .env/ERD/MQTT/Postman/UI riêng giữ nguyên; không reset/clean/stage-all, không tự push/merge.

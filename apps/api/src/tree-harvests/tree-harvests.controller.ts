@@ -3,14 +3,14 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard, AuthRequest } from '../auth/auth.guard';
 import { EmptyFarmActionDto, FarmPageDto, RejectFarmRequestDto } from '../farms/farms.dto';
 import { CreateHarvestBackdateDto, CreateHarvestDto, HarvestCorrectionDto, HarvestListDto, HarvestRequestListDto, UpdateHarvestDto } from './tree-harvests.dto';
-import { TreeHarvestsService } from './tree-harvests.service';
+import { HarvestRecords } from './harvest-records';
 
 const uuid = () => new ParseUUIDPipe({ version: '4' });
 
 @ApiTags('tree-harvests-local-test') @ApiBearerAuth() @UseGuards(AuthGuard)
 @Controller('tree-harvests')
 export class TreeHarvestsController {
-  constructor(@Inject(TreeHarvestsService) private readonly harvests: TreeHarvestsService) {}
+  constructor(@Inject(HarvestRecords) private readonly harvests: HarvestRecords) {}
   @Get() list(@Req() req: AuthRequest, @Query() query: HarvestListDto) { return this.harvests.list(req.user!.id, query); }
   @Get(':id') get(@Req() req: AuthRequest, @Param('id', uuid()) id: string) { return this.harvests.get(req.user!.id, id); }
   @Post() create(@Req() req: AuthRequest, @Body() body: CreateHarvestDto) { return this.harvests.create(req.user!.id, body); }
@@ -29,7 +29,7 @@ export class TreeHarvestsController {
 @ApiTags('harvest-requests-local-test') @ApiBearerAuth() @UseGuards(AuthGuard)
 @Controller('harvest-requests')
 export class HarvestRequestsController {
-  constructor(@Inject(TreeHarvestsService) private readonly harvests: TreeHarvestsService) {}
+  constructor(@Inject(HarvestRecords) private readonly harvests: HarvestRecords) {}
   @Get() list(@Req() req: AuthRequest, @Query() query: HarvestRequestListDto) { return this.harvests.listRequests(req.user!.id, query); }
   @Get(':id') get(@Req() req: AuthRequest, @Param('id', uuid()) id: string) { return this.harvests.getRequest(req.user!.id, id); }
   @Patch(':id/changes') prepare(@Req() req: AuthRequest, @Param('id', uuid()) id: string, @Body() body: UpdateHarvestDto) {
@@ -46,7 +46,7 @@ export class HarvestRequestsController {
 @ApiTags('harvest-backdate-permissions-local-test') @ApiBearerAuth() @UseGuards(AuthGuard)
 @Controller('harvest-backdate-permissions')
 export class HarvestBackdateController {
-  constructor(@Inject(TreeHarvestsService) private readonly harvests: TreeHarvestsService) {}
+  constructor(@Inject(HarvestRecords) private readonly harvests: HarvestRecords) {}
   @Get() list(@Req() req: AuthRequest, @Query() query: FarmPageDto) { return this.harvests.listBackdates(req.user!.id, query); }
   @Post() grant(@Req() req: AuthRequest, @Body() body: CreateHarvestBackdateDto) { return this.harvests.grantBackdate(req.user!.id, body); }
   @Patch(':id/revoke') revoke(@Req() req: AuthRequest, @Param('id', uuid()) id: string, @Body() body: EmptyFarmActionDto) {

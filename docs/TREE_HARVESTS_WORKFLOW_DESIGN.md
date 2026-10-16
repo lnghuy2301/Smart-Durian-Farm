@@ -1,5 +1,8 @@
 # Tree Harvests — thiết kế nghiệp vụ đã chốt
 
+**Hiện hành2026-10-17:** PG adapter/technical workflow metadata/migration010 đã hoàn tất và kiểm thử; [guide persistence](POSTGRES_HARVESTS_IMPLEMENTATION.md), [progress](BACKEND_PROGRESS_CURRENT.md). TREE_HARVESTS vẫn một bảng nghiệp vụ; các đề xuất/quyền nhập bù dùng bảng kỹ thuật chung đã được user chấp nhận. AppModule hiện vẫn RAM đến đợt wiring đồng bộ, mô tả chưa có schema/adapter bên dưới là lịch sử module RAM. Correction cây Dead/Removed không được đổi harvest_date sang hôm nay; giữ nguyên ngày được sửa kể cả ngày đó là hôm nay. Kiểm tra lại khi gửi/chuẩn bị/duyệt; Draft vẫn theo rule cũ. Chỉ xóa Draft chưa từng Confirmed, không xóa lịch sử request/audit.
+
+
 Cập nhật 2026-10-05. Nhánh local `feat/tree-harvests-management`, base Trees `d39c5ce`. Đã triển khai module/API/test Harvests. Đây là quyết định cuối cùng, thay thế các phương án cũ về nhiều bảng, khóa cả batch hoặc quyền sửa 24 giờ. Đọc MODULE_HANDOFF.md và TREE_HARVESTS_IMPLEMENTATION.md để tái lập API/test.
 
 ## ERD và giới hạn lưu trữ

@@ -1,6 +1,6 @@
 # Harvest persistence — điểm cần thống nhất trước code
 
-Nhánh **feat/postgres-harvests-persistence** từ Tree **5aca62a**. Chưa viết Harvest adapter hoặc migration010; chờ người dùng chốt trường hợp dưới. Tree đã đạt233 backend/131 DB/37 browser, migration009 Applied, dữ liệu demo/private sources giữ nguyên. AppModule chính vẫn RAM.
+Nhánh **feat/postgres-harvests-persistence** từ Tree **5aca62a**. Người dùng đã chốt **chặn correction đổi ngày sang hôm nay khi Tree Dead/Removed; vẫn sửa nội dung khi giữ nguyên ngày**, kiểm tra lúc gửi/prepare/approve. Đang triển khai adapter/migration010 và kiểm thử; không còn chờ câu trả lời. Tree đã đạt233 backend/131 DB/37 browser, migration009 Applied, dữ liệu demo/private sources giữ nguyên. AppModule chính vẫn RAM. Phần bên dưới lưu lại tình huống trước khi sửa.
 
 ## Trường hợp đã tái lập
 
