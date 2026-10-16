@@ -3,12 +3,12 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard, AuthRequest } from '../auth/auth.guard';
 import { EmptyFarmActionDto, FarmPageDto, FarmRequestListDto, RejectFarmRequestDto } from '../farms/farms.dto';
 import { CreateTreeDto, TreeCodeParamDto, TreeListDto, UpdateTreeDto } from './trees.dto';
-import { TreesService } from './trees.service';
+import { TreeRecords } from './tree-records';
 
 @ApiTags('trees-local-test') @ApiBearerAuth() @UseGuards(AuthGuard)
 @Controller('trees')
 export class TreesController {
-  constructor(@Inject(TreesService) private readonly trees: TreesService) {}
+  constructor(@Inject(TreeRecords) private readonly trees: TreeRecords) {}
 
   @Get()
   list(@Req() req: AuthRequest, @Query() query: TreeListDto) { return this.trees.list(req.user!.id, query); }
@@ -44,7 +44,7 @@ export class TreesController {
 @ApiTags('tree-requests-local-test') @ApiBearerAuth() @UseGuards(AuthGuard)
 @Controller('tree-requests')
 export class TreeRequestsController {
-  constructor(@Inject(TreesService) private readonly trees: TreesService) {}
+  constructor(@Inject(TreeRecords) private readonly trees: TreeRecords) {}
 
   @Get()
   list(@Req() req: AuthRequest, @Query() query: FarmRequestListDto) { return this.trees.listRequests(req.user!.id, query); }

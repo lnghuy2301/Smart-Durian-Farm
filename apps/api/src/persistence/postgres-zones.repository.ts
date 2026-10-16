@@ -30,14 +30,12 @@ import {
   zoneRequestPayload,
 } from './zone-mappers';
 import { AssignmentRow, mapAssignment } from './assignment-mappers';
+import { ZONE_READ_SCOPE as SCOPE } from './zone-read-scope';
 
 const SELECT_ZONE = `SELECT z.id,z.farm_id,z.standard_id,z.zone_name,z.area_size,z.longitude,z.latitude,m.version::text AS entity_version
   FROM public.zones z LEFT JOIN technical.entity_metadata m ON m.entity_type='zones' AND m.entity_key=z.id::text`;
 const SELECT_REQUEST = `SELECT id,action,status,target_key,requested_by,expected_version::text,payload,created_at,resolved_at,resolved_by
   FROM technical.workflow_requests WHERE module='zones'`;
-const SCOPE = `($1::text='Admin' OR EXISTS(SELECT 1 FROM public.farms f WHERE f.id=z.farm_id AND
-  (($1='Farmer' AND f.owner_id=$2::uuid) OR ($1='Manager' AND EXISTS(SELECT 1 FROM public.cooperatives c WHERE c.id=f.cooperative_id AND c.manager_id=$2::uuid))))
-  OR ($1='Farmer' AND z.id=ANY($3::uuid[])))`;
 interface Context {
   actor: UserRecord;
   users: Map<string, UserRecord>;
@@ -60,7 +58,7 @@ export class PostgresZonesRepository extends ZoneRecords {
   async list(actor: string, input: ZoneListDto) {
     return this.readAs(actor, async (client, user) => {
       const q = farmInput(ZoneListDto, input),
-        assigned = await this.assigned(client, user);
+        assigned = await this.acceptedZoneIdsOnClient(client, user);
       return this.page(
         client,
         `${SELECT_ZONE} WHERE ${SCOPE} AND ($4::uuid IS NULL OR z.farm_id=$4)
@@ -77,7 +75,7 @@ export class PostgresZonesRepository extends ZoneRecords {
       const rows = await client.query<ZoneRow>(`${SELECT_ZONE} WHERE ${SCOPE} AND z.id=$4`, [
         user.role,
         user.id,
-        await this.assigned(client, user),
+        await this.acceptedZoneIdsOnClient(client, user),
         farmUuid(id),
       ]);
       if (!rows.rows[0]) {
@@ -432,7 +430,7 @@ export class PostgresZonesRepository extends ZoneRecords {
       work(client, this.active(await this.lockUsers(client, [actor]), actor)),
     );
   }
-  private async assigned(client: PoolClient, user: UserRecord): Promise<string[]> {
+  async acceptedZoneIdsOnClient(client: PoolClient, user: UserRecord): Promise<string[]> {
     if (user.role !== 'Farmer') {
       return [];
     }

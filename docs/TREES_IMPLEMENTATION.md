@@ -1,5 +1,7 @@
 # Trees — quản lý cây và duyệt đề xuất
 
+**Tree persistence2026-10-16:** feat/postgres-trees-persistence from87c069b delivers PostgreSQL Tree records, immutable backend DRN-UUID code, owner writes/Admin proposals and versioned append-only history. **233 backend/131 persistence/37 browser**, API lint/typecheck/build pass;009 Applied locally without data changes/reseed. [Current progress](BACKEND_PROGRESS_CURRENT.md), [API/source/locks/reproduction](POSTGRES_TREES_IMPLEMENTATION.md). Shared async RAM port retains current AppModule behavior; full runtime still RAM. Next Harvest persistence; remaining4 PG tables/3 Mongo domains before database wiring/restart/hardware acceptance. Private sources unchanged, no push/merge. Older dated checkpoints below are historical.
+
 Cập nhật2026-10-10: [QR traceability](QR_TRACEABILITY_IMPLEMENTATION.md) đã có public API riêng và trang `/trace/{tree_code}`, lấy whitelist qua adapter nội bộ getTraceRecordByCode của shared TreesService. Các API quản lý/metadata history giữ JWT/scope; không gỡ guard. Web cây có link QR; mã bất biến/không chuyển Zone/hard-delete giữ nguyên. Cây Dead/Removed vẫn có public history. Các mô tả chưa QR ở đợt Trees bên dưới là lịch sử.
 
 Ngày 2026-10-04. Nhánh `feat/trees-management`, base HTX `2752454` trên `feat/cooperatives-management`; kế thừa Auth/USERS, danh mục, Farm, Zones và USERS_ZONES. Không triển khai trùng các module này. XML và JSON ERD đều có TREES với id, zone_id, tree_code, variety, plant_date, longitude, latitude, status (Active/Removed/Dead); giữ nguyên file ERD của người dùng.

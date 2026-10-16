@@ -64,7 +64,7 @@ test('PostgreSQL Farm workflow, durable signatures/history and transaction scope
       assert.equal((await sql.query('SELECT count(*) FROM technical.schema_migrations')).rows[0].count, '4');
       assert.equal((await sql.query('SELECT count(*) FROM technical.workflow_requests')).rows[0].count, '2');
       await sql.query('DELETE FROM technical.workflow_requests WHERE id=$1', [rows.rows[1].id]);
-      assert.deepEqual(await runMigrations(sql, mongo.db(name)), ['005_farm_workflow', '006_sensor_types', '007_zone_workflow', '008_assignment_workflow']);
+      assert.deepEqual(await runMigrations(sql, mongo.db(name)), ['005_farm_workflow', '006_sensor_types', '007_zone_workflow', '008_assignment_workflow', '009_tree_workflow']);
       await sql.query('DELETE FROM technical.workflow_requests WHERE id=$1', [rows.rows[0].id]);
       await sql.query('DELETE FROM public.users WHERE id=$1', [user]);
     });
