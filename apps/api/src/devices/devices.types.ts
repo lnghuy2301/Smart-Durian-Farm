@@ -17,7 +17,8 @@ export interface TestDevice extends DeviceCreationDetails {
   last_seen_at: string | null;
 }
 
-// Metadata duyệt/version/audit chỉ trong RAM, không thêm bảng hoặc field vào ERD.
+// Workflow contract shared by RAM and PostgreSQL adapters. Persisted versions,
+// proposals and history use technical tables, without extending DEVICES fields.
 export interface DeviceChangeRequest {
   id: string;
   action: 'Create' | 'Update';

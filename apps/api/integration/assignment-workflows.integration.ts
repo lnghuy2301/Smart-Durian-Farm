@@ -122,7 +122,7 @@ test('PostgreSQL assignments retain invitations, signatures, temporal access and
           '2',
         );
         await sql.query('DELETE FROM technical.workflow_requests WHERE id=$1', [requests.rows[1].id]);
-        assert.deepEqual(await runMigrations(sql, mongo.db(name)), ['008_assignment_workflow', '009_tree_workflow', '010_harvest_workflow']);
+        assert.deepEqual(await runMigrations(sql, mongo.db(name)), ['008_assignment_workflow', '009_tree_workflow', '010_harvest_workflow', '011_device_workflow']);
         await sql.query('DELETE FROM technical.workflow_requests WHERE id=$1', [requests.rows[0].id]);
         await sql.query('DELETE FROM public.users WHERE id=$1', [user]);
       },

@@ -3,12 +3,12 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard, AuthRequest } from '../auth/auth.guard';
 import { EmptyFarmActionDto, FarmPageDto, FarmRequestListDto, RejectFarmRequestDto } from '../farms/farms.dto';
 import { CreateDeviceDto, DeviceListDto, DeviceStationParamDto, UpdateDeviceDto } from './devices.dto';
-import { DevicesService } from './devices.service';
+import { DeviceRecords } from './device-records';
 
 @ApiTags('devices-local-test') @ApiBearerAuth() @UseGuards(AuthGuard)
 @Controller('devices')
 export class DevicesController {
-  constructor(@Inject(DevicesService) private readonly devices: DevicesService) {}
+  constructor(@Inject(DeviceRecords) private readonly devices: DeviceRecords) {}
 
   @Get()
   list(@Req() req: AuthRequest, @Query() query: DeviceListDto) { return this.devices.list(req.user!.id, query); }
@@ -51,7 +51,7 @@ export class DevicesController {
 @ApiTags('device-requests-local-test') @ApiBearerAuth() @UseGuards(AuthGuard)
 @Controller('device-requests')
 export class DeviceRequestsController {
-  constructor(@Inject(DevicesService) private readonly devices: DevicesService) {}
+  constructor(@Inject(DeviceRecords) private readonly devices: DeviceRecords) {}
 
   @Get()
   list(@Req() req: AuthRequest, @Query() query: FarmRequestListDto) { return this.devices.listRequests(req.user!.id, query); }
