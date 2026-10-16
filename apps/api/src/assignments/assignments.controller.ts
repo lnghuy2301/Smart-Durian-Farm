@@ -3,12 +3,12 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard, AuthRequest } from '../auth/auth.guard';
 import { EmptyFarmActionDto, FarmRequestListDto, RejectFarmRequestDto } from '../farms/farms.dto';
 import { AssignmentListDto, CreateAssignmentRequestDto } from './assignments.dto';
-import { AssignmentsService } from './assignments.service';
+import { AssignmentRecords } from './assignment-records';
 
 @ApiTags('zone-assignments-local-test') @ApiBearerAuth() @UseGuards(AuthGuard)
 @Controller('zone-assignments')
 export class AssignmentsController {
-  constructor(@Inject(AssignmentsService) private readonly assignments: AssignmentsService) {}
+  constructor(@Inject(AssignmentRecords) private readonly assignments: AssignmentRecords) {}
 
   @Get()
   list(@Req() request: AuthRequest, @Query() query: AssignmentListDto) { return this.assignments.list(request.user!.id, query); }
@@ -33,7 +33,7 @@ export class AssignmentsController {
 @ApiTags('assignment-requests-local-test') @ApiBearerAuth() @UseGuards(AuthGuard)
 @Controller()
 export class AssignmentRequestsController {
-  constructor(@Inject(AssignmentsService) private readonly assignments: AssignmentsService) {}
+  constructor(@Inject(AssignmentRecords) private readonly assignments: AssignmentRecords) {}
 
   @Post('zones/:id/assignment-requests')
   create(@Req() request: AuthRequest, @Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Body() body: CreateAssignmentRequestDto) {

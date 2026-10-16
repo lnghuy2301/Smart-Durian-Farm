@@ -27,9 +27,9 @@ import {
   ZONE_FIELDS,
   mapZone,
   mapZoneRequest,
-  validAssignmentContext,
   zoneRequestPayload,
 } from './zone-mappers';
+import { AssignmentRow, mapAssignment } from './assignment-mappers';
 
 const SELECT_ZONE = `SELECT z.id,z.farm_id,z.standard_id,z.zone_name,z.area_size,z.longitude,z.latitude,m.version::text AS entity_version
   FROM public.zones z LEFT JOIN technical.entity_metadata m ON m.entity_type='zones' AND m.entity_key=z.id::text`;
@@ -436,18 +436,20 @@ export class PostgresZonesRepository extends ZoneRecords {
     if (user.role !== 'Farmer') {
       return [];
     }
-    const rows = await client.query<{
-      zone_id: string;
-      farm_id: string;
-      data: Parameters<typeof validAssignmentContext>[0];
-    }>(
-      `SELECT a.zone_id,z.farm_id,m.data FROM public.users_zones a JOIN public.zones z ON z.id=a.zone_id
+    const rows = await client.query<AssignmentRow & { farm_id: string }>(
+      `SELECT a.id,a.user_id,a.zone_id,a.start_date,a.end_date,z.farm_id,m.version::text AS entity_version,m.data FROM public.users_zones a JOIN public.zones z ON z.id=a.zone_id
       LEFT JOIN technical.entity_metadata m ON m.entity_type='users_zones' AND m.entity_key=a.id::text
       WHERE a.user_id=$1 AND a.start_date<=$2 AND (a.end_date IS NULL OR a.end_date>$2)`,
       [user.id, this.clock()],
     );
     return rows.rows
-      .filter((row) => validAssignmentContext(row.data, row.zone_id, row.farm_id))
+      .filter((row) => {
+        try {
+          return mapAssignment(row).zone_snapshot.farm_id === row.farm_id;
+        } catch {
+          return false;
+        }
+      })
       .map((row) => row.zone_id);
   }
   private async page<Row, T>(

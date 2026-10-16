@@ -8,6 +8,7 @@ import { COOPERATIVE_WORKFLOW_SCHEMA } from './cooperative-workflow-schema';
 import { FARM_WORKFLOW_SCHEMA } from './farm-workflow-schema';
 import { SENSOR_TYPES_SCHEMA } from './sensor-types-schema';
 import { ZONE_WORKFLOW_SCHEMA } from './zone-workflow-schema';
+import { ASSIGNMENT_WORKFLOW_SCHEMA } from './assignment-workflow-schema';
 
 export interface MigrationDefinition {
   id: string;
@@ -30,6 +31,8 @@ export const MIGRATIONS: MigrationDefinition[] = [
     apply: async (client) => { await client.query(SENSOR_TYPES_SCHEMA); } },
   { id: '007_zone_workflow', store: 'postgres', source: ZONE_WORKFLOW_SCHEMA,
     apply: async (client) => { await client.query(ZONE_WORKFLOW_SCHEMA); } },
+  { id: '008_assignment_workflow', store: 'postgres', source: ASSIGNMENT_WORKFLOW_SCHEMA,
+    apply: async (client) => { await client.query(ASSIGNMENT_WORKFLOW_SCHEMA); } },
 ];
 export function migrationChecksum(source: string): string { return createHash('sha256').update(source).digest('hex'); }
 

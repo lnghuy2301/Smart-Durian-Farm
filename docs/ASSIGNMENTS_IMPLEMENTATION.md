@@ -1,5 +1,7 @@
 # USERS_ZONES — phân công Farmer và lịch sử
 
+Tiếp nối2026-10-16: [PostgreSQL lời mời/chữ ký/nhận việc/End/snapshot/history/API/transaction/tái lập](POSTGRES_ASSIGNMENTS_IMPLEMENTATION.md) đã triển khai trên feat/postgres-assignments-persistence từZone cddede5; [trạng thái hiện hành](BACKEND_PROGRESS_CURRENT.md). **232 backend/118 DB/37 browser**. Nghiệp vụ/API bên dưới giữ nguyên; mô tả chưa schema/RAM/55 tests thuộc checkpoint module ban đầu. AppModule chính vẫn RAM tới khi hoàn tất adapters phụ thuộc và database wiring đồng bộ.
+
 Nhánh `feat/zone-assignments`, base `feat/zones-management` (e7bb204). Module Zones và tất cả phụ thuộc nằm trên nhánh này. Dữ liệu nghiệp vụ đúng ERD: `id`, `user_id`, `zone_id`, `start_date`, `end_date`. Lời mời, các lần duyệt, snapshot là metadata riêng trong bộ nhớ, không phải schema mới. Chưa tạo bảng/migration/seed. Đọc MODULE_HANDOFF.md đầu session.
 
 ## Quy trình đã chốt

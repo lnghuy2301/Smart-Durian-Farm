@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { HttpException } from '@nestjs/common';
-import { setImmediate as turn, setTimeout as delay } from 'node:timers/promises';
+import { setImmediate as turn } from 'node:timers/promises';
 import { test } from 'node:test';
 import { zoneFixture } from '../integration/helpers/zone-fixture';
 import { readMqttConfig } from '../src/mqtt/mqtt.config';
@@ -148,10 +148,14 @@ test('Wrong Device/action/ID, retained/legacy/duplicate ACKs cannot advance a pe
   } finally { await f.app.close(); }
 });
 
-test('Missing pump-OFF Reset ACK fails Start without ever sending valve close or ON', async () => {
+test('Missing pump-OFF Reset ACK fails Start without ever sending valve close or ON', async (context) => {
   const f = await fixture(35);
   try {
-    const task = f.tasks.command(f.owner.id, f.device.id, 'Watering').task; await turn(); await delay(60);
+    let now = Date.now();
+    context.mock.method(Date, 'now', () => now);
+    context.mock.timers.enable({ apis: ['setTimeout'] });
+    const task = f.tasks.command(f.owner.id, f.device.id, 'Watering').task; await turn();
+    now += 35; context.mock.timers.tick(35); await turn();
     assert.equal(f.get(task._id).error_message, 'RESET_FAILED');
     assert.equal(f.get(task.response_payload.reset_task_id!).error_message, 'ACK_TIMEOUT');
     assert.deepEqual(f.shape(), [[2, 0]]); assert.equal(f.tasks.state(f.owner.id, f.device.id).acknowledged_mode, 'Unknown');
@@ -159,12 +163,15 @@ test('Missing pump-OFF Reset ACK fails Start without ever sending valve close or
   } finally { await f.app.close(); }
 });
 
-test('Partial Start timeout keeps Failed Start, creates separate recovery and ignores late ON ACK', async () => {
+test('Partial Start timeout keeps Failed Start, creates separate recovery and ignores late ON ACK', async (context) => {
   const f = await fixture(60);
   try {
+    let now = Date.now();
+    context.mock.method(Date, 'now', () => now);
+    context.mock.timers.enable({ apis: ['setTimeout'] });
     await f.off(); const task = f.tasks.command(f.owner.id, f.device.id, 'Watering').task; await turn();
     await f.acknowledge(); const oldPump = f.transport.sent.length - 1;
-    await delay(85);
+    now += 60; context.mock.timers.tick(60); await turn();
     const failed = f.get(task._id); assert.equal(failed.status, 'Failed'); assert.equal(failed.error_message, 'ACK_TIMEOUT');
     assert.equal(failed.confirmed_at, null); assert.ok(failed.response_payload.recovery_task_id);
     assert.deepEqual(f.shape().at(-1), [2, 0]);
@@ -176,11 +183,18 @@ test('Partial Start timeout keeps Failed Start, creates separate recovery and ig
   } finally { await f.app.close(); }
 });
 
-test('Recovery pump-OFF ACK timeout leaves Unknown and does not close valves', async () => {
+test('Recovery pump-OFF ACK timeout leaves Unknown and does not close valves', async (context) => {
   const f = await fixture(35);
   try {
+    // Không để scheduling/CPU làm timeout Reset ban đầu trước khi tới đúng
+    // bước cần kiểm thử. Giữ 35ms/step, điều khiển cả timer và ACK deadline.
+    let now = Date.now();
+    context.mock.method(Date, 'now', () => now);
+    context.mock.timers.enable({ apis: ['setTimeout'] });
     await f.off(); const task = f.tasks.command(f.owner.id, f.device.id, 'Spraying').task; await turn();
-    await f.acknowledge(); await delay(90);
+    await f.acknowledge();
+    now += 35; context.mock.timers.tick(35); await turn(); // pump ON timeout → recovery pump OFF
+    now += 35; context.mock.timers.tick(35); await turn(); // recovery pump OFF timeout
     const failed = f.get(task._id), recovery = f.get(failed.response_payload.recovery_task_id!);
     assert.equal(recovery.status, 'Failed'); assert.equal(recovery.error_message, 'ACK_TIMEOUT');
     assert.deepEqual(f.shape().slice(-3), [[4, 1], [2, 1], [2, 0]]);

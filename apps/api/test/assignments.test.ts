@@ -6,8 +6,28 @@ import { AssignmentsService } from '../src/assignments/assignments.service';
 import { MockZoneAssignmentStore } from '../src/assignments/mock-zone-assignment.store';
 import { AssignmentRequest, UserZoneAssignment } from '../src/assignments/assignments.types';
 import { assignmentActive, assignmentAllowsCorrection, intervalsOverlap } from '../src/assignments/assignment-policy';
+import { AssignmentRecords } from '../src/assignments/assignment-records';
 
 const page = { limit: 20, offset: 0 };
+
+test('Async Assignment port shares invitations, accepted store and live Zone authorization with domain services', async () => {
+  const f = await zoneFixture();
+  try {
+    const port = f.app.get(AssignmentRecords), service = f.app.get(AssignmentsService);
+    const zone = f.zones.create(f.owner.id, f.input);
+    const request = await port.createRequest(f.owner.id, zone.id, { user_id: f.worker.id });
+    assert.equal(service.getRequest(f.worker.id, request.id).status, 'Pending');
+    service.approve(f.worker.id, request.id);
+    const accepted = await port.getRequest(f.owner.id, request.id);
+    assert.equal((await port.get(f.worker.id, accepted.assignment_id!)).active, true);
+    assert.equal(f.app.get(MockZoneAssignmentStore).hasActive(f.worker.id, zone.id), true);
+    assert.equal(f.zones.get(f.worker.id, zone.id).id, zone.id);
+    await port.assertCanWork(f.worker.id, zone.id);
+    await port.end(f.owner.id, accepted.assignment_id!);
+    await assert.rejects(port.assertCanWork(f.worker.id, zone.id), /không có phân công/);
+    assert.equal(service.get(f.worker.id, accepted.assignment_id!).active, false);
+  } finally { await f.app.close(); }
+});
 
 test('Owner invitation gives no access before assignee acceptance; acceptance is atomic and revokes on end', async () => {
   const f = await zoneFixture();

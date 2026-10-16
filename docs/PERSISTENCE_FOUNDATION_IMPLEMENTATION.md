@@ -1,6 +1,6 @@
 # Persistence foundation — migration, schema và seed demo
 
-Hiện hành2026-10-16: test:persistence gồm **bảy suites/103 tests**, thêm zone-workflows.integration.ts; [Zone guide](POSTGRES_ZONES_IMPLEMENTATION.md), [progress hiện hành](BACKEND_PROGRESS_CURRENT.md). Migrations001–006 giữ checksum;007 tạo partial UNIQUE Pending Zone Update. Foundation/schema không phải database runtime toàn backend: AppModule vẫn RAM, tiếp USERS_ZONES và các adapters còn lại. Các con số/lệnh theo mốc cũ phía dưới là lịch sử.
+Hiện hành2026-10-16: test:persistence gồm **tám suites/118 tests**, thêm assignment-workflows.integration.ts; [Assignment guide](POSTGRES_ASSIGNMENTS_IMPLEMENTATION.md), [progress hiện hành](BACKEND_PROGRESS_CURRENT.md). Migrations001–007 giữ checksum;008 tạo partial UNIQUE Pending End. Foundation/schema không phải database runtime toàn backend: AppModule vẫn RAM, tiếp Tree và các adapters còn lại. Các con số/lệnh theo mốc cũ phía dưới là lịch sử.
 
 Tiếp nối **2026-10-11 feat/postgres-farm-workflows** từbcf8715: PG Farm/workflows/signatures/history/notifications và async memory seam đã có, **228 backend/85 DB/29 browser**, checks đạt. [Guide hiện hành](POSTGRES_FARMS_IMPLEMENTATION.md). Migration005 partial UNIQUE Pending Farm Applied local, giữ001–004/checksums và dữ liệu demo, không seed lại. test:persistence hiện chạy **sáu suites**, thêm farm-workflows.integration.ts. AppModule vẫn RAM; next Zone persistence, không triển khai lại Farm/Users/HTX/catalogs. Kết quả/lệnh scope foundation bên dưới là lịch sử.
 

@@ -155,20 +155,3 @@ export function zoneRequestPayload(value: ZoneChangeRequest): ZoneRequestRow['pa
   const { farm_id, owner_id, proposed_changes, zone_snapshot, rejection_reason } = value;
   return { farm_id, owner_id, proposed_changes, zone_snapshot, rejection_reason };
 }
-
-// Một dòng USERS_ZONES chưa đủ quyền: phải có accepted_at và snapshot hợp lệ
-// do luồng nhận việc/seed đã duyệt lưu. Malformed context không tự cấp quyền.
-export function validAssignmentContext(
-  data: { accepted_at?: unknown; zone_snapshot?: unknown } | null,
-  zoneId: string,
-  farmId: string,
-): boolean {
-  try {
-    invariant(typeof data?.accepted_at === 'string' && time(data.accepted_at) === data.accepted_at);
-    const snapshot = data.zone_snapshot as TestZone;
-    validateZoneSnapshot(snapshot);
-    return snapshot.id === zoneId && snapshot.farm_id === farmId;
-  } catch {
-    return false;
-  }
-}

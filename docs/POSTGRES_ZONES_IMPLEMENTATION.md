@@ -2,11 +2,13 @@
 
 Ngày bàn giao 2026-10-16; nhánh `feat/postgres-zone-persistence` kế thừa `46a03b7` và toàn bộ frontend `024214b`. Không triển khai lại nghiệp vụ Zone. [Trạng thái backend hiện hành](BACKEND_PROGRESS_CURRENT.md) là điểm bắt đầu cho session sau; các checkpoint cũ chỉ mô tả thời điểm bàn giao của chúng.
 
+Tiếp nối: Zone đã commit **cddede5**; [USERS_ZONES persistence](POSTGRES_ASSIGNMENTS_IMPLEMENTATION.md) kế thừa và dùng chung assignment-mappers.ts cho quyền Zone/Assignment, bao gồm metadata version/snapshot/accepted time/current Farm. Tổng hiện hành232 backend/118 DB; AppModule vẫn RAM. Những số231/103/bảy suites và “USERS_ZONES tiếp theo” bên dưới mô tả checkpoint Zone ban đầu.
+
 ## Phạm vi và source
 
 `src/zones/zone-records.ts` là port async cho hai controllers hiện có; `MemoryZoneRecords` gọi đúng một `ZonesService` qua useExisting, không tạo Map/store khác. Các domain RAM vẫn dùng ZonesService/FarmAreaBudget/MockZoneAssignmentStore cũ. Test regression xác nhận ghi qua port được domain service nhìn thấy và cùng kiểm tra ngân sách diện tích.
 
-`src/persistence/postgres-zones.repository.ts` thực hiện port PostgreSQL, nhận pool/users/farms/catalogs có sẵn. Không tạo pool/store/cache riêng hoặc tự seed. `zone-mappers.ts` kiểm tra dữ liệu Zone, expected version, workflow payload và Accepted assignment context. `zone-workflow-schema.ts` là migration007 bổ sung; migrations001–006 không sửa.
+`src/persistence/postgres-zones.repository.ts` thực hiện port PostgreSQL, nhận pool/users/farms/catalogs có sẵn. Không tạo pool/store/cache riêng hoặc tự seed. `zone-mappers.ts` kiểm tra dữ liệu Zone, expected version và workflow payload; Accepted assignment context dùng chung assignment-mappers.ts sau đợt USERS_ZONES. `zone-workflow-schema.ts` là migration007 bổ sung; migrations001–006 không sửa.
 
 **AppModule chính vẫn dùng RAM**. Fixture HTTP riêng chỉ ghép Auth/Users/Farm/Standards/Zones ports PostgreSQL với các repositories cùng pool. Memory services trong fixture không được dùng làm nguồn dữ liệu, không hydrate Map từ database. Không override riêng ZoneRecords trong AppModule: Tree/assignments/harvest/IoT/QR đang gọi domain services RAM và phải chuyển async đồng bộ trước khi bật database runtime toàn hệ thống.
 
