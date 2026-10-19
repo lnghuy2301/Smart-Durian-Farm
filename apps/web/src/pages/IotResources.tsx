@@ -142,9 +142,17 @@ export const deviceDefinition: Definition<Device> = {
     },
   ],
   links: (x) => (
-    <Link className="button secondary" to={`/iot?zone_id=${x.zone_id}`}>
-      Giám sát tín hiệu và cảm biến
-    </Link>
+    <>
+      <Link
+        className="button secondary"
+        to={`/actuator-control?device_id=${x.id}`}
+      >
+        Điều khiển tưới / phun
+      </Link>
+      <Link className="button secondary" to={`/iot?zone_id=${x.zone_id}`}>
+        Giám sát tín hiệu và cảm biến
+      </Link>
+    </>
   ),
   extra: (x) => <DeviceChildren key={x.id} device={x} />,
 };

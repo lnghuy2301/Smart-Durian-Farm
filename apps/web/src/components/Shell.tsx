@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   Sprout,
+  Droplets,
 } from "lucide-react";
 import { useAuth, useSession } from "../auth/session";
 import { Brand } from "./Brand";
@@ -39,6 +40,7 @@ const nav = [
   },
   { to: "/tree-harvests", title: "Thu hoạch", icon: Sprout },
   { to: "/iot", title: "Giám sát IoT", icon: Radio },
+  { to: "/actuator-control", title: "Điều khiển tưới / phun", icon: Droplets },
   { to: "/devices", title: "Thiết bị IoT", icon: Radio },
   { to: "/cooperatives", title: "Hợp tác xã", icon: Building2 },
   { to: "/pending-managers", title: "Duyệt Manager", icon: Users, admin: true },

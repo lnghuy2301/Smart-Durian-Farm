@@ -1,5 +1,7 @@
 # Kế hoạch hoàn thiện và test hardware — tuần19–25/10/2026
 
+Cập nhật UI19/10: mẫu actuator control đã được người dùng cung cấp và triển khai trên `feat/web-actuator-control`; **46 browser/8 unit**, web lint/build/format đạt bằng fixture API/MQTT TCP loopback. [Thiết kế, scope Farmer, API và tái lập](frontend/modules/ACTUATOR_CONTROL_WEB.md). Không còn chờ thiết kế/viết màn control; các mốc dưới vẫn cần nghiệm thu với shared database runtime và hardware thật. Chưa gửi lệnh broker/ESP32 thật trong đợt code UI.
+
 Ngày rà soát19/10/2026 là thứ Hai,20/10 là thứ Ba. Người dùng nói “ngày mai thứ3(19/10)”; kế hoạch tạm lấy buổi nhận/test hardware là **thứ Ba20/10**, không coi ngày hardware tới là dữ kiện đã xác minh. Không cần dừng các công việc độc lập để chờ ngày chính xác.
 
 Mục tiêu tuần: hoàn thiện80–90% **phạm vi đồ án không AI đã thống nhất**, ưu tiên demo dữ liệu thật, không mất nghiệp vụ sau restart và frontend đọc/ghi cùng backend. Đây là mục tiêu, không phải phần trăm hoàn thành đã được đo hoặc cam kết chắc chắn. Chẩn đoán bệnh/chatbot để sau theo người dùng; nếu tính cả AI vào tổng dự án thì chưa đủ cơ sở tuyên bố đạt80–90%.

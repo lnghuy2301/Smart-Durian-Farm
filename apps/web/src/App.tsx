@@ -24,6 +24,7 @@ import {
 import { PendingManagersPage } from "./pages/ManagerApproval";
 import { Dashboard } from "./pages/Dashboards";
 import { IotPage } from "./pages/Iot";
+import { ActuatorControlPage } from "./pages/ActuatorControl";
 import {
   actuatorDefinition,
   deviceDefinition,
@@ -69,6 +70,7 @@ function SessionRoutes() {
       <Route element={<ProtectedLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="requests" element={<RequestsPage />} />
+        <Route path="actuator-control" element={<ActuatorControlPage />} />
         <Route path="account" element={<AccountPage />} />
         <Route
           path="cooperative-updates"

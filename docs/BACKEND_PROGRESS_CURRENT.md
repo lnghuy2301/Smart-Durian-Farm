@@ -1,6 +1,6 @@
 # Backend — trạng thái và việc tiếp theo
 
-Cập nhật 2026-10-19. Đây là bảng hiện hành; các checkpoint theo ngày trong README/handoff/notes vẫn giữ để truy vết lịch sử. [Kế hoạch tuần19–25/10, backlog và test hardware](WEEKLY_COMPLETION_PLAN_20261019.md); [brief màn hình điều khiển còn thiếu](frontend/ACTUATOR_CONTROL_DESIGN_BRIEF.md).
+Cập nhật 2026-10-19. Đây là bảng hiện hành; các checkpoint theo ngày trong README/handoff/notes vẫn giữ để truy vết lịch sử. [Kế hoạch tuần19–25/10, backlog và test hardware](WEEKLY_COMPLETION_PLAN_20261019.md); [control UI đã triển khai, API và tái lập](frontend/modules/ACTUATOR_CONTROL_WEB.md).
 
 | Phần | Đã có | Còn phải hoàn tất |
 | --- | --- | --- |
@@ -9,7 +9,7 @@ Cập nhật 2026-10-19. Đây là bảng hiện hành; các checkpoint theo ng�
 | PostgreSQL adapters | Users/Auth; HTX registry/workflows; vật tư/tiêu chuẩn/bridge; Farm; Zone; USERS_ZONES; TREES; TREE_HARVESTS; DEVICES; SENSORS; ACTUATORS —13/13 bảng nghiệp vụ | Chuyển consumers/runtime đồng bộ sau Mongo; không tạo lại adapters đã có |
 | Mongo | Schema/validators/indexes/hash mapping; telemetry adapter+private FIFO counter đã có |2 adapters nghiệp vụ: actuator tasks,cultivation cùng private context/state |
 | MQTT | Hợp đồng đã đối chiếu, parser/router/ACK/control an toàn và loopback tests;6 Sensor types đã được user duyệt | Durable task ID/recovery và nghiệm thu ESP32 trực tiếp với database runtime |
-| Frontend |37 browser checks,8 unit; form/workflow/dashboard/QR hiện có | Nối/ nghiệm thu database runtime; thêm màn hình điều khiển và tiến trình ACK theo brief |
+| Frontend |46 browser checks,8 unit; form/workflow/dashboard/QR và control tưới/phun/Stop/ACK/Reset/RecoveryStop đã có trên feat/web-actuator-control | Nối/nghiệm thu database runtime và ESP32; không cần dựng lại control UI |
 | AI | User đồng ý để sau | Chẩn đoán bệnh/chatbot chưa triển khai |
 
 **Ứng dụng chính vẫn dùng RAM cho dữ liệu nghiệp vụ.** Các adapter PostgreSQL được kiểm thử với HTTP app/pool mới, không mất trạng thái DB; chưa bật cho AppModule vì các consumers còn gọi sync RAM services. Không đổi riêng HTTP sang PG làm nguồn dữ liệu lệch với assignments/Tree/MQTT/QR. Đã có schema/migration không đồng nghĩa toàn bộ API đang lưu database.

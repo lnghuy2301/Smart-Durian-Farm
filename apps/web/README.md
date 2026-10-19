@@ -1,5 +1,7 @@
 # Smart Durian Web
 
+Actuator control2026-10-19: `/actuator-control` selects Farm/Zone/Device scopes, sends confirmed Watering/Spraying or direct Stop, and polls actual task/Reset/RecoveryStop steps. Farmer owner/current assignee commands; Admin/Manager view only. [Design adaptation, API, tests and reproduction](../../docs/frontend/modules/ACTUATOR_CONTROL_WEB.md). No automatic command replay or physical-state claim from ACK; backend/database/hardware contracts unchanged.
+
 Business workflow UI2026-10-11: Farm/Zone/membership/assignments, Tree, harvest drafts/approvals/corrections/backdates, cultivation journals/lineage/chain, IoT metadata proposals and Manager HTX email→SMS verification are integrated. [Current module branches, contracts and reproduction](../../docs/frontend/REFERENCE_WORKFLOWS_IMPLEMENTATION.md). Approved auth design/logic is preserved; normal AppModule still uses RAM. Account IDs can be copied from `/account` for temporary Farmer selections approved by the user.
 
 React + TypeScript + Vite, official shared brand kit. Run commands from repository root:

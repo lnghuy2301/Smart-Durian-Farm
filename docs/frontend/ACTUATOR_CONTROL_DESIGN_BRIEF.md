@@ -1,5 +1,7 @@
 # Brief thiết kế — điều khiển tưới/phun và tiến trình ACK
 
+**Cập nhật19/10/2026:** người dùng đã cung cấp `code.html`, `screen.png`, `DESIGN.md` tại `references/stitch_smart_durian_farmer_dashboard/actuator control/` và yêu cầu triển khai, tối ưu cho nông dân. Giao diện React/API đã được triển khai trên `feat/web-actuator-control`; đọc [source, thay đổi so với mẫu, kiểm tra và tái lập](modules/ACTUATOR_CONTROL_WEB.md). Nội dung dưới giữ brief gốc; các nhãn “chưa UI/chờ tích hợp” là checkpoint trước khi nhận mẫu. Thư mục `references/actuator_control/` cũ không còn là vị trí mẫu hiện hành.
+
 Ngày19/10/2026. Dành cho bên thiết kế mẫu; chưa phải UI đã tích hợp. Giữ phong cách Farmer dashboard hiện có. Không thay giao diện metadata/giám sát. Mẫu desktop+mobile cho màn hình chọn Farm→Zone→Device, bảng điều khiển và lịch sử gần đây. Một Device có1 bơm chung,1 van tưới và1 van phun; không có slider tốc độ/định lượng hoặc đặt lịch chưa có API.
 
 ## Thành phần cần thiết

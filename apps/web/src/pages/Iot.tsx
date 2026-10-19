@@ -39,9 +39,14 @@ export function IotPage() {
         title="Giám sát IoT"
         subtitle="Theo dõi trạm, số đo cảm biến và lịch sử trong phạm vi truy cập."
         actions={
-          <Link className="button secondary" to="/devices">
-            Quản lý thiết bị IoT
-          </Link>
+          <>
+            <Link className="button" to="/actuator-control">
+              Điều khiển tưới / phun
+            </Link>
+            <Link className="button secondary" to="/devices">
+              Quản lý thiết bị IoT
+            </Link>
+          </>
         }
       />
       <IotMonitor />

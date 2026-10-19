@@ -17,6 +17,9 @@ Ngày tiếp nhận: 2026-10-08. Nguồn: người dùng xác nhận đây là H
 | `cultivation_event/` | `code.html`, `screen.png` | Nhật ký dạng thẻ, ba loại hoạt động, hạn khóa và lịch sử đính chính. |
 | `manage_IoT/` | `code.html`, `screen.png` | Registry thiết bị/cảm biến/bơm van; không coi metadata là điều khiển phần cứng. |
 | `manage_HTX/` | `code.html`, `screen.png` | Trùng cả HTML/ảnh với `cooperative management_admin`; giữ nguồn người dùng và dùng chung component hiện có. |
+| `actuator control/` | `code.html`, `screen.png`, `DESIGN.md` | Điều khiển Tưới/Phun/Dừng và tiến trình nhận ACK; triển khai19/10/2026, bỏ script mô phỏng và các khẳng định trạng thái vật lý chưa đo được. |
+
+Mẫu actuator control được ánh xạ theo [guide triển khai](../../modules/ACTUATOR_CONTROL_WEB.md); nguồn HTML/ảnh/DESIGN giữ nguyên tại đây, không dùng folder `references/actuator_control/` cũ đã được người dùng bỏ.
 
 Sáu mẫu quản lý bổ sung được đối chiếu ngày 2026-10-11. Danh mục route/API, branch, kiểm tra và cách tái lập nằm trong [hồ sơ triển khai](../../REFERENCE_WORKFLOWS_IMPLEMENTATION.md).
 

@@ -1,5 +1,7 @@
 # Tài nguyên thương hiệu và mẫu frontend
 
+2026-10-19: đã triển khai mẫu actuator control thành `/actuator-control`, với ba thao tác Tưới/Phun/Dừng, tiến trình ACK, Reset/RecoveryStop và lịch sử theo quyền hiện tại. Đọc [source, điều chỉnh thiết kế cho nhà vườn, API và tái lập](modules/ACTUATOR_CONTROL_WEB.md). Không dùng ACK làm bằng chứng trạng thái vật lý; chưa nghiệm thu ESP32 hoặc database runtime.
+
 2026-10-11: đã triển khai các mẫu mới quản lý Farm/Zone/Tree/Harvest/Cultivation/IoT/HTX bằng API hiện tại, trên nhánh riêng từng module. Đọc [phạm vi, nhánh, hợp đồng, kiểm thử và tái lập](REFERENCE_WORKFLOWS_IMPLEMENTATION.md) cùng các guide domain trong `modules/`. Thiết kế auth đã duyệt giữ nguyên; AppModule backend vẫn RAM.
 
 QR2026-10-10: web public `/trace/{tree_code}` và link từ trang cây đã có trên feat/qr-traceability, cùng brand kit hiện có; không cần asset mới. Public page ngoài AuthProvider, không gửi JWT; lịch sử correction Locked có nhãn target/latest/applicability và giữ approved harvest lúc Pending sửa. [Cấu hình/demo/API/test/tái lập](../QR_TRACEABILITY_IMPLEMENTATION.md). Browser29/29 và web8 unit/lint/typecheck/build đạt; các mốc22 browser phía dưới là lịch sử.

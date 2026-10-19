@@ -23,6 +23,7 @@ export default tseslint.config(
       "test/e2e.mjs",
       "test/traceability-browser.mjs",
       "test/workflows-browser.mjs",
+      "test/actuator-control-browser.mjs",
     ],
     languageOptions: {
       globals: {

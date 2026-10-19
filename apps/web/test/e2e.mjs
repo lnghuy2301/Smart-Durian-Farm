@@ -8,6 +8,7 @@ import { chromium } from "playwright-core";
 import { loopbackBroker } from "./loopback-broker.mjs";
 import { checkTraceability } from "./traceability-browser.mjs";
 import { checkWorkflows } from "./workflows-browser.mjs";
+import { checkActuatorControl } from "./actuator-control-browser.mjs";
 
 // Backend thật, RAM cô lập, không đọc .env root và không gửi SMTP/SMS thật.
 const webRoot = fileURLToPath(new URL("..", import.meta.url));
@@ -1259,6 +1260,20 @@ try {
     screenshots,
     errors,
   });
+  await checkActuatorControl({
+    browser,
+    origin,
+    http,
+    check,
+    broker,
+    app,
+    apiModule,
+    ownerToken,
+    adminToken,
+    standard,
+    screenshots,
+    errors,
+  });
   await check(
     "expired stored JWT is discarded before protected pages render",
     async () => {
@@ -1331,6 +1346,11 @@ try {
           "workflow-iot-1440.png",
           "workflow-iot-1366.png",
           "workflow-iot-390.png",
+          "control-recovery-desktop.png",
+          "control-1440.png",
+          "control-1366.png",
+          "control-390.png",
+          "control-320.png",
         ],
       },
       null,
