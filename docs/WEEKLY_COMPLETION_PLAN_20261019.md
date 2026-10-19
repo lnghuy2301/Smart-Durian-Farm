@@ -8,6 +8,8 @@ Mục tiêu tuần: hoàn thiện80–90% **phạm vi đồ án không AI đã t
 
 Tiến triển ngay trong lượt19/10: Sensor hoàn tất commit **9571247**; Actuator adapter hoàn tất trên branch kế thừa, PostgreSQL đủ13/13 business-table adapters; **238 backend/200 persistence/37 browser** và API quality checks đạt. Migration001–013 Applied, dữ liệu cũ giữ nguyên. Xem [progress cập nhật](BACKEND_PROGRESS_CURRENT.md)/[Actuator guide](POSTGRES_ACTUATORS_IMPLEMENTATION.md) cho source/branch. Thứ tự tiếp **Mongo telemetry→tasks→Cultivation→runtime/wiring→restart/frontend/hardware**. Đoạn base rà soát bên dưới giữ để biết điểm bắt đầu, không còn nghĩa Sensor/Actuator chưa code.
 
+Tiếp trong cùng lượt: Actuator đã commit **8926d68**, telemetry Mongo hoàn tất trên feat/mongo-telemetry-persistence với FIFO10000 atomic/PG scopes/fresh app-pool-Mongo client; **239 backend/216 persistence/37 browser**, API quality checks đạt. [Telemetry guide](MONGO_TELEMETRY_IMPLEMENTATION.md). Đủ13/13 PG và1/3 Mongo domain adapters; **AppModule vẫn RAM**. Backlog hiện còn tasks/Cultivation Mongo→shared database runtime→restart/frontend/ESP32/control UI acceptance. Các bảng lịch bên dưới giữ ưu tiên, không triển khai lại telemetry đã có.
+
 Base rà soát **9ec5f29**, nhánh đang làm feat/postgres-sensors-persistence. API Auth/Users/HTX/catalogs/Farm/Zone/phân công/Tree/Harvest/Device/Sensor/Actuator/telemetry/tasks/Cultivation/QR đã có. Frontend các luồng quản lý, duyệt, nhật ký, thu hoạch và QR đã có; không dựng lại chúng. Checkpoint base **236 backend/167 persistence/37 browser** và API quality checks đạt. Sensor adapter source đang hoàn thiện cùng integration/tests, chưa tính là delivery mới trước khi hồi quy/bàn giao.
 
 Schema13 bảng PostgreSQL/4 bảng technical/ledger và3 collections Mongo/private state đã có. **11/13 PG business-table adapters hoàn tất** ở base; còn Sensor/Actuator. Chưa có3 Mongo domain adapters. **AppModule vẫn RAM**: không nhầm adapter HTTP riêng đã test restart với toàn runtime đang chạy database. MQTT parser/transport/router/chuỗi control đã có loopback tests, chưa nghiệm thu ESP32 trực tiếp. Không tự suy tỷ lệ tổng thể từ số tests, số bảng hoặc lượng source.
@@ -31,7 +33,7 @@ Sau Sensor/Actuator không triển khai lại nghiệp vụ mới cho các modul
 | Mốc dự kiến | Ưu tiên | Đầu ra kiểm chứng |
 | --- | --- | --- |
 | Thứ Hai19/10 | Hoàn tất Sensor/Actuator PG; chuẩn bị test hardware và brief UI | Baseline tests/docs/branch rõ ràng; recipe/six mappings/ACK contract đã kiểm tra; chưa tuyên bố full persistence |
-| Thứ Ba20/10 — khi hardware có mặt | Smoke MQTT và kiểm tra vật lý theo bảng bên dưới; tiếp telemetry persistence | Evidence packet/ACK/thứ tự van-bơm và ghi chú trạng thái storage đang dùng; lỗi protocol fix theo packet thật, không sửa firmware tự ý |
+| Thứ Ba20/10 — khi hardware có mặt | Smoke MQTT và kiểm tra vật lý theo bảng bên dưới; tiếp tasks durable/runtime | Evidence packet/ACK/thứ tự van-bơm và ghi chú trạng thái storage đang dùng; lỗi protocol fix theo packet thật, không sửa firmware tự ý |
 | Thứ Tư–Năm21–22/10 | Tasks/Cultivation durable, async consumers và database runtime | Restart/failure/concurrency/correction/QR tests; không chia nguồn dữ liệu HTTP/MQTT |
 | Thứ Sáu23/10 | Frontend+DB+ESP32 end-to-end, sửa lỗi và màn hình control nếu có mẫu | Test nghiệp vụ role/scopes, hai luồng tưới/phun không giao nhau, ACK thiếu/late/mismatch/restart |
 | Cuối tuần24–25/10 | Hồi quy, dữ liệu demo, tài liệu/sơ đồ và buổi diễn thử | Checklist đạt/chưa đạt cụ thể, backup thử, demo tái lập từ tài liệu; mới đánh giá mức80–90% |

@@ -9,3 +9,12 @@ export interface TelemetryRecord {
   value: number;
   unit: string;
 }
+
+export interface TelemetryPage {
+  device_id: string;
+  items: TelemetryRecord[];
+  total: number;
+  limit: number;
+  offset: number;
+  storage: { mode: 'Memory' | 'MongoDB'; capacity_readings: number; eviction: 'OldestInserted' };
+}

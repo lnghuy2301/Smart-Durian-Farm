@@ -1,5 +1,7 @@
 # IOT_TELEMETRIES — API, quy trình và tái lập
 
+**Adapter persistence19/10/2026:** feat/mongo-telemetry-persistence kế thừa Actuator8926d68 đã có Mongo FIFO10000/atomic packet+counter+eviction và PG context/scopes/async shared RAM seam. **239 backend/216 persistence/37 browser**, API lint/typecheck/build đạt. [Guide mới/source/transaction/lỗi đã sửa/tái lập](MONGO_TELEMETRY_IMPLEMENTATION.md), [progress hiện hành](BACKEND_PROGRESS_CURRENT.md). AppModule vẫn RAM tới đợt wiring đồng bộ HTTP/MQTT/guards/QR; các câu chưa schema/Mongo bên dưới là checkpoint delivery RAM7/10, không phải adapter hiện hành. DB schema001–013/seed/.env/private sources giữ nguyên; không tự kết nối/gửi lệnh hardware hoặc push/merge. Field storage.mode của adapter làMongoDB, current runtime vẫnMemory; quyền/fields/topics/15s/rawunits giữ nguyên.
+
 Nhánh kế thừa2026-10-09 đã có [ACTUATOR_TASKS](ACTUATOR_TASKS_IMPLEMENTATION.md) và [DOCX MQTT v1 ACK](MQTT_CONTRACT_V1_IMPLEMENTATION.md). ACK taskId/status/action chỉ receipt, do task handler xử lý, không ghi Telemetry; telemetry payload/quyền/FIFO10.000 không thay đổi. Backend168 tests đạt. Các giới hạn chưa có control/short ACK phía dưới ghi phạm vi delivery Telemetry ban đầu.
 
 Ngày triển khai: 2026-10-07. Nhánh feat/iot-telemetries từ a656773 (kế thừa e1ad1a0 và MQTT d10ebd2). Module chỉ dùng RAM, chưa ghi MongoDB, chưa tạo collection/index/migration/seed. Không thay firmware, MQTT topics hoặc .env thật.

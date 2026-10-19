@@ -126,16 +126,26 @@ export class PostgresSensorsRepository extends SensorRecords {
   }
   async getRecordByStream(deviceId: string, streamId: string) {
     const params = this.streamParams(deviceId, streamId);
-    return this.transaction(async (client) => {
-      const rows = await client.query<SensorRow>(
-        `${SELECT_SENSOR} WHERE t.device_id=$1 AND t.data_stream_id=$2`,
-        [params.deviceId, params.dataStreamId],
-      );
-      if (!rows.rows[0]) {
-        throw new NotFoundException('Sensor not found');
-      }
-      return mapSensor(rows.rows[0]).sensor;
-    });
+    return this.transaction(
+      async (client) =>
+        (await this.loadByStreamOnClient(client, params.deviceId, params.dataStreamId)).sensor,
+    );
+  }
+  // Caller owns the transaction/parent and Sensor row locks for ingestion.
+  async loadByStreamOnClient(
+    client: PoolClient,
+    deviceId: string,
+    streamId: string,
+  ): Promise<SensorSnapshot> {
+    const params = this.streamParams(deviceId, streamId);
+    const rows = await client.query<SensorRow>(
+      `${SELECT_SENSOR} WHERE t.device_id=$1 AND t.data_stream_id=$2`,
+      [params.deviceId, params.dataStreamId],
+    );
+    if (!rows.rows[0]) {
+      throw new NotFoundException('Sensor not found');
+    }
+    return mapSensor(rows.rows[0]);
   }
   private streamParams(deviceId: string, streamId: string) {
     return farmInput(SensorStreamParamDto, { deviceId: farmUuid(deviceId), dataStreamId: streamId });

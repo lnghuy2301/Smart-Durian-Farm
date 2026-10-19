@@ -10,7 +10,7 @@ import { SensorsService } from '../sensors/sensors.service';
 import { SensorReading } from '../mqtt/mqtt.protocol';
 import { TelemetryHistoryDto, TelemetryLatestDto } from './telemetry.dto';
 import { TELEMETRY_READING_LIMIT, TelemetryStore } from './telemetry.store';
-import { TelemetryRecord } from './telemetry.types';
+import { TelemetryRecord, TelemetryPage } from './telemetry.types';
 
 @Injectable()
 export class TelemetryService {
@@ -94,7 +94,7 @@ export class TelemetryService {
       && Date.parse(record.received_at) >= start && Date.parse(record.received_at) < end);
   }
 
-  private page(deviceId: string, items: TelemetryRecord[], query: TelemetryLatestDto) {
+  private page(deviceId: string, items: TelemetryRecord[], query: TelemetryLatestDto): TelemetryPage {
     return { device_id: deviceId, items: items.slice(query.offset, query.offset + query.limit), total: items.length,
       limit: query.limit, offset: query.offset,
       storage: { mode: 'Memory', capacity_readings: TELEMETRY_READING_LIMIT, eviction: 'OldestInserted' } };
