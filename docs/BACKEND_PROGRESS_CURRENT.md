@@ -1,15 +1,15 @@
 # Backend — trạng thái và việc tiếp theo
 
-Cập nhật 2026-10-17. Đây là bảng hiện hành; các checkpoint theo ngày trong README/handoff/notes vẫn giữ để truy vết lịch sử.
+Cập nhật 2026-10-19. Đây là bảng hiện hành; các checkpoint theo ngày trong README/handoff/notes vẫn giữ để truy vết lịch sử. [Kế hoạch tuần19–25/10, backlog và test hardware](WEEKLY_COMPLETION_PLAN_20261019.md); [brief màn hình điều khiển còn thiếu](frontend/ACTUATOR_CONTROL_DESIGN_BRIEF.md).
 
 | Phần | Đã có | Còn phải hoàn tất |
 | --- | --- | --- |
 | API nghiệp vụ | Auth/Users/duyệt Manager/HTX/catalogs/Farm/Zone/phân công/Tree/Harvest/IoT metadata/Cultivation/QR; frontend tương ứng đã có | Persistence toàn runtime và nghiệm thu kết hợp |
 | PostgreSQL foundation |13 bảng nghiệp vụ,4 bảng technical/ledger, migration/constraints, seed demo không ghi đè | Không cần tạo lại schema/seed từ đầu |
-| PostgreSQL adapters | Users/Auth; HTX registry/workflows; vật tư/tiêu chuẩn/bridge; Farm; Zone; USERS_ZONES; TREES; TREE_HARVESTS; DEVICES —11/13 bảng nghiệp vụ |2 bảng: SENSORS,ACTUATORS |
+| PostgreSQL adapters | Users/Auth; HTX registry/workflows; vật tư/tiêu chuẩn/bridge; Farm; Zone; USERS_ZONES; TREES; TREE_HARVESTS; DEVICES; SENSORS —12/13 bảng nghiệp vụ |1 bảng: ACTUATORS |
 | Mongo | Schema/validators/indexes/transaction helpers/hash mapping |3 adapters nghiệp vụ: telemetry,actuator tasks,cultivation cùng private context/state |
 | MQTT | Hợp đồng đã đối chiếu, parser/router/ACK/control an toàn và loopback tests;6 Sensor types đã được user duyệt | Durable task ID/recovery và nghiệm thu ESP32 trực tiếp với database runtime |
-| Frontend |37 browser checks,8 unit; form/workflow/dashboard/QR hiện có | Nối và nghiệm thu với backend dùng database toàn bộ |
+| Frontend |37 browser checks,8 unit; form/workflow/dashboard/QR hiện có | Nối/ nghiệm thu database runtime; thêm màn hình điều khiển và tiến trình ACK theo brief |
 | AI | User đồng ý để sau | Chẩn đoán bệnh/chatbot chưa triển khai |
 
 **Ứng dụng chính vẫn dùng RAM cho dữ liệu nghiệp vụ.** Các adapter PostgreSQL được kiểm thử với HTTP app/pool mới, không mất trạng thái DB; chưa bật cho AppModule vì các consumers còn gọi sync RAM services. Không đổi riêng HTTP sang PG làm nguồn dữ liệu lệch với assignments/Tree/MQTT/QR. Đã có schema/migration không đồng nghĩa toàn bộ API đang lưu database.
@@ -26,8 +26,10 @@ Cập nhật 2026-10-17. Đây là bảng hiện hành; các checkpoint theo ng�
 
 Đợt Device **feat/postgres-devices-persistence** từ Harvestc781a91: PG official metadata/proposals/history/version, strict mappers, shared async RAM port; station UUID/Zone bất biến, exact station UNIQUE, presence đơn điệu không tăng metadata version và không làm stale Admin proposal. [Source/API/quyền/presence/locks/tái lập](POSTGRES_DEVICES_IMPLEMENTATION.md). Không đổi topic/firmware/control. Tiếp Sensor PostgreSQL.
 
-Kiểm thử hiện hành **236/236 backend +167/167 persistence +37/37 browser**; API lint/typecheck/build đạt. Web source không đổi, checkpoint8/8 unit và quality checks giữ nguyên. Persistence gồm11 suites; Device16 tests kể cả wrapper, Harvest20. Lượt máy ngủ dài ở đợt Harvest gây TCP/JWT timeout đã chạy lại bằng process/phiên mới; không nới timeout hoặc quyền production. Suite ACK timeout dùng clock giả; production10s giữ nguyên. Không SMS/email/MQTT command thật; DB integration chạy random fixture, không database demo.
+Đợt Sensor **feat/postgres-sensors-persistence** từ Device9ec5f29: PG metadata/composite Device+stream/6 types/raw units/nullable threshold pair/proposals/history/version/audit và shared RAM seam. [Source/API/locks/tests/tái lập](POSTGRES_SENSORS_IMPLEMENTATION.md). Current user/parent rechecks, parent Inactive metadata maintenance, stale/race/rollback/corrupt-state/fresh app-pool đã test; không đổi MQTT/firmware.
 
-Local demo migration001–011 đã **Applied**;010/011 ngày17/10 chỉ thêm indexes. Từng lần đối chiếu hash/count13 bảng nghiệp vụ +4 bảng technical trước/sau giữ nguyên, không seed/ghi đè business data hoặc tạo lại volume. Migration006 trước đó cũng giữ nguyên toàn bộ dữ liệu. Existing demo Sensors chưa tự thêm304–306 vì không reseed.
+Kiểm thử mới **237/237 backend +184/184 persistence +37/37 browser**; API lint/typecheck/build đạt. Web source không đổi, checkpoint8/8 unit và quality checks giữ nguyên. Persistence gồm12 suites; Sensor17 tests kể cả wrapper, Device16, Harvest20. Lượt máy ngủ dài ở đợt Harvest gây TCP/JWT timeout đã chạy lại bằng process/phiên mới; không nới timeout hoặc quyền production. Suite ACK timeout dùng clock giả; production10s giữ nguyên. Không SMS/email/MQTT command thật; DB integration chạy random fixture, không database demo.
 
-Thứ tự thực hiện tiếp: **Sensor PostgreSQL** → Actuator PostgreSQL → telemetry/actuator-tasks/Cultivation Mongo → chuyển các lookup/guards/QR async và wiring database AppModule một lần đồng bộ → restart/API/frontend/hardware acceptance. Mỗi module một branch kế thừa nhánh mới nhất; comment logic khóa/quyền/recovery, guide API/giới hạn/tái lập và cập nhật bảng này. Nghiệp vụ đã chốt giữ nguyên, điểm mới chưa rõ phải hỏi và chờ. .env/ERD/MQTT/Postman/UI riêng giữ nguyên; không reset/clean/stage-all, không tự push/merge.
+Local demo migration001–012 đã **Applied**;012 ngày19/10 chỉ thêm Pending Sensor index. Từng lần đối chiếu hash/count13 bảng nghiệp vụ +4 bảng technical trước/sau giữ nguyên, không seed/ghi đè business data hoặc tạo lại volume. Migration006 trước đó cũng giữ nguyên toàn bộ dữ liệu. Existing demo Sensors chưa tự thêm304–306 vì không reseed. Docker Desktop đã khởi động lại hidden ngày19/10, giữ containers/volumes cũ.
+
+Thứ tự thực hiện tiếp: **Actuator PostgreSQL** → telemetry/actuator-tasks/Cultivation Mongo → chuyển các lookup/guards/QR async và wiring database AppModule một lần đồng bộ → restart/API/frontend/hardware acceptance. Kế hoạch buổi hardware tạm theo thứBa20/10, vì19/10 là thứHai; không chặn việc độc lập để chờ xác nhận lịch. Mỗi module một branch kế thừa nhánh mới nhất; comment logic khóa/quyền/recovery, guide API/giới hạn/tái lập và cập nhật bảng này. Nghiệp vụ đã chốt giữ nguyên, điểm mới chưa rõ phải hỏi và chờ. .env/ERD/MQTT/Postman/UI riêng giữ nguyên; không reset/clean/stage-all, không tự push/merge.

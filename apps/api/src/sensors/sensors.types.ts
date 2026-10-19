@@ -19,7 +19,8 @@ export interface TestSensor extends SensorCreationDetails {
   id: string;
   device_id: string;
 }
-// Metadata duyệt/version/audit chỉ trong RAM, không thêm bảng/field vào ERD.
+// Shared workflow contract; PostgreSQL stores proposals/version/history in
+// technical tables without adding business fields to SENSORS.
 export interface SensorChangeRequest {
   id: string;
   action: 'Create' | 'Update';

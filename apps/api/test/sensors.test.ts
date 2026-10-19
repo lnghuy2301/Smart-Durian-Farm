@@ -6,8 +6,22 @@ import { AssignmentsService } from '../src/assignments/assignments.service';
 import { DevicesService } from '../src/devices/devices.service';
 import { SensorsService, SENSOR_LIMIT, SENSOR_HISTORY_LIMIT, SENSOR_REQUEST_LIMIT } from '../src/sensors/sensors.service';
 import { TestSensor } from '../src/sensors/sensors.types';
+import { SensorRecords } from '../src/sensors/sensor-records';
+import { MemorySensorRecords } from '../src/sensors/memory-sensor-records';
 
 const page = { limit: 20, offset: 0 };
+
+test('Sensor async port shares metadata and stream lookup with the MQTT service store', async () => {
+  const f=await fixture();
+  try {
+    const port=f.app.get(SensorRecords);
+    assert.equal(port,f.app.get(MemorySensorRecords));
+    const sensor=await port.create(f.owner.id,f.inputSensor);
+    assert.deepEqual(f.sensors.getRecordByStream(f.device.id,sensor.data_stream_id),sensor);
+    f.sensors.update(f.owner.id,sensor.id,{unit:'C'});
+    assert.equal((await port.getRecordByStream(f.device.id,sensor.data_stream_id)).unit,'C');
+  } finally { await f.app.close(); }
+});
 
 test('Sensor HTTP registers six semantic types and keeps type immutable for new streams', async () => {
   const f = await fixture();

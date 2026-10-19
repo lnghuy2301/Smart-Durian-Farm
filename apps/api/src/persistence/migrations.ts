@@ -12,6 +12,7 @@ import { ASSIGNMENT_WORKFLOW_SCHEMA } from './assignment-workflow-schema';
 import { TREE_WORKFLOW_SCHEMA } from './tree-workflow-schema';
 import { HARVEST_WORKFLOW_SCHEMA } from './harvest-workflow-schema';
 import { DEVICE_WORKFLOW_SCHEMA } from './device-workflow-schema';
+import { SENSOR_WORKFLOW_SCHEMA } from './sensor-workflow-schema';
 
 export interface MigrationDefinition {
   id: string;
@@ -42,6 +43,8 @@ export const MIGRATIONS: MigrationDefinition[] = [
     apply: async (client) => { await client.query(HARVEST_WORKFLOW_SCHEMA); } },
   { id: '011_device_workflow', store: 'postgres', source: DEVICE_WORKFLOW_SCHEMA,
     apply: async (client) => { await client.query(DEVICE_WORKFLOW_SCHEMA); } },
+  { id: '012_sensor_workflow', store: 'postgres', source: SENSOR_WORKFLOW_SCHEMA,
+    apply: async (client) => { await client.query(SENSOR_WORKFLOW_SCHEMA); } },
 ];
 export function migrationChecksum(source: string): string { return createHash('sha256').update(source).digest('hex'); }
 
