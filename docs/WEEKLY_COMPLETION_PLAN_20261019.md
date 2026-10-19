@@ -6,6 +6,8 @@ Mục tiêu tuần: hoàn thiện80–90% **phạm vi đồ án không AI đã t
 
 ## Hiện trạng có bằng chứng
 
+Tiến triển ngay trong lượt19/10: Sensor hoàn tất commit **9571247**; Actuator adapter hoàn tất trên branch kế thừa, PostgreSQL đủ13/13 business-table adapters; **238 backend/200 persistence/37 browser** và API quality checks đạt. Migration001–013 Applied, dữ liệu cũ giữ nguyên. Xem [progress cập nhật](BACKEND_PROGRESS_CURRENT.md)/[Actuator guide](POSTGRES_ACTUATORS_IMPLEMENTATION.md) cho source/branch. Thứ tự tiếp **Mongo telemetry→tasks→Cultivation→runtime/wiring→restart/frontend/hardware**. Đoạn base rà soát bên dưới giữ để biết điểm bắt đầu, không còn nghĩa Sensor/Actuator chưa code.
+
 Base rà soát **9ec5f29**, nhánh đang làm feat/postgres-sensors-persistence. API Auth/Users/HTX/catalogs/Farm/Zone/phân công/Tree/Harvest/Device/Sensor/Actuator/telemetry/tasks/Cultivation/QR đã có. Frontend các luồng quản lý, duyệt, nhật ký, thu hoạch và QR đã có; không dựng lại chúng. Checkpoint base **236 backend/167 persistence/37 browser** và API quality checks đạt. Sensor adapter source đang hoàn thiện cùng integration/tests, chưa tính là delivery mới trước khi hồi quy/bàn giao.
 
 Schema13 bảng PostgreSQL/4 bảng technical/ledger và3 collections Mongo/private state đã có. **11/13 PG business-table adapters hoàn tất** ở base; còn Sensor/Actuator. Chưa có3 Mongo domain adapters. **AppModule vẫn RAM**: không nhầm adapter HTTP riêng đã test restart với toàn runtime đang chạy database. MQTT parser/transport/router/chuỗi control đã có loopback tests, chưa nghiệm thu ESP32 trực tiếp. Không tự suy tỷ lệ tổng thể từ số tests, số bảng hoặc lượng source.

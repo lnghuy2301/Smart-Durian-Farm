@@ -15,7 +15,8 @@ export interface TestActuator extends ActuatorCreationDetails {
   id: string;
   device_id: string;
 }
-// Metadata duyệt/version/audit chỉ lưu trong RAM; không thêm bảng/field vào ERD.
+// Shared workflow contract; persisted proposals/version/history use technical
+// tables, without adding fields to the ACTUATORS business table.
 export interface ActuatorChangeRequest {
   id: string;
   action: 'Create' | 'Update';

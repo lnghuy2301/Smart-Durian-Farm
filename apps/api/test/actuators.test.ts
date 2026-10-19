@@ -7,8 +7,20 @@ import { DevicesService } from '../src/devices/devices.service';
 import { ActuatorsService, ACTUATOR_LIMIT, ACTUATOR_REQUEST_LIMIT, ACTUATOR_HISTORY_LIMIT } from '../src/actuators/actuators.service';
 import { MAX_CAPABILITY_ID } from '../src/actuators/actuators.dto';
 import { TestActuator } from '../src/actuators/actuators.types';
+import { ActuatorRecords } from '../src/actuators/actuator-records';
+import { MemoryActuatorRecords } from '../src/actuators/memory-actuator-records';
 
 const page = { limit: 20, offset: 0 };
+test('Actuator async port shares metadata and capability lookup with the control service store', async () => {
+  const f=await fixture();
+  try {
+    const port=f.app.get(ActuatorRecords);assert.equal(port,f.app.get(MemoryActuatorRecords));
+    const actuator=await port.create(f.owner.id,f.actuatorInput);
+    assert.deepEqual(f.actuators.getRecordByCapability(f.device.id,actuator.capability_id),actuator);
+    f.actuators.update(f.owner.id,actuator.id,{status:'Inactive'});
+    assert.equal((await port.getRecordByCapability(f.device.id,actuator.capability_id)).status,'Inactive');
+  } finally { await f.app.close(); }
+});
 async function fixture() {
   const f = await zoneFixture();
   const zone = f.zones.create(f.owner.id, f.input);
