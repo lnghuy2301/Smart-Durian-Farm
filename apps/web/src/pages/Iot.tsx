@@ -280,8 +280,8 @@ function DeviceMonitor({
             )}
             <Pagination {...data.latest} onChange={setLatestOffset} />
             <p className="table-note">
-              Chỉ các giá trị còn trong bộ nhớ hiện tại. Dữ liệu có thể cũ dù
-              trạm đang trực tuyến.
+              Hiển thị các số đo được lưu gần nhất. Dữ liệu có thể cũ dù trạm
+              đang trực tuyến.
             </p>
             {!compact && (
               <>
@@ -553,10 +553,13 @@ function TelemetryHistory({
               </table>
             </div>
             <Notice kind="warning">
-              Lịch sử tạm thời trong bộ nhớ (
+              {data.storage.mode === "MongoDB"
+                ? "Lịch sử được lưu lại ("
+                : "Lịch sử tạm thời trong bộ nhớ ("}
               {number(data.storage.capacity_readings)} số đo dùng chung toàn hệ
-              thống). Số đo cũ có thể bị loại bỏ; dữ liệu mất khi server khởi
-              động lại.
+              thống). Số đo cũ nhất có thể bị loại bỏ.
+              {data.storage.mode === "Memory" &&
+                " Dữ liệu mất khi server khởi động lại."}
             </Notice>
           </>
         )}

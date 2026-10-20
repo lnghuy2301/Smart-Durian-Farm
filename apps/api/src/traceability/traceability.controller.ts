@@ -2,7 +2,7 @@ import { applyDecorators, Controller, Get, Header, Inject, Param, Query } from '
 import { ApiOkResponse, ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
 import { TreeCodeParamDto } from '../trees/trees.dto';
 import { FarmPageDto } from '../farms/farms.dto';
-import { TraceabilityService } from './traceability.service';
+import { TraceabilityRecords } from './traceability-records';
 import { traceSchema, versionPageSchema, harvestPageSchema } from './traceability.schema';
 const publicHeaders = () => applyDecorators(Header('Cache-Control', 'no-store'), Header('X-Content-Type-Options', 'nosniff'));
 
@@ -10,7 +10,7 @@ const publicHeaders = () => applyDecorators(Header('Cache-Control', 'no-store'),
 @ApiTags('public-traceability')
 @Controller('traceability/trees/:treeCode')
 export class TraceabilityController {
-  constructor(@Inject(TraceabilityService) private readonly trace: TraceabilityService) {}
+  constructor(@Inject(TraceabilityRecords) private readonly trace: TraceabilityRecords) {}
   @Get() @publicHeaders() @ApiOperation({ summary: 'Public whitelisted Tree/Zone/Cooperative/standard metadata' })
   @ApiOkResponse({ schema: traceSchema })
   get(@Param() param: TreeCodeParamDto) { return this.trace.get(param.treeCode); }

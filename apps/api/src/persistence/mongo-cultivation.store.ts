@@ -17,15 +17,25 @@ export class MongoCultivationStore {
     return this.transaction(async (session) => structuredClone(work((await this.snapshot(session, hashes)).journal)));
   }
   async change<T>(work: (journal: CultivationEventsStore) => T): Promise<T> {
-    return this.transaction(async (session) => {
-      const before = await this.snapshot(session);
-      before.journal.lockDue(this.clock());
-      // Pure synchronous work only: driver retry cannot send messages, acquire
-      // new PG locks or apply external mutations a second time.
-      const result = work(before.journal), after = before.journal.snapshot();
-      await this.commit(session, before.ledger, before.snapshot, after);
-      return structuredClone(result);
-    });
+    for (;;) {
+      const result = await this.transaction(async (session): Promise<{ done: false } | { done: true; value: T }> => {
+        const before = await this.snapshot(session), now = this.clock();
+        // Restart can leave10k overdue events. Commit the earliest512 and head
+        // atomically per transaction, preserving ordering without extending the
+        // deadline or attempting10k updates inside one10s transaction.
+        before.journal.lockDue(now, 512);
+        const afterLock = before.journal.snapshot();
+        if (afterLock.events.some((event) => event.status === 'Pending' && Date.parse(event.lock_at) <= now)) {
+          await this.commit(session, before.ledger, before.snapshot, afterLock); return { done: false };
+        }
+        // Pure synchronous work only: driver retry cannot send messages,
+        // acquire PG locks or apply external mutations a second time.
+        const value = work(before.journal);
+        await this.commit(session, before.ledger, before.snapshot, before.journal.snapshot());
+        return { done: true, value: structuredClone(value) };
+      });
+      if (result.done) return result.value;
+    }
   }
   async lockDue() { return this.change(() => undefined); }
   private async snapshot(session: ClientSession, hashes = true) {
@@ -50,7 +60,9 @@ export class MongoCultivationStore {
       const rows = await this.db.collection<EventDocument>('CULTIVATION_EVENTS').find({ _id: { $in: chunk } }, { session, limit: 100, batchSize: 100 }).toArray();
       const privateRows = await this.db.collection<StateRow>('PERSISTENCE_STATE').find({ _id: { $in: chunk.map((id) => contextKey(id.toHexString())) } }, { session, limit: 100, batchSize: 100 }).toArray();
       check(rows.length === chunk.length && privateRows.length === chunk.length);
-      events.push(...rows.map((row) => mapCultivation(row, hashes)));
+      // verify() below checks each complete chain once; avoid hashing every
+      // Locked event a second time while decoding BSON.
+      events.push(...rows.map((row) => mapCultivation(row, false)));
       for (const row of privateRows) {
         check(row.kind === 'CultivationContext' && typeof row.key === 'string' && row._id === contextKey(row.key) && Object.keys(row).length === 4);
         contexts.push([row.key, mapCultivationContext(row.payload)]);
@@ -63,7 +75,8 @@ export class MongoCultivationStore {
       check(context && root && !root.is_correction && context.author_id === event.farmer_id && context.author_id === root.farmer_id
         && context.original_created_at === root.created_at && context.root_id === (event.root_event_id ?? event._id)
         && (event.target_type !== 'Zone' || event.target_id === context.zone_id));
-      check(canonicalJson(context) === canonicalJson(contextMap.get(root._id)));
+      const rootContext = contextMap.get(root._id)!;
+      check(rootContext && Object.keys(context).every((key) => context[key as keyof typeof context] === rootContext[key as keyof typeof rootContext]));
       if (event.status === 'Locked') zones.add(context.zone_id);
     }
     // Exactly one non-branching lineage; Pending can only be the final version.
@@ -99,7 +112,7 @@ export class MongoCultivationStore {
     const contexts = new Map(after.contexts), business: AnyBulkWriteOperation<EventDocument>[] = [], state: AnyBulkWriteOperation<StateRow>[] = [];
     for (const event of after.events) {
       const previous = old.get(event._id);
-      if (previous && canonicalJson(previous) === canonicalJson(event)) continue;
+      if (previous && JSON.stringify(previous) === JSON.stringify(event)) continue;
       if (previous) {
         check(previous.status === 'Pending');
         business.push({ replaceOne: { filter: { _id: new ObjectId(event._id), status: 'Pending' }, replacement: cultivationDocument(event) } });

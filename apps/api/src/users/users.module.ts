@@ -14,6 +14,12 @@ import { MemoryUserManagement } from './memory-user-management';
 
 @Module({})
 export class UsersModule {
+  static forDatabase(config: MockAuthConfig, authModule: DynamicModule, persistenceModule: DynamicModule): DynamicModule {
+    return { module: UsersModule, imports: [authModule, persistenceModule], controllers: [RegistrationController, UsersController],
+      providers: [UsersService, EmailVerificationService, AdminGuard,
+        { provide: EmailSender, useFactory: () => config.email ? new SmtpEmailSender(config.email) : new DisabledEmailSender() }],
+      exports: [EmailSender] };
+  }
   static forMock(config: MockAuthConfig, authModule: DynamicModule = AuthModule.forMock(config)): DynamicModule {
     return {
       module: UsersModule,

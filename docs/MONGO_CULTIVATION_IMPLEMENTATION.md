@@ -1,6 +1,6 @@
 # Cultivation MongoDB — nhật ký, context và chuỗi theo Zone
 
-Ngày 20/10/2026. Nhánh `feat/mongo-cultivation-persistence` kế thừa task journal `b6d3ed1`. Đây là adapter nghiệp vụ MongoDB cuối cùng; 13 bảng PostgreSQL và ba collections MongoDB đều đã có adapters. **AppModule vẫn RAM trong checkpoint này**; chuyển MQTT/QR/consumers và wiring toàn database là nhánh kế tiếp. Không coi kiểm thử fixture là nghiệm thu ESP32 thật.
+Ngày 20/10/2026. Nhánh `feat/mongo-cultivation-persistence`, commit `1a8a8bb`, kế thừa task journal `b6d3ed1`. Đây là adapter nghiệp vụ MongoDB cuối cùng; 13 bảng PostgreSQL và ba collections MongoDB đều đã có adapters. **Checkpoint adapter ban đầu dùng AppModule RAM**; nhánh kế tiếp đã nối [database runtime/MQTT/QR](DATABASE_RUNTIME_IMPLEMENTATION.md) và bổ sung catch-up tối đa512 records mỗi transaction cho burst10.000 overdue. Không coi fixture/loopback là nghiệm thu ESP32 thật.
 
 ## API và quy tắc
 
@@ -14,7 +14,7 @@ Chuỗi SHA-256 v1 theo Zone gồm cả log Zone và log Tree, chỉ Locked, th�
 
 ## Lưu trữ và transaction
 
-`CULTIVATION_EVENTS` giữ đúng17 fields hiện có, không thêm metadata quyền vào business document. `PERSISTENCE_STATE` lưu:
+`CULTIVATION_EVENTS` giữ đúng16 fields hiện có, không thêm metadata quyền vào business document. `PERSISTENCE_STATE` lưu:
 
 | kind / key | Dữ liệu |
 | --- | --- |
@@ -24,7 +24,7 @@ Chuỗi SHA-256 v1 theo Zone gồm cả log Zone và log Tree, chỉ Locked, th�
 
 Migration mới **014_cultivation_ledger** mở rộng validator technical-state bằng kind ledger. Không sửa source/checksum001–013 hoặc tạo thêm collection/bảng nghiệp vụ. DDL có thể chạy lại sau gián đoạn; chỉ ledger migration PostgreSQL được ghi khi bước Mongo hoàn tất. Migration không seed hay sửa nội dung records.
 
-Mỗi thay đổi dùng Mongo snapshot transaction +majority, deadline10s. Tạo event/context, xóa Pending/context, lock nhiều event/head và cập nhật revision/IDs commit hoặc rollback cùng nhau. Mọi writer tranh một ledger revision để serialize capacity và correction qua nhiều process/Zone. Driver retry chỉ chạy callback thuần đồng bộ; không email/MQTT/PG writes trong callback. Duplicate key khi bootstrap có retry giới hạn sau transaction abort; không tự replay uncertain commit. Capacity đầy trả429, không xóa Locked hoặc tự tăng cap.
+Mỗi thay đổi dùng Mongo snapshot transaction +majority, deadline10s. Tạo event/context, xóa Pending/context, lock event/head và cập nhật revision/IDs commit hoặc rollback cùng nhau. Đợt runtime sửa trường hợp10.000 Pending quá hạn vượt deadline: khóa tối đa512 records sớm nhất mỗi transaction, commit head và tiếp tục catch-up trước callback nghiệp vụ. Gián đoạn sau một đợt giữ phần đã commit; lần sau tiếp từ head đó, không hash lại Locked. Mọi writer tranh một ledger revision để serialize capacity và correction qua nhiều process/Zone. Driver retry chỉ chạy callback thuần đồng bộ; không email/MQTT/PG writes trong callback. Duplicate key khi bootstrap có retry giới hạn sau transaction abort; không tự replay uncertain commit. Capacity đầy trả429, không xóa Locked hoặc tự tăng cap.
 
 Journal Map chỉ sống trong transaction sau khi hydrate từ Mongo; không cache nghiệp vụ giữa requests, không fallback RAM. Đọc chunk tối đa100 events/context trong một cursor batch, tránh lỗi CSOT/getMore đã xác nhận ở telemetry và tránh vượt16MiB với event nhiều snapshots. Bulk writes giữ giới hạn capacity khả thi; không tắt timeout để vượt lỗi. Đây vẫn là thiết kế bounded snapshot, cần đo lại trước khi tăng10.000 hoặc triển khai lưu lượng lớn.
 

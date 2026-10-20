@@ -10,9 +10,19 @@ import { MockSmsGateway, SmsGateway } from './sms/sms.gateway';
 import { SpeedSmsGateway } from './sms/speedsms.gateway';
 import { LocalOtpProvider, OtpProvider } from './sms/otp.provider';
 import { TwilioVerifyGateway } from './sms/twilio-verify.gateway';
+import { PostgresUsersRepository } from '../persistence/postgres-users.repository';
 
 @Module({})
 export class AuthModule {
+  static forDatabase(config: MockAuthConfig, persistenceModule: DynamicModule): DynamicModule {
+    const module = this.forMock(config);
+    module.imports!.push(persistenceModule);
+    module.providers = module.providers!.filter((provider) => typeof provider !== 'object'
+      || !('provide' in provider) || ![MockUserStore, UserAccounts].includes(provider.provide as typeof MockUserStore));
+    module.providers.push({ provide: UserAccounts, useExisting: PostgresUsersRepository });
+    module.exports = [UserAccounts, AuthGuard, AuthService];
+    return module;
+  }
   static forMock(config: MockAuthConfig): DynamicModule {
     return {
       module: AuthModule,

@@ -18,6 +18,7 @@ export interface MockAuthConfig {
 }
 
 export interface Environment {
+  storage?: 'memory' | 'database';
   port: number;
   corsOrigins: string[];
   database: { postgresUrl: string; mongoUri: string; timeoutMs: number };
@@ -28,6 +29,8 @@ export interface Environment {
 }
 
 export function readEnvironment(env: NodeJS.ProcessEnv): Environment {
+  const storage = env.BUSINESS_STORAGE ?? (env.NODE_ENV === 'test' ? 'memory' : 'database');
+  if (!['memory', 'database'].includes(storage)) throw new Error('BUSINESS_STORAGE must be memory or database');
   const rawPort = env.PORT ?? '3000';
   const port = Number(rawPort);
   if (!/^\d+$/.test(rawPort) || !Number.isInteger(port) || port < 1 || port > 65535) {
@@ -151,6 +154,6 @@ export function readEnvironment(env: NodeJS.ProcessEnv): Environment {
   }
   const mqtt = readMqttConfig(env);
   if (mqtt.enabled && !auth) { throw new Error('MQTT_ENABLED requires the current application metadata modules (AUTH_MODE=mock)'); }
-  return { port, corsOrigins, database: { postgresUrl, mongoUri, timeoutMs }, auth, mqtt,
+  return { storage: storage as 'memory' | 'database', port, corsOrigins, database: { postgresUrl, mongoUri, timeoutMs }, auth, mqtt,
     actuatorTasks: readActuatorTasksConfig(env), traceability: readTraceabilityConfig(env) };
 }

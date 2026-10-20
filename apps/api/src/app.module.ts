@@ -24,10 +24,12 @@ import { readActuatorTasksConfig } from './actuator-tasks/actuator-tasks.config'
 import { CultivationEventsModule } from './cultivation-events/cultivation-events.module';
 import { TraceabilityModule } from './traceability/traceability.module';
 import { readTraceabilityConfig } from './traceability/traceability.config';
+import { DatabaseRuntimeModule } from './persistence/database-runtime.module';
 
 @Module({})
 export class AppModule {
   static register(config: Environment): DynamicModule {
+    if (config.storage === 'database') return { module: AppModule, imports: [DatabaseRuntimeModule.register(config)] };
     const imports: DynamicModule[] = [HealthModule.register(config.database)];
     if (config.auth) {
       // Dùng cùng instance dynamic module để JWT và user đăng ký được thấy ở mọi module.

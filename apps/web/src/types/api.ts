@@ -171,7 +171,7 @@ export interface TelemetryRecord {
 export interface TelemetryPage extends Page<TelemetryRecord> {
   device_id: string;
   storage: {
-    mode: "Memory";
+    mode: "Memory" | "MongoDB";
     capacity_readings: number;
     eviction: "OldestInserted";
   };

@@ -25,7 +25,7 @@ export class CultivationEventsStore {
     for (const [id, context] of snapshot.contexts) store.contexts.set(id, structuredClone(context));
     for (const [zone, head] of snapshot.heads) store.heads.set(zone, structuredClone(head));
     for (const event of [...snapshot.events].filter((item) => item.status === 'Locked').sort(compareEvents)) {
-      const zone = store.context(event._id).zone_id;
+      const zone = store.contexts.get(event._id)!.zone_id;
       const chain = store.chains.get(zone) ?? [];
       chain.push(event._id); store.chains.set(zone, chain);
     }
@@ -73,8 +73,8 @@ export class CultivationEventsStore {
     this.contexts.delete(id);
   }
 
-  lockDue(now = this.clock()): number {
-    const due = [...this.records.values()].filter((event) => event.status === 'Pending' && Date.parse(event.lock_at) <= now).sort(compareEvents);
+  lockDue(now = this.clock(), maximum = Infinity): number {
+    const due = [...this.records.values()].filter((event) => event.status === 'Pending' && Date.parse(event.lock_at) <= now).sort(compareEvents).slice(0, maximum);
     // Không await giữa kiểm tra và ghi: trong một process Nest, request khác
     // không đọc bản ghi đang khóa dở hoặc nối cùng head hai lần. Khi persistence
     // cần transaction/lock thật; tính đồng bộ RAM không bảo vệ nhiều process.
