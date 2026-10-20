@@ -3,7 +3,7 @@ import { MockUserStore } from '../auth/mock-user.store';
 import { DevicesService } from '../devices/devices.service';
 import { SensorsService } from '../sensors/sensors.service';
 import { TelemetryService } from '../telemetry/telemetry.service';
-import { ActuatorTasksService } from '../actuator-tasks/actuator-tasks.service';
+import { ActuatorTaskRecords } from '../actuator-tasks/actuator-task-records';
 import { FarmPageDto } from '../farms/farms.dto';
 import { MqttConfig, MQTT_CONFIG } from './mqtt.config';
 import { BrokerState, MqttTransport } from './mqtt.transport';
@@ -36,11 +36,14 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     @Inject(SensorsService) private readonly sensors: SensorsService,
     @Inject(TelemetryService) private readonly telemetry: TelemetryService,
     @Inject(MockUserStore) private readonly users: MockUserStore,
-    @Inject(ActuatorTasksService) private readonly tasks: ActuatorTasksService) {
+    @Inject(ActuatorTaskRecords) private readonly tasks: ActuatorTaskRecords) {
     this.state = { enabled: config.enabled, connected: false, subscribed: false, last_error: null };
   }
   onModuleInit(): void {
-    this.transport.start({ state: (state) => { this.state = { ...state }; this.tasks.brokerChanged(state); },
+    this.transport.start({ state: (state) => { this.state = { ...state };
+      const changed = this.tasks.brokerChanged(state);
+      if (changed instanceof Promise) void changed.catch(() => this.logger.error('TASK_STATE_PERSISTENCE_FAILED'));
+    },
       message: (topic, payload, retained) => this.receive(topic, payload, retained) });
   }
   async onModuleDestroy(): Promise<void> { await this.transport.stop(); }
@@ -82,9 +85,11 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
       this.devices.recordSeen(deviceId, receivedAt);
       if (incoming.kind === 'Ack') {
         ++this.counts.ack;
-        const reason = this.tasks.receiveAck(deviceId, incoming.taskId, incoming.action);
-        this.append({ received_at: receivedAt, device_id: deviceId, kind: 'Ack', reason, readings: [],
+        const result = this.tasks.receiveAck(deviceId, incoming.taskId, incoming.action, Date.parse(receivedAt));
+        const append = (reason: string | null) => this.append({ received_at: receivedAt, device_id: deviceId, kind: 'Ack', reason, readings: [],
           ack: { task_id: incoming.taskId, action: incoming.action } });
+        if (result instanceof Promise) void result.then(append).catch(() => append('TASK_PERSISTENCE_FAILED'));
+        else append(result);
         return;
       }
       const device = this.devices.getRecord(deviceId);

@@ -27,7 +27,7 @@ export const taskSchema = object({
 });
 export const acceptedSchema = object({ task: taskSchema, status_url: { type: 'string' }, state_url: { type: 'string' } });
 export const listSchema = object({ items: { type: 'array', items: taskSchema }, total: { type: 'integer' },
-  limit: { type: 'integer' }, offset: { type: 'integer' }, storage: object({ mode: { type: 'string', enum: ['Memory'] },
+  limit: { type: 'integer' }, offset: { type: 'integer' }, storage: object({ mode: { type: 'string', enum: ['Memory', 'MongoDB'] },
     capacity_tasks: { type: 'integer', example: 5000 }, eviction: { type: 'string', enum: ['OldestTerminal'] } }) });
 export const stateSchema = object({ device_id: { type: 'string', format: 'uuid' },
   acknowledged_mode: { type: 'string', enum: ['Unknown', 'Off', 'Watering', 'Spraying'] },

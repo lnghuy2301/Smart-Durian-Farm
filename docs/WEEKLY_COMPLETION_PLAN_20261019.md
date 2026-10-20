@@ -1,5 +1,7 @@
 # Kế hoạch hoàn thiện và test hardware — tuần19–25/10/2026
 
+Cập nhật Tasks19/10: `feat/mongo-actuator-tasks-persistence` từ control UI148c380 hoàn tất durable journal/allocator/order/receipts/Reset/RecoveryStop; PG singleton lease/Mongo owner fence; restart Pending→Failed/Unknown, không replay ON. **239 backend/239 persistence(15 suites)/46 browser**, API lint/typecheck/build đạt; [guide tái lập/giới hạn](MONGO_ACTUATOR_TASKS_IMPLEMENTATION.md). Đủ13 PG+2/3 Mongo adapters. **AppModule vẫn RAM**; backlog hiện là Cultivation Mongo→shared async database runtime→restart/frontend/hardware acceptance. Các bảng lịch ưu tiên bên dưới không có nghĩa cần làm lại tasks/telemetry/UI đã có.
+
 Cập nhật UI19/10: mẫu actuator control đã được người dùng cung cấp và triển khai trên `feat/web-actuator-control`; **46 browser/8 unit**, web lint/build/format đạt bằng fixture API/MQTT TCP loopback. [Thiết kế, scope Farmer, API và tái lập](frontend/modules/ACTUATOR_CONTROL_WEB.md). Không còn chờ thiết kế/viết màn control; các mốc dưới vẫn cần nghiệm thu với shared database runtime và hardware thật. Chưa gửi lệnh broker/ESP32 thật trong đợt code UI.
 
 Ngày rà soát19/10/2026 là thứ Hai,20/10 là thứ Ba. Người dùng nói “ngày mai thứ3(19/10)”; kế hoạch tạm lấy buổi nhận/test hardware là **thứ Ba20/10**, không coi ngày hardware tới là dữ kiện đã xác minh. Không cần dừng các công việc độc lập để chờ ngày chính xác.
@@ -22,7 +24,7 @@ Schema13 bảng PostgreSQL/4 bảng technical/ledger và3 collections Mongo/priv
 | --- | --- | --- |
 | 1 | Sensor PG, rồi Actuator PG, mỗi module một branch | Async shared RAM seam +PG adapter; immutable identifiers/composite unique/scopes/proposals/history/version/audit; race/rollback/fresh app-pool tests; migration/docs/local commit |
 | 2 | IOT_TELEMETRIES Mongo | Packet hợp lệ→Device UUID+stream→raw value/unit, measured/received times theo quyết định cũ; latest/history/current assignment scope; append/trim tổng10000 readings atomic/deterministic qua restart |
-| 3 | ACTUATOR_TASKS Mongo/private recovery state | Numeric wire task IDs bền vững/không trùng sau restart; step/task/mode/links durable; không replay ON; lần Start tiếp Reset đủ ACK; lock1 workflow/Device, Stop/recovery/timeout race được kiểm thử |
+| 3 | ACTUATOR_TASKS Mongo/private recovery state — adapter hoàn tất | Numeric IDs/step/task/links/order bền vững; mode Unknown sau restart, không replay ON; Start mới Reset đủ ACK; singleton controller/per-Device queue, Stop/recovery/timeout/DB failure đã test; còn nghiệm thu shared runtime |
 | 4 | CULTIVATION_EVENTS Mongo/private context | Pending15 phút→Locked đúng deadline; Zone hash-chain/head/event/context atomic; immutable gốc+corrections; quyền theo phân công gốc/hạn15 ngày giữ nguyên; QR full lineage/applicability |
 | 5 | Database runtime toàn backend | Chuyển consumers/guards/workers/MQTT/QR async, cùng instances/pool/ports; Auth/User/HTX/Farm/Zone/catalog/Tree/Harvest/IoT/Mongo cùng authority; không mixed PG HTTP/RAM domain hoặc fallback dữ liệu khi DB lỗi |
 | 6 | Nghiệm thu xuyên suốt | Cùng process/backend DB nhận hardware; frontend thao tác đúng API; restart giữ users/tài nguyên/quyền/proposals/readings/logs/task journal; OTP dở xác minh lại, không tự gửi command ON |

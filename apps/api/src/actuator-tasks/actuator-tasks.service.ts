@@ -1,7 +1,6 @@
 import { ConflictException, ForbiddenException, HttpException, HttpStatus, Inject, Injectable, NotFoundException,
   OnModuleDestroy, ServiceUnavailableException } from '@nestjs/common';
 import { randomInt } from 'node:crypto';
-import { ObjectId } from 'mongodb';
 import { MockUserStore } from '../auth/mock-user.store';
 import { AssignmentsService } from '../assignments/assignments.service';
 import { MockZoneAssignmentStore } from '../assignments/mock-zone-assignment.store';
@@ -15,9 +14,9 @@ import { buildControlPublication } from '../mqtt/mqtt.protocol';
 import { ACTUATOR_TASKS_CONFIG, ActuatorTasksConfig } from './actuator-tasks.config';
 import { TaskPageDto } from './actuator-tasks.dto';
 import { AcknowledgedMode, ActuatorTask, ControlOperation, TaskOperation, TaskStep } from './actuator-tasks.types';
+import { CONTROL_RECIPE, createControlTask, markTaskFailed, stopCapabilities } from './task-rules';
 
 export const ACTUATOR_TASK_LIMIT = 5000;
-const RECIPE = [{ capability: 2, purpose: 'shared' }, { capability: 3, purpose: 'watering' }, { capability: 4, purpose: 'spraying' }] as const;
 interface Run { deviceId: string; actorId: string; current: ActuatorTask; start?: ActuatorTask; index: number }
 interface Wait { run: Run; step: TaskStep; deadline: number; timer: NodeJS.Timeout; published: boolean; ackAt?: string }
 
@@ -90,7 +89,7 @@ export class ActuatorTasksService implements OnModuleDestroy {
     const items = [...this.tasks.values()].reverse().filter((task) => task.device_id === deviceId
       && (!page.status || task.status === page.status) && this.visible(actorId, task));
     return { items: structuredClone(items.slice(page.offset, page.offset + page.limit)), total: items.length,
-      limit: page.limit, offset: page.offset, storage: { mode: 'Memory', capacity_tasks: ACTUATOR_TASK_LIMIT, eviction: 'OldestTerminal' } };
+      limit: page.limit, offset: page.offset, storage: { mode: 'Memory' as const, capacity_tasks: ACTUATOR_TASK_LIMIT, eviction: 'OldestTerminal' as const } };
   }
   state(actorId: string, deviceId: string) {
     this.devices.get(actorId, deviceId);
@@ -198,12 +197,7 @@ export class ActuatorTasksService implements OnModuleDestroy {
     for (const [id, wait] of this.waits) { if (wait.run === run) { clearTimeout(wait.timer); this.waits.delete(id); } }
   }
   private markFailed(task: ActuatorTask, code: string): void {
-    if (task.status !== 'Pending') { return; }
-    task.status = 'Failed'; task.error_message = code;
-    for (const step of task.response_payload.steps) {
-      if (step.status === 'WaitingAck') { step.status = 'Failed'; }
-      else if (step.status === 'Queued') { step.status = 'Cancelled'; }
-    }
+    markTaskFailed(task, code);
   }
   private live(run: Run): boolean { return this.runs.get(run.deviceId) === run && run.current.status === 'Pending'; }
   private requireController(actorId: string, deviceId: string): void {
@@ -221,14 +215,14 @@ export class ActuatorTasksService implements OnModuleDestroy {
     }
   }
   private requireRecipe(deviceId: string): void {
-    for (const entry of RECIPE) {
+    for (const entry of CONTROL_RECIPE) {
       if (this.actuators.getRecordByCapability(deviceId, entry.capability).purpose !== entry.purpose) {
         throw new ConflictException('Bộ demo cần capability2/shared,3/watering,4/spraying');
       }
     }
   }
   private stopCapabilities(mode: AcknowledgedMode): number[] {
-    return mode === 'Watering' ? [2, 3] : mode === 'Spraying' ? [2, 4] : [2, 3, 4];
+    return stopCapabilities(mode);
   }
   private visible(actorId: string, task: ActuatorTask): boolean {
     try {
@@ -252,13 +246,7 @@ export class ActuatorTasksService implements OnModuleDestroy {
     for (const task of removable) { this.tasks.delete(task._id); }
   }
   private newTask(deviceId: string, operation: TaskOperation, caps: number[], action: 0 | 1, parent: string | null = null): ActuatorTask {
-    const steps: TaskStep[] = caps.map((id) => ({ task_id: this.hardwareId(), tasking_capability_id: id, action,
-      status: 'Queued', sent_at: null, ack_received_at: null, ack: null }));
-    const task: ActuatorTask = { _id: new ObjectId().toHexString(), device_id: deviceId, command_id: this.hardwareId(),
-      targets: steps.map(({ task_id, tasking_capability_id }) => ({ task_id, tasking_capability_id })),
-      tasking_parameters: { actionType: 'control', action }, status: 'Pending', created_at: new Date(Date.now()).toISOString(),
-      sent_at: null, confirmed_at: null, error_message: null, response_payload: { operation, confirmation_kind: 'CommandReceipt',
-        parent_task_id: parent, reset_task_id: null, recovery_task_id: null, steps } };
+    const task = createControlTask(deviceId, operation, caps, action, () => this.hardwareId(), new Date(Date.now()).toISOString(), parent);
     this.tasks.set(task._id, task); return task;
   }
   private hardwareId(): number {
