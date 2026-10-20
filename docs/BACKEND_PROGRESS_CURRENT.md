@@ -1,5 +1,7 @@
 # Backend — trạng thái và việc tiếp theo
 
+**Checkpoint2026-10-20:** đủ13/13 PostgreSQL và3/3 Mongo domain adapters. Cultivation có event/private context/head/ledger atomic, original-assignment15 ngày, Pending15 phút, chain/correction và bounded10.000 không eviction;15 kiểm thử database mới đạt. [Guide](MONGO_CULTIVATION_IMPLEMENTATION.md). Phần còn lại: chuyển async MQTT/QR/consumers và wiring database toàn AppModule, kiểm thử restart/browser database, nghiệm thu ESP32 thật. Giao diện control đã có. Các checkpoint dưới là lịch sử.
+
 Cập nhật 2026-10-19. Đây là bảng hiện hành; các checkpoint theo ngày trong README/handoff/notes vẫn giữ để truy vết lịch sử. [Kế hoạch tuần19–25/10, backlog và test hardware](WEEKLY_COMPLETION_PLAN_20261019.md); [control UI đã triển khai, API và tái lập](frontend/modules/ACTUATOR_CONTROL_WEB.md).
 
 | Phần | Đã có | Còn phải hoàn tất |

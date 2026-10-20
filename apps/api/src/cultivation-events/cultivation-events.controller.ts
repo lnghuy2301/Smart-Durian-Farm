@@ -3,13 +3,13 @@ import { ApiBearerAuth, ApiCreatedResponse, ApiNoContentResponse, ApiOkResponse,
 import { AuthGuard, AuthRequest } from '../auth/auth.guard';
 import { FarmPageDto } from '../farms/farms.dto';
 import { CreateCorrectionDto, CreateEventDto, EventIdDto, EventListDto, UpdateEventDto } from './cultivation-events.dto';
-import { CultivationEventsService } from './cultivation-events.service';
+import { CultivationRecords } from './cultivation-records';
 import { chainSchema, eventPageSchema, eventSchema } from './cultivation-events.schema';
 
 @ApiTags('cultivation-events') @ApiBearerAuth() @UseGuards(AuthGuard)
 @Controller('cultivation-events')
 export class CultivationEventsController {
-  constructor(@Inject(CultivationEventsService) private readonly events: CultivationEventsService) {}
+  constructor(@Inject(CultivationRecords) private readonly events: CultivationRecords) {}
 
   @Get() @ApiOperation({ summary: 'Visible journals, filtered before pagination' })
   @ApiOkResponse({ schema: eventPageSchema })
@@ -40,7 +40,7 @@ export class CultivationEventsController {
   update(@Req() req: AuthRequest, @Param() param: EventIdDto, @Body() body: UpdateEventDto) { return this.events.update(req.user!.id, param.id, body); }
 
   @Delete(':id') @HttpCode(204) @ApiNoContentResponse() @ApiOperation({ summary: 'Author deletes Pending before lock_at' })
-  remove(@Req() req: AuthRequest, @Param() param: EventIdDto) { this.events.remove(req.user!.id, param.id); }
+  remove(@Req() req: AuthRequest, @Param() param: EventIdDto) { return this.events.remove(req.user!.id, param.id); }
 
   @Post(':id/corrections') @ApiOperation({ summary: 'Append Pending correction referencing latest Locked; original assignment policy' })
   @ApiCreatedResponse({ schema: eventSchema })

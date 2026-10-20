@@ -344,7 +344,7 @@ test('Mongo actuator journal, durable IDs and PostgreSQL control authority', asy
     await t.test('Mongo loss during ACK fails closed, preserves durable intent and restart does not replay it', async () => {
       const fixture = await f.deviceFixture(), transport = new TaskTransport();
       const client = new MongoClient(taskMongoUri, { serverSelectionTimeoutMS: 100 }); await client.connect();
-      const service = new DatabaseActuatorTaskRecords({ ackTimeoutMs: 10000 }, transport, f.access, new MongoActuatorTaskStore(client, client.db(f.name), 100));
+      const service = new DatabaseActuatorTaskRecords({ ackTimeoutMs: 10000 }, transport, f.access, new MongoActuatorTaskStore(client, client.db(f.name)));
       await service.initialize(); await service.brokerChanged(readyState);
       let destroyed = false;
       try {
@@ -366,7 +366,7 @@ test('Mongo actuator journal, durable IDs and PostgreSQL control authority', asy
     });
     await t.test('Mongo loss before command cannot publish or return cached known mode', async () => {
       const fixture = await f.deviceFixture(), client = new MongoClient(taskMongoUri, { serverSelectionTimeoutMS: 100 }); await client.connect();
-      const transport = new TaskTransport(), service = new DatabaseActuatorTaskRecords({ ackTimeoutMs: 10000 }, transport, f.access, new MongoActuatorTaskStore(client, client.db(f.name), 100));
+      const transport = new TaskTransport(), service = new DatabaseActuatorTaskRecords({ ackTimeoutMs: 10000 }, transport, f.access, new MongoActuatorTaskStore(client, client.db(f.name)));
       await service.initialize(); await service.brokerChanged(readyState); wireDevices.set(service, fixture.device.id);
       try {
         await service.command(fixture.owner.id, fixture.device.id, 'Stop'); await finish(service, transport, 0, 3);

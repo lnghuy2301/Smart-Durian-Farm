@@ -2,12 +2,38 @@ import { ConflictException, HttpException, HttpStatus, Injectable, NotFoundExcep
 import { CultivationEvent, EventContext, EVENT_CAPACITY } from './cultivation-events.types';
 import { compareEvents, eventHash, verifyEvents } from './cultivation-chain';
 
+export interface CultivationSnapshot {
+  events: CultivationEvent[];
+  contexts: [string, EventContext][];
+  heads: [string, { count: number; hash: string | null }][];
+}
+
 @Injectable()
 export class CultivationEventsStore {
   private readonly records = new Map<string, CultivationEvent>();
   private readonly contexts = new Map<string, EventContext>();
   private readonly chains = new Map<string, string[]>();
   private readonly heads = new Map<string, { count: number; hash: string | null }>();
+  private clock: () => number = () => Date.now();
+
+  // Transaction-local journal only. The Mongo adapter hydrates a fresh journal
+  // per snapshot; it never retains this Map as a second persistence authority.
+  static restore(snapshot: CultivationSnapshot, clock: () => number): CultivationEventsStore {
+    const store = new CultivationEventsStore();
+    store.clock = clock;
+    for (const event of snapshot.events) store.records.set(event._id, structuredClone(event));
+    for (const [id, context] of snapshot.contexts) store.contexts.set(id, structuredClone(context));
+    for (const [zone, head] of snapshot.heads) store.heads.set(zone, structuredClone(head));
+    for (const event of [...snapshot.events].filter((item) => item.status === 'Locked').sort(compareEvents)) {
+      const zone = store.context(event._id).zone_id;
+      const chain = store.chains.get(zone) ?? [];
+      chain.push(event._id); store.chains.set(zone, chain);
+    }
+    return store;
+  }
+  snapshot(): CultivationSnapshot {
+    return structuredClone({ events: [...this.records.values()], contexts: [...this.contexts], heads: [...this.heads] });
+  }
 
   get(id: string): CultivationEvent {
     const event = this.records.get(id);
@@ -47,7 +73,7 @@ export class CultivationEventsStore {
     this.contexts.delete(id);
   }
 
-  lockDue(now = Date.now()): number {
+  lockDue(now = this.clock()): number {
     const due = [...this.records.values()].filter((event) => event.status === 'Pending' && Date.parse(event.lock_at) <= now).sort(compareEvents);
     // Không await giữa kiểm tra và ghi: trong một process Nest, request khác
     // không đọc bản ghi đang khóa dở hoặc nối cùng head hai lần. Khi persistence
@@ -75,6 +101,6 @@ export class CultivationEventsStore {
 
   private pending(id: string): void {
     const event = this.get(id);
-    if (event.status !== 'Pending' || Date.now() >= Date.parse(event.lock_at)) { throw new ConflictException('Only Pending events before lock_at can change'); }
+    if (event.status !== 'Pending' || this.clock() >= Date.parse(event.lock_at)) { throw new ConflictException('Only Pending events before lock_at can change'); }
   }
 }

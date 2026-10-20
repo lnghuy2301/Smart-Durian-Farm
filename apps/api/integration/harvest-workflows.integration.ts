@@ -130,7 +130,7 @@ test('PostgreSQL Harvest durable review/backdates, batch locks, approved trace a
           '2',
         );
         await sql.query('DELETE FROM technical.workflow_requests WHERE id=$1', [rows.rows[1].id]);
-        assert.deepEqual(await runMigrations(sql, mongo.db(name)), ['010_harvest_workflow', '011_device_workflow', '012_sensor_workflow', '013_actuator_workflow']);
+        assert.deepEqual(await runMigrations(sql, mongo.db(name)), MIGRATIONS.filter((entry) => entry.id >= '010_harvest_workflow').map((entry) => entry.id));
         await sql.query('DELETE FROM technical.workflow_requests WHERE id=$1', [rows.rows[0].id]);
         await sql.query('DELETE FROM public.users WHERE id=$1', [u]);
       },

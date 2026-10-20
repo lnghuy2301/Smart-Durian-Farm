@@ -47,8 +47,8 @@ export interface CultivationEvent {
   hash: string | null;
 }
 
-// Context quyền chỉ lưu RAM ngoài document ERD. Correction kế thừa phân công
-// và thời điểm GỐC. Cần chốt nơi lưu bền context khi triển khai persistence.
+// Private authority context outside the business document; Mongo persists it in
+// PERSISTENCE_STATE. Corrections retain the ORIGINAL assignment and timestamp.
 export interface EventContext {
   zone_id: string;
   farm_id: string;

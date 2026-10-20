@@ -79,6 +79,14 @@ export class PostgresCatalogRepository {
     if (!result.rows[0]) { throw new NotFoundException('Không tìm thấy tiêu chuẩn'); }
     return result.rows[0];
   }
+  // Trusted snapshot lookup for Cultivation; caller already owns authority and
+  // Standard lock, then acquires Material IDs in sorted order on this client.
+  async loadMaterialOnClient(client: PoolClient, id: string): Promise<AgriculturalMaterial> {
+    catalogUuid(id);
+    const result = await client.query<AgriculturalMaterial>(`SELECT id,${MATERIAL_FIELDS.join(',')} FROM public.agricultural_materials WHERE id=$1 FOR SHARE`, [id]);
+    if (!result.rows[0]) throw new NotFoundException('Không tìm thấy vật tư');
+    return result.rows[0];
+  }
   private async read<T extends CatalogRecord>(client: PoolClient, table: CatalogTable, id: string, lock = false): Promise<T> {
     catalogUuid(id);
     // Table/columns đến từ whitelist nội bộ; mọi giá trị HTTP là parameters.

@@ -14,6 +14,7 @@ import { HARVEST_WORKFLOW_SCHEMA } from './harvest-workflow-schema';
 import { DEVICE_WORKFLOW_SCHEMA } from './device-workflow-schema';
 import { SENSOR_WORKFLOW_SCHEMA } from './sensor-workflow-schema';
 import { ACTUATOR_WORKFLOW_SCHEMA } from './actuator-workflow-schema';
+import { applyCultivationStateSchema, CULTIVATION_STATE_SCHEMA } from './cultivation-state-schema';
 
 export interface MigrationDefinition {
   id: string;
@@ -48,6 +49,8 @@ export const MIGRATIONS: MigrationDefinition[] = [
     apply: async (client) => { await client.query(SENSOR_WORKFLOW_SCHEMA); } },
   { id: '013_actuator_workflow', store: 'postgres', source: ACTUATOR_WORKFLOW_SCHEMA,
     apply: async (client) => { await client.query(ACTUATOR_WORKFLOW_SCHEMA); } },
+  { id: '014_cultivation_ledger', store: 'mongo', source: JSON.stringify(CULTIVATION_STATE_SCHEMA),
+    apply: async (_client, db) => { await applyCultivationStateSchema(db); } },
 ];
 export function migrationChecksum(source: string): string { return createHash('sha256').update(source).digest('hex'); }
 
