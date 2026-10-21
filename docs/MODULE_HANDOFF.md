@@ -1,5 +1,7 @@
 # Bàn giao các module — đọc đầu session
 
+Checkpoint mới21/10: branch `feat/offline-demo-telemetry` kế thừa `71fb723`. Đã chuẩn bị sáu Sensor mỗi Device mẫu và nạp1.440 readings riêng SIM_DEMO_001/002; trạm thật/.env/MQTT=false giữ nguyên. DB local240 PG rows/1.441 Mongo documents; backup/restore-check khớp. [Source/commands/tests/giới hạn](OFFLINE_DEMO_TELEMETRY.md). Không chạy lại seed telemetry vì journal đã có dữ liệu; không xóa counter/collections. Backend248 tests, integration liên quan31 tests, lint/typecheck/build đạt. AI vẫn cần chốt model/provider/corpus trước khi code.
+
 Cập nhật21/10/2026. Nhánh hiện hành `feat/database-backup-restore` kế thừa MQTT final `fd7a4fb`, cleanup `92ce66f` và database runtime `1f6c1fd`. Không coi tên nhánh/commit trong guide cũ là trạng thái GitHub hiện tại; kiểm tra git trước khi làm. [Mục lục](README.md), [tiến độ](BACKEND_PROGRESS_CURRENT.md).
 
 ## Đọc và kiểm tra

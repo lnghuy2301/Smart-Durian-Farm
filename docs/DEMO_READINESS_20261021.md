@@ -1,5 +1,7 @@
 # Chuẩn bị demo — checkpoint21/10/2026
 
+Cập nhật sau cùng: [offline demo telemetry](OFFLINE_DEMO_TELEMETRY.md) đã thêm1.440 readings riêng Device mô phỏng, chuẩn bị6 Sensor thiếu và sửa2 đơn vị mẫu qua owner repository. Backup/restore-check mới khớp với240 PG rows/1.441 Mongo documents. Trạm thật/MQTT=false giữ nguyên. Các số Mongo0/220 PG bên dưới là checkpoint trước import; tình trạng Manager chưa Active/Join và các bước live chưa thay đổi.
+
 Source MQTT final `fd7a4fb`; công cụ vận hành trên `feat/database-backup-restore`. [Protocol/source/tests](MQTT_FINAL_INTEGRATION.md), [backup/restore CLI](DATABASE_BACKUP_RESTORE.md).
 
 ## Đã thực hiện trên database local

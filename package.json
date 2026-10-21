@@ -17,6 +17,8 @@
     "db:status": "npm run db:status --workspace @smart-durian/api",
     "db:migrate": "npm run db:migrate --workspace @smart-durian/api",
     "db:seed": "npm run db:seed --workspace @smart-durian/api",
+    "db:demo:prepare": "npm run db:demo:prepare --workspace @smart-durian/api",
+    "db:seed:telemetry": "npm run db:seed:telemetry --workspace @smart-durian/api",
     "db:backup": "npm run db:backup --workspace @smart-durian/api",
     "db:demo:check": "npm run db:demo:check --workspace @smart-durian/api",
     "db:backup:verify": "npm run db:backup:verify --workspace @smart-durian/api --",

@@ -17,6 +17,9 @@ interface InsertionState {
   payload: { sequence: number; retained_ids: ObjectId[] };
 }
 const STATE_ID = 'telemetry-insertion:global';
+export class DemoTelemetryOccupiedError extends Error {
+  constructor() { super('Demo telemetry requires an unused journal; existing data was preserved'); }
+}
 function invariant(value: boolean): asserts value {
   if (!value) {
     throw new Error('Invalid persisted telemetry state');
@@ -66,6 +69,16 @@ export class MongoTelemetryStore {
     return this.transaction(async (session) => (await this.snapshot(session)).records.reverse());
   }
   async append(input: TelemetryRecord[]): Promise<void> {
+    return this.write(input, false);
+  }
+  // Offline fixture import only: never evict or mix with an existing journal.
+  // The emptiness check shares the insertion-counter transaction, so racing
+  // imports cannot both succeed, even when neither saw a counter beforehand.
+  async initializeEmptyDemo(input: TelemetryRecord[]): Promise<void> {
+    invariant(input.length > 0 && input.length <= TELEMETRY_READING_LIMIT);
+    return this.write(input, true);
+  }
+  private async write(input: TelemetryRecord[], emptyDemoOnly: boolean): Promise<void> {
     if (!input.length) {
       return;
     }
@@ -81,6 +94,9 @@ export class MongoTelemetryStore {
         await this.transaction(async (session) => {
           const snapshot = await this.snapshot(session),
             state = snapshot.state;
+          if (emptyDemoOnly && (state?.payload.sequence ?? 0) !== 0) {
+            throw new DemoTelemetryOccupiedError();
+          }
           const existing = new Set(snapshot.records.map((record) => record._id));
           invariant(rows.every((row) => !existing.has(row._id.toHexString())));
           const oldSequence = state?.payload.sequence ?? 0;
@@ -122,7 +138,7 @@ export class MongoTelemetryStore {
         if (creatingCounter && (error as { code?: number }).code === 11000) {
           continue;
         }
-        if (error instanceof ServiceUnavailableException) {
+        if (error instanceof ServiceUnavailableException || error instanceof DemoTelemetryOccupiedError) {
           throw error;
         }
         throw new ServiceUnavailableException('Không thể lưu dữ liệu telemetry; vui lòng thử lại sau');
@@ -192,6 +208,7 @@ export class MongoTelemetryStore {
         maxCommitTimeMS: this.timeoutMs,
       });
     } catch (error) {
+      if (error instanceof DemoTelemetryOccupiedError) throw error;
       if (exposeDuplicate && (error as { code?: number }).code === 11000) {
         throw error;
       }

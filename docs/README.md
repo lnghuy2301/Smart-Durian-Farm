@@ -43,6 +43,7 @@ Các guide `*_IMPLEMENTATION.md` ghi cả phạm vi và kết quả ở thời �
 - [Persistence design](PERSISTENCE_DESIGN.md): phân chia PG/Mongo và metadata kỹ thuật.
 - [Foundation](PERSISTENCE_FOUNDATION_IMPLEMENTATION.md): CLI, migration/seed và nguyên tắc không ghi đè.
 - [Seed spec hiện hành](PERSISTENCE_SEED_SPEC.md), [chuẩn bị hardware thật](REAL_HARDWARE_DATABASE_READINESS.md).
+- [IoT demo offline](OFFLINE_DEMO_TELEMETRY.md): chuẩn bị Sensor mẫu và lịch sử1.440 readings riêng hai Device mô phỏng, không cần hardware/MQTT.
 - [Backup/restore CLI](DATABASE_BACKUP_RESTORE.md), [demo readiness21/10](DEMO_READINESS_20261021.md): thao tác vận hành, role/HTX scope và báo cáo kiểm chứng thực tế.
 - Các guide `POSTGRES_*_IMPLEMENTATION.md`: SQL, quyền, locks, proposals, restart và tái lập riêng từng adapter.
 - [Frontend](frontend/README.md), [các workflow UI](frontend/REFERENCE_WORKFLOWS_IMPLEMENTATION.md), tài liệu từng màn hình trong `frontend/modules/`.

@@ -1,5 +1,7 @@
 # Kế hoạch triển khai tiếp theo
 
+Checkpoint offline21/10: [dữ liệu IoT mẫu](OFFLINE_DEMO_TELEMETRY.md) đã nạp cho hai Device mô phỏng; không cần bật hardware/MQTT để xem lịch sử. Bước tiếp theo là người dùng smoke API/web với DB đã có mẫu, hoàn tất Manager thật/Join HTX, sau đó nghiệm thu hardware. AI chỉ bắt đầu sau khi chốt model/provider/corpus và phạm vi; chưa tự chọn dịch vụ trả phí hoặc giả kết quả AI.
+
 Cập nhật21/10/2026. API nghiệp vụ,13 PG adapters,3 Mongo adapters, shared database runtime, giao diện web và QR đã có. [Tiến độ/evidence](BACKEND_PROGRESS_CURRENT.md); không lập lại backlog persistence/UI đã hoàn tất.
 
 ## Thứ tự ưu tiên
