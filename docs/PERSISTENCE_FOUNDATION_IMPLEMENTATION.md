@@ -1,79 +1,30 @@
-# Persistence foundation — migration, schema và seed demo
+# Persistence foundation — CLI, schema và seed
 
-**Telemetry Mongo2026-10-19:** feat/mongo-telemetry-persistence từ Actuator8926d68 hoàn tất Mongo FIFO10000/atomic packet+counter+eviction, PG identity/current scopes và async shared RAM seam. **239 backend/216 persistence/37 browser**, API lint/typecheck/build đạt; target16/16 tăng cường ObjectId/time order đạt. [Progress](BACKEND_PROGRESS_CURRENT.md), [source/API/transaction/lỗi đã sửa/tái lập](MONGO_TELEMETRY_IMPLEMENTATION.md), [kế hoạch tuần/hardware](WEEKLY_COMPLETION_PLAN_20261019.md), [brief control UI](frontend/ACTUATOR_CONTROL_DESIGN_BRIEF.md). Đủ13 PG+1/3 Mongo domain adapters; **AppModule/MQTT vẫn RAM** tới wiring async đồng bộ. Tiếp tasks Mongo/allocator/recovery→Cultivation Mongo/context/head→database runtime/restart/frontend/ESP32 acceptance. Không migration/seed/demo DB writes trong đợt Telemetry, không thay firmware/topic/rules/10s ACK. .env/ERD/MQTT/Postman/UI riêng giữ nguyên, không tự push/merge hoặc gửi hardware commands. Checkpoints dưới là lịch sử.
+Cập nhật21/10/2026. Foundation và tất cả adapters/shared database runtime đã hoàn tất trong source nền1f6c1fd. [Runtime và kiểm thử hiện hành](DATABASE_RUNTIME_IMPLEMENTATION.md), [thiết kế](PERSISTENCE_DESIGN.md), [seed profile](PERSISTENCE_SEED_SPEC.md). Hướng dẫn này giữ CLI/recovery, không lặp các checkpoint RAM và số lượng seed cũ.
 
-**Actuator persistence2026-10-19:** feat/postgres-actuators-persistence từ Sensor9571247 hoàn tất PG metadata/Device-local numeric capability/fixed purpose/proposals/history/version/audit và async port dùng cùng RAM ActuatorsService. **238 backend/200 persistence/37 browser**, API lint/typecheck/build đạt;013 Applied local, hash/count13 business +4 technical giữ nguyên, không reseed. [Progress](BACKEND_PROGRESS_CURRENT.md), [guide/tái lập](POSTGRES_ACTUATORS_IMPLEMENTATION.md), [backlog/kế hoạch tuần và hardware](WEEKLY_COMPLETION_PLAN_20261019.md), [brief control UI](frontend/ACTUATOR_CONTROL_DESIGN_BRIEF.md). Đủ13/13 PG business-table adapters, **AppModule vẫn RAM**; tiếp Mongo telemetry→tasks→Cultivation→async shared database runtime/restart/frontend/hardware acceptance. Không đổi recipe/topic/firmware/ACK semantics hoặc tự gửi command thật. .env/ERD/MQTT/Postman/UI riêng giữ nguyên, không hỏi lại rules/seed/hardware, không tự push/merge. Checkpoints dưới là lịch sử.
+## Source
 
-**Sensor persistence2026-10-19:** feat/postgres-sensors-persistence từ Device9ec5f29 hoàn tất PG metadata/composite Device+stream/6 types/raw units/nullable threshold pairs/proposals/history/version/audit và async port dùng chung RAM SensorsService. **237 backend/184 persistence/37 browser**, API lint/typecheck/build đạt;012 Applied local, hash/count13 business +4 technical không đổi, không reseed. [Progress](BACKEND_PROGRESS_CURRENT.md), [guide/tái lập](POSTGRES_SENSORS_IMPLEMENTATION.md), [backlog và kế hoạch tuần/hardware](WEEKLY_COMPLETION_PLAN_20261019.md), [brief màn hình control còn thiếu](frontend/ACTUATOR_CONTROL_DESIGN_BRIEF.md). AppModule vẫn RAM; còn1 PG Actuator +3 Mongo domains +async shared database runtime/restart/frontend/hardware acceptance. Tiếp Actuator trên branch mới kế thừa Sensor; không hỏi lại rules/seed/hardware, không đổi firmware hoặc tự push/merge. .env/ERD/MQTT/Postman/UI riêng giữ nguyên. Checkpoints cũ bên dưới là lịch sử.
+Tính từ apps/api/src/persistence:
 
-**Device persistence2026-10-17:** feat/postgres-devices-persistence từ Harvest **c781a91** hoàn tất PostgreSQL Device metadata/proposals/history, async port dùng cùng RAM store và presence đơn điệu không tăng metadata version. **236 backend/167 persistence/37 browser**, API lint/typecheck/build đạt;011 Applied local, hash/count13 business +4 technical không đổi, không reseed. [Tiến độ hiện hành](BACKEND_PROGRESS_CURRENT.md), [source/API/quyền/presence/locks/tái lập](POSTGRES_DEVICES_IMPLEMENTATION.md). AppModule vẫn RAM tới khi adapters và async consumers hoàn tất đồng bộ; không chỉ đổi HTTP sang DB. Còn2 PG bảng Sensor/Actuator và3 Mongo domains, tiếp Sensor trên branch mới kế thừa Device; sau đó full runtime/restart/frontend/hardware acceptance. .env/private ERD/MQTT/Postman/UI giữ nguyên; không hỏi lại rule/seed/hardware, không tự push/merge. Các checkpoint bên dưới là lịch sử.
+| File | Vai trò |
+| --- | --- |
+| postgres-schema.ts | Initial schema001:13 business tables và technical tables |
+| mongo-schema.ts | Schema002 validators/indexes của domain/private state |
+| migrations.ts và các schema import | Manifest001–014/checksum/ledger/advisory lock, schema gia tăng |
+| transactions.ts | Transaction client, parent/batch locks |
+| seed-config.ts / seed.ts | Preflight/profile/seed_key, không overwrite |
+| mappers.ts | Decimal/time/ObjectId/BSON mapping giữ canonical hash |
+| cli.ts | status/migrate/seed, đọc .env local, đóng pool/client |
+| database-runtime.module.ts / persistence-runtime.module.ts | Shared bindings/preflight/providers |
 
-**Harvest persistence2026-10-17:** feat/postgres-harvests-persistence từ Tree5aca62a hoàn tất PG TREE_HARVESTS/requests/grants/version/audit, async port dùng cùng RAM service và migration010. **235 backend/151 persistence/37 browser**, API lint/typecheck/build đạt;010 Applied local, hash/count13 business +4 technical giữ nguyên, không reseed. [Tiến độ hiện hành](BACKEND_PROGRESS_CURRENT.md), [source/API/quyền/locks/tái lập](POSTGRES_HARVESTS_IMPLEMENTATION.md). User chốt correction cây Dead/Removed: chặn đổi sang hôm nay; giữ nguyên ngày vẫn sửa được kể cả ngày đó là hôm nay, kiểm tra lại khi gửi/chuẩn bị/duyệt. **AppModule vẫn RAM** tới khi hoàn tất adapters/async consumers; không bật riêng PG HTTP. Còn3 PG bảng Device/Sensor/Actuator và3 Mongo domains, tiếp Device trên nhánh mới từ Harvest. Không hỏi lại rule/seed/hardware đã chốt; private files/.env giữ nguyên, không tự push/merge. Các checkpoint cũ bên dưới là lịch sử.
-
-**Tree persistence2026-10-16:** feat/postgres-trees-persistence from87c069b delivers PostgreSQL Tree records, immutable backend DRN-UUID code, owner writes/Admin proposals and versioned append-only history. **233 backend/131 persistence/37 browser**, API lint/typecheck/build pass;009 Applied locally without data changes/reseed. [Current progress](BACKEND_PROGRESS_CURRENT.md), [API/source/locks/reproduction](POSTGRES_TREES_IMPLEMENTATION.md). Shared async RAM port retains current AppModule behavior; full runtime still RAM. Next Harvest persistence; remaining4 PG tables/3 Mongo domains before database wiring/restart/hardware acceptance. Private sources unchanged, no push/merge. Older dated checkpoints below are historical.
-
-Hiện hành2026-10-16: test:persistence gồm **tám suites/118 tests**, thêm assignment-workflows.integration.ts; [Assignment guide](POSTGRES_ASSIGNMENTS_IMPLEMENTATION.md), [progress hiện hành](BACKEND_PROGRESS_CURRENT.md). Migrations001–007 giữ checksum;008 tạo partial UNIQUE Pending End. Foundation/schema không phải database runtime toàn backend: AppModule vẫn RAM, tiếp Tree và các adapters còn lại. Các con số/lệnh theo mốc cũ phía dưới là lịch sử.
-
-Tiếp nối **2026-10-11 feat/postgres-farm-workflows** từbcf8715: PG Farm/workflows/signatures/history/notifications và async memory seam đã có, **228 backend/85 DB/29 browser**, checks đạt. [Guide hiện hành](POSTGRES_FARMS_IMPLEMENTATION.md). Migration005 partial UNIQUE Pending Farm Applied local, giữ001–004/checksums và dữ liệu demo, không seed lại. test:persistence hiện chạy **sáu suites**, thêm farm-workflows.integration.ts. AppModule vẫn RAM; next Zone persistence, không triển khai lại Farm/Users/HTX/catalogs. Kết quả/lệnh scope foundation bên dưới là lịch sử.
-
-Tiếp nối mới2026-10-10: **feat/postgres-catalogs** từ007834f đã có PG catalogs/bridge +async ports/shared memory wrappers, **227 backend/65 persistence** và checks đạt. [Guide hiện hành](POSTGRES_CATALOGS_IMPLEMENTATION.md). Không migration005/reseed/demo data changes; migrations001–004 giữ nguyên. test:persistence hiện chạy **năm suites**, thêm catalogs.integration.ts. AppModule vẫn RAM; isolated PG Auth/catalog restart đã test, next **Farm persistence**. Lệnh/số liệu đợt foundation bên dưới là lịch sử; dùng guide hiện hành để chạy đủ suites.
-
-Tiếp nối mới2026-10-10: **feat/postgres-cooperative-workflows** từ9c328a4 đã chuyển HTX workflow/history và async service/scheduler seam; **226 backend/51 DB** và checks đạt. [Guide hiện hành](POSTGRES_COOPERATIVE_WORKFLOWS_IMPLEMENTATION.md). Migration004 partial UNIQUE active Manager request Applied local; 001–003 không đổi, không seed lại/.env/private changes. test:persistence hiện chạy **bốn suites**. AppModule vẫn RAM; PG HTTP Auth/Users/HTX test cô lập không đồng nghĩa persistence toàn dự án đã bật. Số liệu/commands scope foundation dưới đây mô tả mốc cũ.
-
-Tiếp nối hiện hành2026-10-10: **feat/postgres-users-cooperatives** từcb2a4d6 đã có async Users/email lease, PG registration/Manager approval HTTP restart riêng và cooperative registry/lifecycle/version/audit/notifications. **226 backend/37 DB/8 web/29 browser**, checks đạt. Migration003 certificate UNIQUE bổ sung đã Applied local, giữ nguyên001/002 và dữ liệu demo, không chạy seed lại. [Guide hiện hành](POSTGRES_USERS_COOPERATIVES_IMPLEMENTATION.md). AppModule còn RAM; Manager email→SMS workflows/scheduler/các repositories khác chưa wiring. Hướng dẫn foundation/số216/16 bên dưới là kết quả lịch sử, lệnh test:persistence hiện đã chạy cả ba suites.
-
-Tiếp nối2026-10-10: adapter Users/Auth đã triển khai trên **feat/postgres-users-auth** từ2b6db5f, kiểm thử221 backend/26 DB integration tests và Auth HTTP restart riêng. [Guide và phạm vi](POSTGRES_USERS_AUTH_IMPLEMENTATION.md). AppModule toàn dự án vẫn RAM; Users/email/HTX và domain repositories chưa wiring. Các số216/16 và giới hạn của foundation dưới đây là kết quả của đợt foundation, chưa bao gồm adapter mới.
-
-Ngày 2026-10-10. Nhánh **feat/persistence-foundation**, base **622a189** từ docs/persistence-design; kế thừa QR/Cultivation/backend/frontend hiện có. Đọc cùng [thiết kế đã chốt](PERSISTENCE_DESIGN.md), [profile seed](PERSISTENCE_SEED_SPEC.md) và [handoff](MODULE_HANDOFF.md).
-
-## Kết quả và giới hạn
-
-Đã có CLI migration/status/seed, 13 bảng PostgreSQL nghiệp vụ, 4 bảng kỹ thuật dùng chung và ledger migration. MongoDB có 3 collections nghiệp vụ cùng PERSISTENCE_STATE nội bộ. Các migration được quản lý checksum, khóa đồng thời và chạy lại an toàn. Seed nằm trong một transaction PostgreSQL, chạy lại giữ UUID/password/status/nội dung đã sửa.
-
-**API nghiệp vụ vẫn dùng RAM.** CLI đã tạo bảng và seed database demo local nhưng chưa thay các store/services/guards/workers bằng repository database. IDs từ output seed chưa thể dùng với các API đang chạy RAM; chưa có chế độ database/fallback tự động. Nghiệm thu này không tuyên bố luồng HTTP giữ dữ liệu sau restart hoặc hardware đã kết nối. Việc mở client database mới đã được kiểm thử; restart toàn backend với adapters database là đợt tiếp theo.
-
-Không thêm endpoint API, không sửa frontend hoặc MQTT/DOCX/ERD/Postman riêng. Tiếp tục dùng các collection Postman hiện có; không thêm scripts/environments phức tạp. CLI không khởi tạo Nest/Auth/SMS/SMTP/MQTT, không tự gửi tin hoặc command, không seed telemetry/ACK/nhật ký đã Locked giả. Không tạo hai collections AI hoặc bảng QR.
-
-## Source và contract
-
-| File trong apps/api/src/persistence | Mục đích |
-|---|---|
-| postgres-schema.ts | SQL migration 001: bảng/FK/unique/check/index/trigger theo ERD và quyết định mới nhất |
-| mongo-schema.ts | Migration 002: validators/indexes; BSON Date/ObjectId; PERSISTENCE_STATE có payload riêng từng kind |
-| migrations.ts | Manifest/checksum/ledger/session advisory lock; status và runner |
-| transactions.ts | Một PoolClient cho transaction; helper khóa Farm/batch trước câu ghi |
-| seed-config.ts | Validate tài khoản/namespace/allowlist/DTO installed_at/cost trước khi kết nối seed |
-| seed.ts | Profile durian-demo-v1, manifest seed_key, giữ dữ liệu đã có và báo conflict |
-| mappers.ts | numeric/bigint/timestamp/ObjectId mapping; roundtrip không đổi canonical hash v1 |
-| contracts.ts | Contracts async/unit of work cho adapters đợt sau, chưa đăng ký DI |
-| cli.ts | Lệnh status/migrate/seed, dotenv local, đóng pool/client và log không có secrets |
-
-CLI là process riêng, sở hữu và đóng một DatabaseService/pool/client. API AppModule không thêm instance/store hoặc runner tự chạy khi startup. Đợt repository phải tái dùng đúng DatabaseModule của AppModule hiện có và await mọi thao tác.
-
-## Schema và ràng buộc
-
-Tên vật lý PostgreSQL lowercase, cùng field của ERD: users, cooperatives, farms, zones, users_zones, trees, tree_harvests, agricultural_materials, farming_standards, standard_materials, devices, sensors, actuators. Enum nghiệp vụ dùng TEXT + CHECK để dễ đọc/đổi bằng migration mới; giá trị JSON/API không đổi. UUID default gen_random_uuid; timestamps TIMESTAMPTZ; harvest_date DATE; numeric giữ precision/scale ERD. Seed cây sinh tree_code DRN-{id}, không nhập mã hardware làm PK.
-
-Schema technical gồm entity_metadata, workflow_requests, audit_events, notifications và schema_migrations. Bốn bảng đầu là dữ liệu kỹ thuật đã được người dùng chấp thuận; ledger là hạ tầng migration. JSONB chứa payload có loại rõ ràng, không dump toàn bộ store vào một blob. Liên kết đa hình entity_type/entity_key không có FK tự động tới mọi bảng; repository phải kiểm tra trong transaction. audit_events chặn UPDATE/DELETE.
-
-Các bảo vệ đã kiểm thử:
-
-- Phone unique sau chuẩn hóa 0/84/+84; email nullable/chuẩn hóa và unique. Không lưu plaintext password. Một manager_id chỉ gắn tối đa một HTX.
-- USERS_ZONES exclusion trên Zone + tstzrange [start,end), end null không có hạn cuối. Chỉ các phân công đã được chấp thuận sẽ được adapter ghi vào bảng chính; lời mời Pending nằm trong workflow_requests.
-- Station unique/not null và bất biến; Device installed_at/cost bắt buộc; Tree/Device/Zone không chuyển cha. Sensor loại/stream/device và Actuator purpose/capability/device bất biến, unique theo cặp Device. Sensor.unit vẫn varchar16 editable; hai ngưỡng cùng null hoặc min < max.
-- TREE_HARVESTS unique(tree_id,harvest_date); batch_code có index nhưng **không UNIQUE**. Trigger kiểm tra chung Zone/ngày, khóa batch cũ/mới theo thứ tự. updated_by/updated_at cùng null hoặc cùng có giá trị. Quyền đọc/duyệt, everConfirmed, sửa/xóa vẫn phải qua repository/service hiện hành, không suy từ CHECK.
-- Trigger kiểm tra tổng diện tích Zone và shrink Farm; standard gắn mới phải Active. Không tự tuyên bố SQL trigger thay toàn bộ quyền hay luồng duyệt.
-
-**Contract khóa bắt buộc cho adapter:** transaction READ COMMITTED gọi lockFarm trước INSERT/PATCH Zone hoặc shrink Farm; lockHarvestBatches trước INSERT/PATCH/review Harvest và khóa cả mã cũ/mới theo thứ tự cố định. Helper khóa trước câu ghi để truy vấn kiểm tra sau khi chờ khóa có snapshot mới. Trigger là phòng vệ; các lệnh SQL tùy ý bỏ helper hoặc isolation khác chưa được nghiệm thu về concurrent aggregate/batch. Không dùng pool.query rời rạc bên trong transaction. [node-postgres transactions](https://node-postgres.com/features/transactions), [PostgreSQL17 ranges/exclusion](https://www.postgresql.org/docs/17/rangetypes.html).
-
-Mongo: IOT_TELEMETRIES unit tối đa16 theo runtime hiện hành, không dùng giới hạn8 cũ của ERD; preserved raw unit. ACTUATOR_TASKS command_id unique/safe JSON integer và index history/Pending. CULTIVATION_EVENTS bắt buộc field/ObjectId/date/hash shape, index tác giả/target/lineage/deadline. Validators không thay kiểm tra quyền, liên kết context hoặc tính hash. PERSISTENCE_STATE kinds: CultivationContext, ZoneChainHead, TelemetryInsertionCounter (retained_ids tối đa10000), TaskIdAllocator. Collection/state vẫn trống sau seed; FIFO/counter allocator/catch-up transaction sẽ thực hiện ở đợt Mongo repository. [Mongo schema validation](https://www.mongodb.com/docs/manual/core/schema-validation/specify-json-schema/).
+Interfaces scaffolding contracts.ts không có consumer đã bỏ; các domain async ports và repository bundle đang được dùng thực tế.
 
 ## Migration: lệnh và phục hồi
 
 Từ thư mục gốc dự án, cấu hình DATABASE_URL/MONGODB_URI trong .env local và dùng Compose hiện có:
 
 ```powershell
-docker compose up -d postgres mongodb mongo-init
+docker compose -p smart-durian-farm up -d postgres mongodb mongo-init
 npm run db:status
 npm run db:migrate
 npm run db:status
@@ -92,53 +43,21 @@ node dist/persistence/cli.js migrate
 node dist/persistence/cli.js seed
 ```
 
-## Seed demo và cấu hình
+## Seed và dữ liệu demo
 
-Đã đầy đủ các khóa local/example; các khóa DEMO_DEVICE_* được **CLI seed** đọc, không dùng làm global whitelist MQTT:
+Chỉ chạy `npm run db:seed` khi cần chuẩn bị/bổ sung profile đã kiểm tra. [Seed spec hiện hành](PERSISTENCE_SEED_SPEC.md) liệt kê cấu hình, six-stream mappings, accounts, số lượng fresh profile và quy tắc không ghi đè. Không reset password, role/status/verification, UUID, station, unit hoặc history đang có.
 
-| Key | Giá trị / nguồn |
-|---|---|
-| AUTH_TEST_PHONE / AUTH_TEST_PASSWORD | Farmer demo chính từ cấu hình hiện có; không gửi secret trong chat/docs |
-| AUTH_TEST_ADMIN_PHONE / AUTH_TEST_ADMIN_PASSWORD | Admin bootstrap từ cấu hình hiện có |
-| DEMO_DEVICE_STATION_ID | E08CFE41DCAC local; template để trống cho installation khác |
-| DEMO_DEVICE_INSTALLED_AT | 2026-09-01T08:30:00+07:00, lưu UTC; metadata minh họa được cho phép |
-| DEMO_DEVICE_COST | 10237500 VNĐ, metadata minh họa được cho phép |
+Seed không gửi mail/SMS/MQTT và không tạo ACK/telemetry/Locked journal giả cho trạm thật. Manager mẫu Pending không thay Manager thật đã verify; dữ liệu workflow demo tạo qua API. Database local đã có dữ liệu thì kiểm kê/backup trước, không xóa volume/reseed để chữa login.
 
-```powershell
-npm run db:seed
-npm run db:seed
-```
-
-Lần đầu profile tạo 99 records có UUID và4 liên kết standard_materials: 4 Users,1 HTX chưa gắn Manager,3 tiêu chuẩn,5 vật tư,3 Farms,6 Zones,54 Trees,2 phân công cùng Zone có khoảng liền kề (một đã hết và một đang hiệu lực),3 Devices,9 Sensors,9 Actuators. Không seed Harvest/Cultivation đã xác nhận trong foundation. Farmer chính sở hữu2 Farms, Farmer mẫu sở hữu Farm còn lại. Farm độc lập; HTX mẫu chưa có Manager và metadata created_at để worker xử lý deadline sau này. Manager mẫu Pending, email demo.invalid chưa verified; cần đăng ký/xác minh thật qua API để demo Active Manager, không duyệt tài khoản mẫu này như đã verified.
-
-Trạm thật ở Zone Khu A; streams301/C,302/%,303/% và capabilities2/shared,3/watering,4/spraying. Hai trạm mô phỏng SIM_DEMO_001/SIM_DEMO_002 nằm ở Zones khác, Inactive/Maintenance. Mọi bảng con dùng Device UUID. last_seen_at null, không bịa Online/readings/ACK/physical state. seed_origin/hardware_bundle/seed_key ở metadata kỹ thuật phân biệt fixture/mô phỏng/bộ thật; dữ liệu mẫu có nhãn trong tên/hướng dẫn.
-
-Chạy lại: reused=99/inserted=0 trên profile chưa thay identity; không reset password/status/verification/token version/cost/UUID. Metadata cũ thắng defaults. Đổi station/phone/Zone bất biến, role/ownership không phù hợp, manifest trỏ record đã xóa hoặc liên kết vật tư bị gỡ: báo conflict và rollback toàn transaction, không khôi phục/ghi đè dữ liệu tùy tiện. Nếu tài khoản Farmer đã có nhưng chưa là owner, seed báo conflict; chuyển ownership qua nghiệp vụ repository ở đợt sau thay vì seed sửa user có sẵn. Các số mẫu không được nằm trong SMS allowlist. CLI output chỉ counts và IDs của trạm/Zone/Farmer chính, không phone/hash/password.
-
-Nghiệm thu local trong đợt này: hai migrations Applied; seed đầu inserted99/reused0, chạy lại inserted0/reused99. Không ghi IDs của installation local vào source; lấy output CLI bằng tay khi adapters database đã được triển khai. .env không đổi nội dung trong đợt foundation, vẫn ngoài Git. Việc kiểm chứng SMS/hardware thật phải do người dùng chủ động thực hiện sau khi API đọc repository.
-
-## Tái lập kiểm thử
+## Kiểm thử cô lập
 
 ```powershell
 docker compose -p sdf-persistence-test -f docker-compose.persistence-test.yml up -d
 npm run test:persistence
-npm test
-npm run lint
-npm run typecheck
-npm run build
-docker compose -p sdf-persistence-test -f docker-compose.persistence-test.yml down
 ```
 
-Compose test dùng ports15432/27028, credentials fixture và tmpfs riêng; không đọc .env để lấy giá trị connection/credentials. Test không khởi tạo Nest hoặc provider thật. Mỗi run tạo database tên sdf_persistence_test_{32hex}, chỉ xóa database đã tạo trên endpoint test; không reset smart_durian hoặc volumes demo. Cần Docker đang chạy và Mongo rs-test có primary; lỗi kết nối không được coi là test pass/skipped. Từ apps/api có thể compile bằng tsc --outDir .integration-dist và chạy node --test .integration-dist/integration/persistence.integration.js khi npm wrapper lỗi.
+Fixture riêng ports15432/27028, tên databases có prefix kiểm soát; không dùng database demo để chạy integration. Mongo cần primary replica set. Mỗi suite có kiểm tra endpoint và cleanup database test; mất kết nối là lỗi, không coi skipped là pass. Tests hiện hành có full AppModule/HTTP/MQTT/QR/restart, khác giới hạn foundation ban đầu.
 
-Đã đạt **216/216 backend tests** (9 mới) và **16/16 persistence integration tests** (15 subcases + wrapper), lint/typecheck/build. Kiểm thử gồm migration concurrent/rerun/checksum/DDL rollback; seed conflict/no-overwrite; identity/composite unique; cạnh tranh diện tích; exclusion khoảng liền kề; batch nhiều cây/cross-Zone/date; rollback record/request/metadata; append-only audit; Mongo validation/transactions; client mới vẫn đọc dữ liệu. Hash v1 roundtrip BSON được kiểm thử độc lập. Không chạy lại web suite vì không sửa frontend; các số web trong bàn giao trước là kết quả đợt QR.
+Sau test: `docker compose -p sdf-persistence-test -f docker-compose.persistence-test.yml down`, không -v. Không tác động project smart-durian-farm. [Runtime guide](DATABASE_RUNTIME_IMPLEMENTATION.md) có nguồn tests, cấu hình và lệnh Windows fallback cho từng đợt.
 
-## Session tiếp theo
-
-1. Đọc AGENTS nếu có, git status/branch/log; không checkout main cũ làm mất chuỗi tích hợp hoặc stage toàn bộ workspace.
-2. Đọc guide này, thiết kế/profile/handoff và nguồn ERD hiện có. Giữ các file nguồn ERD/MQTT/spec/Postman/UI riêng ngoài commit.
-3. Nhánh kế tiếp từ foundation: PostgreSQL repositories. Chuyển từng service/guard/worker sang async, ghi records + workflow + metadata + audit trong cùng transaction; preserving API contracts và shared instances. Ưu tiên Users/Auth/HTX/danh mục, sau đó Farm/Zone/assignments/Trees/Harvest/IoT metadata.
-4. Mongo repositories: atomic context/head/event; retention insertion order; ID allocator bền; restart interrupted control giữ Unknown và reset trước Start. Chưa có điểm nghiệp vụ mới cần chốt ở foundation; nếu schema/API/role rule chưa rõ trong adapter thì hỏi trước.
-5. Nghiệm thu HTTP/web/Postman/restart và ESP32 thật sau khi adapters hoàn tất. Không gọi receipt ACK là bằng chứng relay hoạt động; không tự tạo Cultivation từ ACK.
-
-Nhánh/commit local; không tự push hoặc merge.
+Backend unit/quality: npm test, npm run lint/typecheck/build; web commands ở README gốc. Không gửi SMS/email/control hardware thật trong automated tests. [Kế hoạch nghiệm thu](IMPLEMENTATION_PLAN.md), [bàn giao](MODULE_HANDOFF.md).

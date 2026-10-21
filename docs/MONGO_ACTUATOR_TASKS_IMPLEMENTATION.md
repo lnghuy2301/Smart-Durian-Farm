@@ -117,4 +117,4 @@ Kết quả cuối: **239/239 backend,239/239 persistence (15 suites),46/46 brow
 
 ## Việc tiếp theo
 
-Cultivation Mongo/private context/head với deadline15 phút, chain/correction/assignment gốc và QR lineage như đã chốt; sau đó async lookup/guards/workers/MQTT/QR và shared database AppModule. Cuối cùng nghiệm thu restart/API/frontend cùng nguồn database và ESP32 thật theo [kế hoạch tuần](WEEKLY_COMPLETION_PLAN_20261019.md). Không xây lại giao diện actuator control đã được duyệt; không đổi protocol, firmware, ACK semantics hoặc tự gửi lệnh thật.
+Cultivation Mongo/private context/head với deadline15 phút, chain/correction/assignment gốc và QR lineage như đã chốt; sau đó async lookup/guards/workers/MQTT/QR và shared database AppModule. Cuối cùng nghiệm thu restart/API/frontend cùng nguồn database và ESP32 thật theo [kế hoạch tuần](IMPLEMENTATION_PLAN.md). Không xây lại giao diện actuator control đã được duyệt; không đổi protocol, firmware, ACK semantics hoặc tự gửi lệnh thật.

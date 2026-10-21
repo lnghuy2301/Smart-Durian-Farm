@@ -3,7 +3,7 @@
     "_postman_id": "9e12e60a-8db3-4383-a68a-efb303780445",
     "name": "Smart Durian Farm - Auth Local Test",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "MOCK SMS ONLY: set SMS_PROVIDER=mock and restart API. Use Local environment and match test_phone/test_password to .env. Automatic mock outbox read is unavailable with Twilio. Current real SMS demo uses Twilio-Verify-Demo files. AUTH_MODE=mock only. No database writes or actual SMS. Restart API before each full collection run to restore initial test password and clear rate limits. Run requests in order. Local environment passwords are fake examples."
+    "description": "Import JSON truc tiep, khong scripts/environment. Dien phone/password local va copy JWT/OTP bang tay; khong export credentials that. Auth test/sms chi dung mock provider trong development/test."
   },
   "item": [
     {
@@ -16,59 +16,35 @@
             "value": "application/json"
           }
         ],
-        "url": "{{base_url}}/api/auth/login",
+        "url": "http://localhost:3000/api/auth/login",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"phone_number\": \"{{test_phone}}\",\n  \"password\": \"{{test_password}}\"\n}",
+          "raw": "{\n  \"phone_number\": \"YOUR_PHONE_NUMBER\",\n  \"password\": \"YOUR_PASSWORD\"\n}",
           "options": {
             "raw": {
               "language": "json"
             }
           }
         }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
-              "if (pm.response.code === 200) { pm.environment.set('access_token', pm.response.json().access_token); }",
-              "pm.test('No password returned', () => pm.expect(pm.response.json().user).not.to.have.property('password'));"
-            ]
-          }
-        }
-      ]
+      }
     },
     {
       "name": "02 Current user",
       "request": {
         "method": "GET",
         "header": [],
-        "url": "{{base_url}}/api/auth/me",
+        "url": "http://localhost:3000/api/auth/me",
         "auth": {
           "type": "bearer",
           "bearer": [
             {
               "key": "token",
-              "value": "{{access_token}}",
+              "value": "PASTE_JWT_HERE",
               "type": "string"
             }
           ]
         }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
-            ]
-          }
-        }
-      ]
+      }
     },
     {
       "name": "03 Wrong password",
@@ -80,28 +56,17 @@
             "value": "application/json"
           }
         ],
-        "url": "{{base_url}}/api/auth/login",
+        "url": "http://localhost:3000/api/auth/login",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"phone_number\": \"{{test_phone}}\",\n  \"password\": \"WrongPassword123!\"\n}",
+          "raw": "{\n  \"phone_number\": \"YOUR_PHONE_NUMBER\",\n  \"password\": \"WrongPassword123!\"\n}",
           "options": {
             "raw": {
               "language": "json"
             }
           }
         }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
-            ]
-          }
-        }
-      ]
+      }
     },
     {
       "name": "04 Forgot password",
@@ -113,50 +78,25 @@
             "value": "application/json"
           }
         ],
-        "url": "{{base_url}}/api/auth/forgot-password",
+        "url": "http://localhost:3000/api/auth/forgot-password",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"phone_number\": \"{{test_phone}}\"\n}",
+          "raw": "{\n  \"phone_number\": \"YOUR_PHONE_NUMBER\"\n}",
           "options": {
             "raw": {
               "language": "json"
             }
           }
         }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('HTTP 202', () => pm.response.to.have.status(202));",
-              "pm.test('OTP is not in this response', () => pm.expect(pm.response.json()).not.to.have.property('otp'));"
-            ]
-          }
-        }
-      ]
+      }
     },
     {
       "name": "05 Read mock SMS",
       "request": {
         "method": "GET",
         "header": [],
-        "url": "{{base_url}}/api/auth/test/sms?phone_number={{test_phone}}"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
-              "pm.test('Six digit OTP exists', () => pm.expect(pm.response.json().messages[0].otp).to.match(/^\\d{6}$/));",
-              "if (pm.response.code === 200 && pm.response.json().messages.length) { pm.environment.set('otp', pm.response.json().messages[0].otp); }"
-            ]
-          }
-        }
-      ]
+        "url": "http://localhost:3000/api/auth/test/sms?phone_number=YOUR_PHONE_NUMBER"
+      }
     },
     {
       "name": "06 Reset password",
@@ -168,57 +108,35 @@
             "value": "application/json"
           }
         ],
-        "url": "{{base_url}}/api/auth/reset-password",
+        "url": "http://localhost:3000/api/auth/reset-password",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"phone_number\": \"{{test_phone}}\",\n  \"otp\": \"{{otp}}\",\n  \"new_password\": \"{{reset_password}}\"\n}",
+          "raw": "{\n  \"phone_number\": \"YOUR_PHONE_NUMBER\",\n  \"otp\": \"000000\",\n  \"new_password\": \"YOUR_NEW_PASSWORD\"\n}",
           "options": {
             "raw": {
               "language": "json"
             }
           }
         }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
-            ]
-          }
-        }
-      ]
+      }
     },
     {
       "name": "07 Old token rejected",
       "request": {
         "method": "GET",
         "header": [],
-        "url": "{{base_url}}/api/auth/me",
+        "url": "http://localhost:3000/api/auth/me",
         "auth": {
           "type": "bearer",
           "bearer": [
             {
               "key": "token",
-              "value": "{{access_token}}",
+              "value": "PASTE_JWT_HERE",
               "type": "string"
             }
           ]
         }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
-            ]
-          }
-        }
-      ]
+      }
     },
     {
       "name": "08 Reused OTP rejected",
@@ -230,28 +148,17 @@
             "value": "application/json"
           }
         ],
-        "url": "{{base_url}}/api/auth/reset-password",
+        "url": "http://localhost:3000/api/auth/reset-password",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"phone_number\": \"{{test_phone}}\",\n  \"otp\": \"{{otp}}\",\n  \"new_password\": \"{{reset_password}}\"\n}",
+          "raw": "{\n  \"phone_number\": \"YOUR_PHONE_NUMBER\",\n  \"otp\": \"000000\",\n  \"new_password\": \"YOUR_NEW_PASSWORD\"\n}",
           "options": {
             "raw": {
               "language": "json"
             }
           }
         }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
-            ]
-          }
-        }
-      ]
+      }
     },
     {
       "name": "09 Old password rejected",
@@ -263,28 +170,17 @@
             "value": "application/json"
           }
         ],
-        "url": "{{base_url}}/api/auth/login",
+        "url": "http://localhost:3000/api/auth/login",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"phone_number\": \"{{test_phone}}\",\n  \"password\": \"{{test_password}}\"\n}",
+          "raw": "{\n  \"phone_number\": \"YOUR_PHONE_NUMBER\",\n  \"password\": \"YOUR_PASSWORD\"\n}",
           "options": {
             "raw": {
               "language": "json"
             }
           }
         }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('HTTP 401', () => pm.response.to.have.status(401));"
-            ]
-          }
-        }
-      ]
+      }
     },
     {
       "name": "10 Login with new password",
@@ -296,58 +192,35 @@
             "value": "application/json"
           }
         ],
-        "url": "{{base_url}}/api/auth/login",
+        "url": "http://localhost:3000/api/auth/login",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"phone_number\": \"{{test_phone}}\",\n  \"password\": \"{{reset_password}}\"\n}",
+          "raw": "{\n  \"phone_number\": \"YOUR_PHONE_NUMBER\",\n  \"password\": \"YOUR_NEW_PASSWORD\"\n}",
           "options": {
             "raw": {
               "language": "json"
             }
           }
         }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
-              "if (pm.response.code === 200) { pm.environment.set('access_token', pm.response.json().access_token); }"
-            ]
-          }
-        }
-      ]
+      }
     },
     {
       "name": "11 Current user after reset",
       "request": {
         "method": "GET",
         "header": [],
-        "url": "{{base_url}}/api/auth/me",
+        "url": "http://localhost:3000/api/auth/me",
         "auth": {
           "type": "bearer",
           "bearer": [
             {
               "key": "token",
-              "value": "{{access_token}}",
+              "value": "PASTE_JWT_HERE",
               "type": "string"
             }
           ]
         }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
-            ]
-          }
-        }
-      ]
+      }
     }
   ]
 }

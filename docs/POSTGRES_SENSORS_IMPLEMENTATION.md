@@ -1,6 +1,6 @@
 # Sensors — PostgreSQL metadata, streams và workflow
 
-Ngày19/10/2026. Nhánh **feat/postgres-sensors-persistence** kế thừa Device **9ec5f29**, không tạo lại Sensor nghiệp vụ/MQTT. [Progress](BACKEND_PROGRESS_CURRENT.md), [kế hoạch tuần/hardware](WEEKLY_COMPLETION_PLAN_20261019.md), [Device shared context](POSTGRES_DEVICES_IMPLEMENTATION.md), [quyết định6 streams](MQTT_PROTOCOL_REVIEW_20261014.md).
+Ngày19/10/2026. Nhánh **feat/postgres-sensors-persistence** kế thừa Device **9ec5f29**, không tạo lại Sensor nghiệp vụ/MQTT. [Progress](BACKEND_PROGRESS_CURRENT.md), [kế hoạch tuần/hardware](IMPLEMENTATION_PLAN.md), [Device shared context](POSTGRES_DEVICES_IMPLEMENTATION.md), [quyết định6 streams](MQTT_COMMUNICATION_IMPLEMENTATION.md).
 
 **AppModule vẫn RAM**, chờ tất cả adapters/async consumers/Mongo được chuyển đồng bộ. SensorRecords async controller seam dùng MemorySensorRecords/useExisting và đúng SensorsService đang được MQTT gọi, không tạo store thứ hai. PG HTTP kiểm thử riêng có Users/Farm/Zone/Tree/Device/Sensor cùng database; không override một mình Sensor controller trong runtime chính. Schema/migration/adapter không tự đổi authority của receiver.
 

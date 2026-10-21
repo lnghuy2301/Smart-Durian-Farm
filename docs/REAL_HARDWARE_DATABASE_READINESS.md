@@ -44,4 +44,4 @@ Không cần Postman scripts/environments; UUID/OTP/JWT vẫn copy tay. Tài li�
 
 ## Phần chưa được chứng minh bằng phần cứng thật
 
-Loopback đã chứng minh MQTT.js TCP→full database→API→browser, Reset/Start/Stop/ACK/history/restart. ESP32 thật còn cần kiểm tra sensor301–306 và từng relay, timeout/disconnect/recovery. ACK chỉ báo nhận command; đủ ACK không tự chứng minh bơm/van đã hoạt động. Hẹn người phụ trách hardware và cô lập tải trước khi chạy các lệnh Bật/Dừng theo [kế hoạch nghiệm thu](WEEKLY_COMPLETION_PLAN_20261019.md).
+Loopback đã chứng minh MQTT.js TCP→full database→API→browser, Reset/Start/Stop/ACK/history/restart. ESP32 thật còn cần kiểm tra sensor301–306 và từng relay, timeout/disconnect/recovery. ACK chỉ báo nhận command; đủ ACK không tự chứng minh bơm/van đã hoạt động. Hẹn người phụ trách hardware và cô lập tải trước khi chạy các lệnh Bật/Dừng theo [kế hoạch nghiệm thu](IMPLEMENTATION_PLAN.md).

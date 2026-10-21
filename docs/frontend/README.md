@@ -1,12 +1,8 @@
-# Tài nguyên thương hiệu và mẫu frontend
+# Tài nguyên frontend và hướng dẫn module
 
-2026-10-19: đã triển khai mẫu actuator control thành `/actuator-control`, với ba thao tác Tưới/Phun/Dừng, tiến trình ACK, Reset/RecoveryStop và lịch sử theo quyền hiện tại. Đọc [source, điều chỉnh thiết kế cho nhà vườn, API và tái lập](modules/ACTUATOR_CONTROL_WEB.md). Không dùng ACK làm bằng chứng trạng thái vật lý; chưa nghiệm thu ESP32 hoặc database runtime.
+Cập nhật21/10/2026. Các workflow web và màn hình điều khiển đã có; backend development dùng shared database runtime. [Chạy web](../../apps/web/README.md), [runtime](../DATABASE_RUNTIME_IMPLEMENTATION.md), [workflows UI](REFERENCE_WORKFLOWS_IMPLEMENTATION.md), [control](modules/ACTUATOR_CONTROL_WEB.md). Các guide cũ ghi checkpoint triển khai; dùng [tiến độ hiện hành](../BACKEND_PROGRESS_CURRENT.md) để xác định phần còn thiếu.
 
-2026-10-11: đã triển khai các mẫu mới quản lý Farm/Zone/Tree/Harvest/Cultivation/IoT/HTX bằng API hiện tại, trên nhánh riêng từng module. Đọc [phạm vi, nhánh, hợp đồng, kiểm thử và tái lập](REFERENCE_WORKFLOWS_IMPLEMENTATION.md) cùng các guide domain trong `modules/`. Thiết kế auth đã duyệt giữ nguyên; AppModule backend vẫn RAM.
-
-QR2026-10-10: web public `/trace/{tree_code}` và link từ trang cây đã có trên feat/qr-traceability, cùng brand kit hiện có; không cần asset mới. Public page ngoài AuthProvider, không gửi JWT; lịch sử correction Locked có nhãn target/latest/applicability và giữ approved harvest lúc Pending sửa. [Cấu hình/demo/API/test/tái lập](../QR_TRACEABILITY_IMPLEMENTATION.md). Browser29/29 và web8 unit/lint/typecheck/build đạt; các mốc22 browser phía dưới là lịch sử.
-
-Ngày 2026-10-08, người dùng chọn **Smart Durian — Brand Kit v1.0 / Durian Connect** cho toàn dự án. Nguồn chuẩn nằm tại [assets/brand/Smart_Durian_Brand_Kit/](../../assets/brand/Smart_Durian_Brand_Kit/); xem [quy ước tích hợp web/mobile](../../assets/brand/README.md). Web React/TypeScript/Vite đã có dashboard Farmer, Admin và Manager theo mẫu đã được xác nhận, nối API hiện có. Đọc [hướng dẫn chạy và tái lập](WEB_FOUNDATION_IMPLEMENTATION.md), [thích nghi thiết kế](DESIGN_ADAPTATION.md) và [module Manager](modules/MANAGER_DASHBOARD.md). React Native là đợt riêng sau này.
+Brand kit chính thức giữ tại assets/brand; HTML/screenshots riêng là nguồn thiết kế, không xóa chỉ vì không import runtime.
 
 | Thư mục | Nội dung |
 | --- | --- |

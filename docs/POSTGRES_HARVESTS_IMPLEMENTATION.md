@@ -1,6 +1,6 @@
 # PostgreSQL Harvest — xác nhận, correction, batch và quyền nhập bù
 
-Đợt2026-10-17 trên **feat/postgres-harvests-persistence**, từ Tree5aca62a và review e84703b; kế thừa toàn bộ frontend024214b. [Tiến độ hiện hành](BACKEND_PROGRESS_CURRENT.md). Không triển khai lại API nghiệp vụ; port lưu trữ và rule bổ sung đã được người dùng xác nhận. [Tình huống/quyết định correction](HARVEST_PERSISTENCE_REVIEW_20261016.md).
+Đợt2026-10-17 trên **feat/postgres-harvests-persistence**, từ Tree5aca62a và review e84703b; kế thừa toàn bộ frontend024214b. [Tiến độ hiện hành](BACKEND_PROGRESS_CURRENT.md). Không triển khai lại API nghiệp vụ; port lưu trữ và rule bổ sung đã được người dùng xác nhận. [Tình huống/quyết định correction](POSTGRES_HARVESTS_IMPLEMENTATION.md).
 
 ## Source và runtime
 

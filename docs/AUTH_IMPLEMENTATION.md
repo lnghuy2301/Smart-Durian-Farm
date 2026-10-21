@@ -1,5 +1,7 @@
 # Auth — đăng nhập và OTP ở chế độ test
 
+Runtime hiện hành dùng database chung cho Auth và nghiệp vụ trong development; các checkpoint RAM bên dưới mô tả đợt ban đầu. Xem [runtime](DATABASE_RUNTIME_IMPLEMENTATION.md), [account persistence](POSTGRES_USERS_AUTH_IMPLEMENTATION.md) và [tiến độ](BACKEND_PROGRESS_CURRENT.md).
+
 Tiếp nối2026-10-10: PG HTX edit workflow dùng riêng provider email→SMS, recheck token version/context trong transaction và xóa chứng cứ OTP sau restart/lỗi; **226 backend/51 DB** và checks đạt. [Guide](POSTGRES_COOPERATIVE_WORKFLOWS_IMPLEMENTATION.md). Không đổi Auth OTP/password reset/provider config, không gộp proof HTX với reset. AppModule vẫn shared memory; PG Auth/Users/HTX HTTP tests cô lập, chưa demo SMS/hardware thật.
 
 Mốc mới2026-10-10: Users/email đã dùng UserManagement async và proof lease; Auth+Users HTTP với PG registration/Manager approval đã kiểm thử dựng lại instances, giữ dữ liệu đã commit và bỏ proof chưa hoàn tất. **226 backend/37 DB/8 web/29 browser**, checks đạt. [Guide](POSTGRES_USERS_COOPERATIVES_IMPLEMENTATION.md). AppModule vẫn dùng shared memory adapters tới khi mọi domain chuyển xong; không đổi OTP/provider/route/.env hoặc coi test isolated là nghiệm thu SMS/full-process restart. Nội dung local/mock dưới đây tiếp tục áp dụng.
@@ -53,7 +55,7 @@ Twilio có thời hạn và quy tắc resend riêng; có thể gửi lại cùng
 
 SMS thật: import duy nhất **Twilio-Verify-Demo.postman_collection.json** trong docs/postman, mở collection **Smart Durian Farm - Twilio Verify - Nhap JSON**. Không cần Environment hoặc Scripts. Nhập trực tiếp Body → raw → JSON: 01 login → 02 gửi OTP → 03 nhập mã SMS và mật khẩu mới → 04 login mật khẩu mới. Thay số ví dụ bằng AUTH_TEST_PHONE. Không đưa Twilio credentials vào Postman. Kiểm tra token cũ/OTP dùng lại và các lỗi bảo mật nằm trong tests backend, không bắt buộc người dùng chạy thủ công.
 
-Mock: SMS_PROVIDER=mock rồi restart, import Auth-Local-Test.postman_collection.json + Local.postman_environment.json; đồng bộ test_phone/test_password với .env. Luồng 01→11 tự đọc OTP mock. Restart trước mỗi lượt chạy toàn bộ để phục hồi password gốc.
+Mock: SMS_PROVIDER=mock rồi restart, import Auth-Local-Test.postman_collection.json; điền phone/password và copy JWT/OTP bằng tay, không scripts/environment. Đọc OTP qua endpoint mock trong collection. Database mode restart không phục hồi password gốc; dùng mật khẩu vừa đổi hoặc luồng reset. Chỉ legacy memory fixtures được khởi tạo lại khi restart.
 
 ## Kiểm tra và tiếp tục session
 

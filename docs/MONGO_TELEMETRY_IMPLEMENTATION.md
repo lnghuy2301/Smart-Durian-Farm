@@ -1,6 +1,6 @@
 # Telemetry — MongoDB FIFO bền vững và quyền PostgreSQL
 
-Ngày19/10/2026. Nhánh **feat/mongo-telemetry-persistence**, base Actuator **8926d68**. Đã có13 PG business-table adapters; module này tiếp Mongo đầu tiên. [Progress](BACKEND_PROGRESS_CURRENT.md), [kế hoạch tuần/hardware](WEEKLY_COMPLETION_PLAN_20261019.md), [contract telemetry](IOT_TELEMETRIES_IMPLEMENTATION.md), [persistence design](PERSISTENCE_DESIGN.md), [MQTT/sáu streams](MQTT_PROTOCOL_REVIEW_20261014.md).
+Ngày19/10/2026. Nhánh **feat/mongo-telemetry-persistence**, base Actuator **8926d68**. Đã có13 PG business-table adapters; module này tiếp Mongo đầu tiên. [Progress](BACKEND_PROGRESS_CURRENT.md), [kế hoạch tuần/hardware](IMPLEMENTATION_PLAN.md), [contract telemetry](IOT_TELEMETRIES_IMPLEMENTATION.md), [persistence design](PERSISTENCE_DESIGN.md), [MQTT/sáu streams](MQTT_COMMUNICATION_IMPLEMENTATION.md).
 
 **AppModule hiện vẫn RAM**: TelemetryRecords HTTP seam dùng MemoryTelemetryRecords/useExisting và đúng TelemetryService/TelemetryStore mà MqttService đang gọi. Không chuyển riêng HTTP sang Mongo còn receiver ghi RAM. DatabaseTelemetryRecords được kiểm thử với HTTP app riêng, shared PostgreSQL ports và MongoClient mới; MQTT receiver toàn runtime sẽ chuyển await/async cùng tasks/Cultivation/guards/QR ở đợt wiring. Các tests gọi facade record nội bộ, không phải nghiệm thu MQTT→Mongo trên ESP32 thật.
 

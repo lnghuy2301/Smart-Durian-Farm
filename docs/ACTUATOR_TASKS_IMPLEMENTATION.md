@@ -2,7 +2,7 @@
 
 **Frontend19/10/2026:** `/actuator-control` đã tích hợp theo mẫu người dùng, có scope, thao tác Tưới/Phun/Dừng, tiến trình ACK/Reset/RecoveryStop và lịch sử. [Source, UI dành cho nông dân, kiểm thử và tái lập](frontend/modules/ACTUATOR_CONTROL_WEB.md). Các câu “chưa UI” dưới đây là checkpoint backend09/10, không còn là hiện trạng frontend; database runtime và ESP32 acceptance vẫn chưa được thay bằng fixture tests.
 
-Ngày triển khai: 2026-10-09. Nhánh **feat/actuator-tasks-v1**, kế thừa **feat/mqtt-contract-v1 @ f20ea20**, từ frontend/backend hiện có ab478fc. Nguồn giao tiếp: **MQTT_Configuration_Smart_Farm_Durian_v1.0.docx** và câu trả lời trực tiếp của người dùng. Đọc cùng [contract](MQTT_CONTRACT_V1_IMPLEMENTATION.md), [workflow](ACTUATOR_TASKS_WORKFLOW_DESIGN.md), [metadata](IOT_METADATA_UPDATE_IMPLEMENTATION.md), [Telemetry](IOT_TELEMETRIES_IMPLEMENTATION.md).
+Ngày triển khai: 2026-10-09. Nhánh **feat/actuator-tasks-v1**, kế thừa **feat/mqtt-contract-v1 @ f20ea20**, từ frontend/backend hiện có ab478fc. Nguồn giao tiếp: **MQTT_Configuration_Smart_Farm_Durian_v1.0.docx** và câu trả lời trực tiếp của người dùng. Đọc cùng [contract](MQTT_COMMUNICATION_IMPLEMENTATION.md), [workflow](ACTUATOR_TASKS_WORKFLOW_DESIGN.md), [metadata](IOT_METADATA_UPDATE_IMPLEMENTATION.md), [Telemetry](IOT_TELEMETRIES_IMPLEMENTATION.md).
 
 ## Ý nghĩa xác nhận
 

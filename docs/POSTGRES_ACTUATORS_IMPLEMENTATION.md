@@ -1,6 +1,6 @@
 # Actuators — PostgreSQL metadata, capability và workflow
 
-Ngày19/10/2026. Nhánh **feat/postgres-actuators-persistence**, base Sensor **9571247**, kế thừa các modules/frontend đã giao. Đây là adapter cuối cho13 bảng PostgreSQL nghiệp vụ; **chưa có nghĩa AppModule đã chuyển database**, vì còn Mongo/async consumers/wiring. [Progress hiện hành](BACKEND_PROGRESS_CURRENT.md), [Sensor/parent lock guide](POSTGRES_SENSORS_IMPLEMENTATION.md), [kế hoạch tuần/hardware](WEEKLY_COMPLETION_PLAN_20261019.md).
+Ngày19/10/2026. Nhánh **feat/postgres-actuators-persistence**, base Sensor **9571247**, kế thừa các modules/frontend đã giao. Đây là adapter cuối cho13 bảng PostgreSQL nghiệp vụ; **chưa có nghĩa AppModule đã chuyển database**, vì còn Mongo/async consumers/wiring. [Progress hiện hành](BACKEND_PROGRESS_CURRENT.md), [Sensor/parent lock guide](POSTGRES_SENSORS_IMPLEMENTATION.md), [kế hoạch tuần/hardware](IMPLEMENTATION_PLAN.md).
 
 ActuatorRecords async seam dùng MemoryActuatorRecords/useExisting gọi đúng ActuatorsService đang được control service sử dụng. Không có store thứ hai. HTTP PG kiểm thử riêng với shared Pool/Users/Farm/Zone/Tree/Device; không bật riêng Actuator HTTP còn task/MQTT đọc RAM. Module này không publish MQTT, đổi task protocol/recipe/ACK semantics hoặc tự điều khiển hardware.
 

@@ -66,7 +66,7 @@ Sau khi reset thành công, password cũ không còn dùng được; restart API
 
 Nếu bản đã import còn báo lỗi pre-request, đó là collection cũ. Import file mới và dùng collection **Nhap JSON**; thay đổi file trong dự án không tự cập nhật bản đã import.
 
-File Twilio-Verify-Demo.postman_environment.json cũ không cần cho luồng này. Auth-Local-Test + Local environment là bộ kiểm thử mock tự động riêng; chỉ dùng khi SMS_PROVIDER=mock.
+Các environment files cũ đã bỏ. Auth-Local-Test cũng nhập JSON/JWT/OTP bằng tay, không scripts/environment; endpoint hộp thư mock chỉ dùng khi SMS_PROVIDER=mock. Database mode restart không reset mật khẩu đã đổi.
 
 
 ## Luồng và giới hạn

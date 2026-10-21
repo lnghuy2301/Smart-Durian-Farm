@@ -26,7 +26,7 @@ Ba nhánh local kế tiếp nhau: `feat/mongo-actuator-tasks-persistence` (`b6d3
 
 Việc làm tiếp theo theo thứ tự:
 
-1. Nghiệm thu trạm thật theo [MQTT/hardware plan](WEEKLY_COMPLETION_PLAN_20261019.md):6 readings/cadence/raw units/presence, từng ACK, Reset/Start/Stop/recovery, mất broker, backend restart, đối chiếu Mongo và UI. Người phụ trách phần cứng phải xác nhận quan sát bơm/van; ACK chỉ là receipt, physical_state vẫn Unknown.
+1. Nghiệm thu trạm thật theo [MQTT/hardware plan](IMPLEMENTATION_PLAN.md):6 readings/cadence/raw units/presence, từng ACK, Reset/Start/Stop/recovery, mất broker, backend restart, đối chiếu Mongo và UI. Người phụ trách phần cứng phải xác nhận quan sát bơm/van; ACK chỉ là receipt, physical_state vẫn Unknown.
 2. Smoke tài khoản Farmer demo thật/SMS quên mật khẩu, Manager email→SMS/approval/HTX, harvest/cultivation/QR trên database runtime.
 3. Backup/restore và chuẩn bị deploy/Auth/TLS/broker khi có đích triển khai. AI tiếp tục hoãn; không tự chọn provider/model hoặc ghi nghiệp vụ giả để nâng phần trăm hoàn thành.
 

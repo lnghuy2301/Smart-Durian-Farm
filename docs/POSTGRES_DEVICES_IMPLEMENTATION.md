@@ -1,6 +1,6 @@
 # Device — PostgreSQL adapter, presence và duyệt metadata
 
-Cập nhật2026-10-17. Nhánh **feat/postgres-devices-persistence**, base Harvest **c781a91**; kế thừa frontend024214b và các adapters hiện có. Không triển khai lại Device API/MQTT hoặc thay đổi topic/firmware. Đọc [progress hiện hành](BACKEND_PROGRESS_CURRENT.md), [hợp đồng MQTT đã đối chiếu](MQTT_PROTOCOL_REVIEW_20261014.md) và nguồn MQTT_HARDWARE_PROTOCOL_VERIFIED.md/IOT_CORE_TABLES_SPEC.md riêng của người dùng.
+Cập nhật2026-10-17. Nhánh **feat/postgres-devices-persistence**, base Harvest **c781a91**; kế thừa frontend024214b và các adapters hiện có. Không triển khai lại Device API/MQTT hoặc thay đổi topic/firmware. Đọc [progress hiện hành](BACKEND_PROGRESS_CURRENT.md), [hợp đồng MQTT đã đối chiếu](MQTT_COMMUNICATION_IMPLEMENTATION.md) và nguồn MQTT_HARDWARE_PROTOCOL_VERIFIED.md/IOT_CORE_TABLES_SPEC.md riêng của người dùng.
 
 AppModule hiện vẫn dùng RAM cho nghiệp vụ. DeviceRecords là seam async; MemoryDeviceRecords dùng **useExisting**, gọi đúng DevicesService mà Sensors/Actuators/MQTT đang dùng. PostgreSQL được kiểm thử trong HTTP app riêng với shared pool và toàn bộ Users/Farm/Zone/Tree phụ thuộc cũng trỏ DB. Không chỉ override Device HTTP trong AppModule khi receiver/guards còn đọc RAM. Schema/adapter hoàn tất chưa phải hardware acceptance.
 

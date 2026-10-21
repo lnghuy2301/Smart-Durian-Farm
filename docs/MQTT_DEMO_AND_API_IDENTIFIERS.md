@@ -52,7 +52,7 @@ Code đã đối chiếu:
 | JWT Manager A gửi update request cho HTX của Manager B | 403 |
 | JWT khác xác minh OTP của request Manager A | Bị chặn theo scope/role |
 
-Copy JWT vào Authorization: Bearer, OTP trong JSON body; không đưa JWT/password/OTP vào URL hoặc file export lên Git. Deployment thật phải dùng HTTPS; bản hiện tại vẫn Auth/store RAM development, chưa có production persistence.
+Copy JWT vào Authorization: Bearer, OTP trong JSON body; không đưa JWT/password/OTP vào URL hoặc file export lên Git. Deployment thật phải dùng HTTPS; development hiện có database persistence; production Auth/deploy vẫn cần hoàn thiện theo runtime guide.
 
 Tái lập các tests từ apps/api, không dùng .env/SMS/SMTP thật:
 
@@ -61,4 +61,4 @@ node ../../node_modules/typescript/bin/tsc --outDir .test-dist
 node --test --test-reporter=spec .test-dist/test/users.test.js .test-dist/test/cooperatives.test.js
 ~~~
 
-Telemetry đã được chốt và triển khai trên feat/iot-telemetries: lưu mọi reading hardware gửi15 giây, RAM FIFO10.000; Farmer hết assignment không xem history; measured_at lúc backend nhận/đọc, received_at lúc ghi store, không sửa firmware.147 tests đạt; xem IOT_TELEMETRIES_IMPLEMENTATION.md. Cấu hình demo vẫn không tự tạo metadata/persistence.
+Telemetry đã được chốt và triển khai trên feat/iot-telemetries: lưu mọi reading hardware gửi15 giây, Mongo FIFO10.000; Farmer hết assignment không xem history; measured_at lúc backend nhận/đọc, received_at lúc ghi database, không sửa firmware.147 tests đạt; xem IOT_TELEMETRIES_IMPLEMENTATION.md. Cấu hình broker/demo station không tự đăng ký metadata; API dùng shared database runtime đã có. Xem [runtime](DATABASE_RUNTIME_IMPLEMENTATION.md) và [MQTT hiện hành](MQTT_COMMUNICATION_IMPLEMENTATION.md).

@@ -1,131 +1,64 @@
-# MQTT communication — triển khai và tái lập
+# MQTT — implementation đang dùng và tiếp nhận Configuration cuối
 
-**Cập nhật2026-10-09:** contract hiện hành là DOCX MQTT_Configuration_Smart_Farm_Durian_v1.0 và [guide](MQTT_CONTRACT_V1_IMPLEMENTATION.md), thay short ACK phía dưới: `{taskId:number,status:"ACK",action:0|1}`, ACK ngay khi nhận command. ACTUATOR_TASKS/API control đã triển khai trên feat/actuator-tasks-v1, [setup/API/limits](ACTUATOR_TASKS_IMPLEMENTATION.md); Confirmed chỉ receipt, không execution. Telemetry đã có RAM/history. Transport/config duy nhất được chia sẻ qua MqttTransportModule. Đợt mới append .env ACK timeout10000ms, không thay broker settings;168 tests backend đạt. Các ghi chú chưa control/ACK không taskId bên dưới là lịch sử MQTT gốc.
+Cập nhật21/10/2026. Hợp nhất guide communication/contract v1/review sáu Sensor; source nền `1f6c1fd`. [Protocol người dùng hiện có](MQTT_HARDWARE_PROTOCOL_VERIFIED.md), [DOCX hiện có](MQTT_Configuration_Smart_Farm_Durian_v1.0.docx). Người dùng sẽ gửi Configuration chốt tiếp theo; đợt dọn này không đổi firmware, payload, topic hoặc credentials.
 
-Cập nhật nhánh kế thừa feat/iot-telemetries 2026-10-07: receiver đã nối Telemetry RAM FIFO10.000 readings và API latest/history,147 tests đạt. .env/protocol/firmware giữ nguyên. Xem [IOT_TELEMETRIES_IMPLEMENTATION.md](IOT_TELEMETRIES_IMPLEMENTATION.md); các đoạn134 tests/chưa history phía dưới ghi phạm vi commit MQTT gốc d10ebd2, không phải phần cần viết lại.
+## Giao tiếp source đang triển khai
 
-Nhánh **feat/mqtt-communication**, base metadata **939c350** trên feat/iot-core-metadata-update, kế thừa Actuators95c15fc/Sensorsc9d0940/Devices09cb1da/mainc71820d. Chỉ commit local, chưa push/merge. Đọc cùng [metadata](IOT_METADATA_UPDATE_IMPLEMENTATION.md) và [handoff](MODULE_HANDOFF.md).
+| Hướng | Topic | Payload |
+| --- | --- | --- |
+| Telemetry lên | publish/station/{stationId} | stationId + sensorRecords[{dataStreamId,result}] |
+| ACK lên | publish/station/{stationId} | taskId:number, status:ACK, action:0 hoặc1; stationId nếu có phải khớp topic |
+| Command xuống | subscribe/station/{stationId} | targets[{taskId,taskingCapabilityId}], taskingParameters{actionType:control,action:0 hoặc1} |
 
-Đã đọc đầy đủ ERD_DIAGRAM.xml, IOT_CORE_TABLES_SPEC.md, MQTT_HARDWARE_PROTOCOL_VERIFIED.md. Ba file nguồn mới và các sửa/xóa riêng của người dùng được giữ ngoài commit. Quy tắc cần tái lập được ghi dưới đây; không phụ thuộc các guide IoT cũ đã bị người dùng xóa. File source mới nếu còn untracked ở session khác phải được bảo vệ trước checkout.
+ACK không có taskId/action là legacy và bị reject; không dùng short ACK cũ để xác nhận task. ACK chỉ nhận command, không xác nhận relay/lưu lượng/áp lực vật lý.
 
-## Phạm vi và quyết định đã chốt
+Topic station→DEVICES.station_id→DEVICES.id UUID; Sensor lookup device_id+data_stream_id, Actuator device_id+capability_id. station bất biến/không secret/không FK. Không hardcode một station global cho mọi Device. Stream/capability có thể dùng lại ở Device khác; numeric IDs dương, safe integer.
 
-Device chỉ đăng ký khi đã lắp: installed_at/cost bắt buộc, không null, không đăng ký trước lắp. Device status Active/Inactive/Maintenance là quản trị, last_seen_at tạo null và chỉ receiver cập nhật. Sensor type air_temperature/air_humidity/soil_moisture, unit metadata string1..16 thay enum %/oC cũ. Actuator purpose watering/spraying/shared bất biến. UUID nội bộ khác station_id/stream/capability; composite unique theo Device giữ nguyên.
+| Stream demo | Type | Raw unit |
+| --- | --- | --- |
+|301|air_temperature|C|
+|302|air_humidity|%|
+|303|soil_moisture|%RH|
+|304|soil_temperature|C|
+|305|soil_ph|H+|
+|306|soil_ec|μS/cm|
 
-Module này đã làm kết nối MQTT.js, reconnect/subscription/shutdown, parser/receiver, mapping shared Device/Sensor và API chẩn đoán chỉ đọc. Có builder và publisher **nội bộ** cho đúng wire format, chưa có REST bật/tắt, automation, orchestration bơm/van, task state hay lịch sử telemetry MongoDB. Dữ liệu nghiệp vụ vẫn RAM; không bảng/migration/seed/collection, không schema IOT_TELEMETRIES/ACTUATOR_TASKS. Không tự mở kết nối broker thật hoặc gửi lệnh thật khi kiểm thử.
+Đây là mapping bộ demo đã chốt, router vẫn resolve bằng metadata, không ép mọi station tương lai dùng cùng IDs. Sensor type/stream/Device bất biến; unit varchar16 sửa được. Metadata303 cũ% giữ nguyên tới khi chủ sửa; readings vẫn giữ raw%RH và diagnostic mismatch. Không tự convert, tự tạo Sensor hay tự đặt thresholds.
 
-## Contract đang dùng, ưu tiên hơn ghi chú MQTT cũ
+## Runtime, quyền và lỗi
 
-| Chiều | Topic / wire |
-|---|---|
-| ESP32 → server | publish/station/{stationId}, subscription backend publish/station/+ |
-| Server → ESP32 | subscribe/station/{stationId} |
-| Telemetry | sensorRecords:[{dataStreamId:number,result:"26.54 C"}] |
-| ACK | status:"ACK", stationId nếu có phải khớp topic; **không có taskId đáng tin cậy** |
-| Control | targets:[{taskId:number,taskingCapabilityId:number}], taskingParameters:{actionType:"control",action:0 hoặc 1}, errorMessage:null |
+Database runtime dùng `database-mqtt.service.ts` với cùng DeviceRecords/SensorRecords/TelemetryRecords/ActuatorTaskRecords như HTTP. Chế độ memory dùng mqtt.service.ts; giữ để test. MQTT.js quản lý connect/reconnect/SUBACK/shutdown. Presence last_seen_at monotonic trong PG, không version/audit metadata mỗi packet; Active khác Online và khác relaystate.
 
-StationId từ topic tra DEVICES.station_id → UUID DEVICES.id. Payload có stationId thì bắt buộc bằng topic, exact case. Không dùng env station toàn cục, không observation/sensor topic, không device auth_token. Station là mã phần cứng, không phải bằng chứng xác thực phần cứng; không thay firmware/topic/broker ACL trong đợt này.
+Parser phân biệt telemetry/ACK bằng shape. Retained, malformed UTF-8/JSON/result, duplicate stream, station mismatch hoặc station chưa đăng ký bị từ chối; telemetry lỗi không rơi xuống ACK. Stream chưa map có diagnostic, không tự đăng ký. Packet tối đa64KiB/100 readings, diagnostics FIFO200 và tối đa200 handlers đồng thời theo source.
 
-301/302/303 và capability2/3/4 là quan sát một bộ hardware, không constants backend. Chủ Farm phải khai báo Sensor/Actuator đúng bộ lắp thật. Không tự đoán air_humidity/soil_moisture hay van watering/spraying từ mã. MQTT numeric stream được đổi sang string để lookup composite (device_id,data_stream_id); metadata "0301" khác "301". Stream dạng chữ trong metadata chưa có packet numeric tương ứng ở firmware hiện tại.
+measured_at là backend packet arrival, received_at bước ghi Mongo, không thêm timestamp firmware. Telemetry nhận mọi packet hợp lệ theo nhịp hardware khoảng15s, FIFO10.000 readings. [Mongo telemetry](MONGO_TELEMETRY_IMPLEMENTATION.md).
 
-Action **1=ON, 0=OFF**, JSON number. Mỗi target taskId/capability là số nguyên dương ≤Number.MAX_SAFE_INTEGER, không string/rounding bigint; builder chặn target trùng task/capability trong một packet và copy đúng các field verified. Mapping/UUID→capability và cấp taskId sẽ do domain service tiếp theo cung cấp, không tự sinh bằng timestamp ở gateway.
+Farmer Accepted còn hiệu lực được đọc đúng scope/reading interval; hết phân công mất latest/history IoT. Diagnostic chứa readings cũng lọc theo assignment trước pagination. Không endpoint HTTP inject telemetry hoặc publish arbitrary MQTT.
 
-## Receiver và trạng thái
+ACK đối chiếu taskId+Device+requested action+arrival time; sai/trùng/trễ/unknown không revive workflow. Confirmed/confirmed_at là receipt backend; physical_state vẫn Unknown. Chờ10s/step. Bơm2 shared, van3 watering, van4 spraying; Unknown trước Start phải OFF2→ACK→OFF3→ACK→OFF4→ACK rồi valveON→ACK→pumpON→ACK. Stop/recovery bơm trước van; không đồng thời tưới/phun. Restart không tự gửi command, pending cũ Failed và Start sau Reset. [Workflow](ACTUATOR_TASKS_WORKFLOW_DESIGN.md), [durable journal](MONGO_ACTUATOR_TASKS_IMPLEMENTATION.md).
 
-- Giờ nhận lấy từ server, không lấy resultTime/giờ client. Packet hợp lệ Telemetry/ACK, station đã đăng ký, không retained mới cập nhật last_seen_at. Unknown/mismatch/malformed/retained/unregistered không cập nhật. Presence không tăng version/audit metadata, nên không làm proposal Admin stale hoặc ghi đè timestamp mới khi duyệt.
-- Parser UTF-8 strict, JSON object; station 1..50 [A-Za-z0-9_-], một topic segment. Payload1..65536 bytes; sensorRecords1..100; numeric positive safe stream IDs; stream không trùng trong một packet. Result string≤128, số thập phân hữu hạn + khoảng trắng + unit một token1..16. C, %, %rH giữ đúng spelling; rawResult được giữ. Packet sai một record bị reject cả packet, không cập nhật presence một phần.
-- Ưu tiên sensorRecords: nếu có nhưng sai cấu trúc thì reject, không rơi xuống ACK. ACK được ghi chẩn đoán, **không xác nhận task/relay**, kể cả khi chỉ một command đang chờ. Packet có thêm taskId vẫn không được dùng cho correlation vì chưa phải firmware contract.
-- Reading chỉ accepted khi Device Active, Sensor Active và có mapping đúng Device/stream. Inactive/Maintenance không nhận xử lý bình thường, vẫn cập nhật presence cho packet hợp lệ và giữ chẩn đoán trước. Lý do từng reading DEVICE_UNAVAILABLE/SENSOR_UNAVAILABLE/UNMAPPED_STREAM.
-- Unit khác Sensor.unit: reading vẫn accepted nếu đúng trạng thái/mapping, unit_mismatch=true, giữ số/unit thật, không chuyển đổi hoặc ghi đè. Snapshot của packet cũ không đổi khi sửa metadata.
-- Connectivity **Unknown** nếu chưa last_seen, **Online** nếu tuổi message <MQTT_OFFLINE_AFTER_MS, **Offline** khi tuổi ≥ ngưỡng. Đây là trạng thái suy ra khi đọc, không sửa Device.status. Broker_connected/receiver_ready trả riêng; broker lỗi không chứng minh từng station mất điện. last_seen của packet hợp lệ cũng không phải tín hiệu relay vật lý.
-- Chẩn đoán tối đa **200 packet toàn gateway** trong RAM, FIFO đẩy packet cũ; mỗi packet tối đa100 readings. Không phải lịch sử sản xuất, không bảo đảm đọc lại sau eviction/restart. Tổng counters tính từ lần start, không giảm khi eviction; rejected_readings khác rejected packet. Rejected station đã biết có device_id để đọc đúng scope; station lạ chỉ vào counters Admin, không lộ tên/raw payload. Log chỉ mã lỗi cố định ở debug, không credentials hoặc exception provider.
+## Cấu hình và kiểm tra thủ công
 
-## Transport và publish nội bộ
+- Root `.env`: MQTT_ENABLED, MQTT_BROKER_HOST, MQTT_BROKER_PORT, MQTT_USERNAME, MQTT_PASSWORD, MQTT_USE_TLS cùng các timeouts/presence keys theo `.env.example`/mqtt.config.ts. Không in credentials.
+- DEMO_DEVICE_STATION_ID chỉ phục vụ chuẩn bị demo; HTTP/MQTT tìm Device đã đăng ký. Không thay bằng global station hay thêm auth_token firmware.
+- Không cần Postman environment. Import [collection MQTT](postman/MQTT-Communication-Local-Test.postman_collection.json), copy JWT/UUID bằng tay. Control dùng collection riêng, chỉ gửi lệnh thật trong buổi test được người dùng chủ động thực hiện.
+- Database mode restart giữ metadata/history, không tạo lại Farm/Device/Sensor và không mặc định JWT đã mất. OTP/proof dở mới cần xác minh lại. Khi test legacy memory, restart mất dữ liệu RAM là expected.
+- Xem [readiness của trạm thật](REAL_HARDWARE_DATABASE_READINESS.md), [demo config/UUID](MQTT_DEMO_AND_API_IDENTIFIERS.md), [kế hoạch nghiệm thu](IMPLEMENTATION_PLAN.md).
 
-MQTT.js **5.16.0** dùng TCP mqtt hoặc mqtts TLS có kiểm tra certificate, protocol3.1.1 (version4), clean session, clientId backend UUID mới, reconnect cấu hình. Đợi CONNACK rồi subscribe publish/station/+ QoS1; chỉ receiver_ready sau SUBACK thành công. Callback cũ bị vô hiệu theo connection generation. SUBACK bị từ chối/hết hạn đóng socket để reconnect; không resubscribe kép. Module stop force-close client, xóa subscription timer, thời gian đóng có giới hạn.
+API diagnostic: GET `/api/mqtt/status`, `/api/mqtt/devices/:deviceId/status`, `/api/mqtt/devices/:deviceId/messages`. Quyền global và resource theo controller/scopes; không mở global cho Farmer.
 
-MqttTransport.publish và buildControlPublication là adapter cho module điều khiển tương lai, **không route người dùng**. Publish chỉ khi connected + subscribed. Gửi QoS0, retain=false, queueQoSZero=false: không lưu hàng đợi hoặc tự gửi lại lệnh cũ sau mất kết nối. Callback/timeout/reconnect race đều trả lỗi mã cố định, không raw credentials. Response TransportAccepted chỉ là library transport write, **không bảo đảm broker/hardware nhận hoặc thực thi**. Chưa có retry/dedup domain hoặc ACK correlation.
+## Source và kiểm thử
 
-Trước khi domain service gọi publisher phải có quyền công việc hiện tại, mapping UUID/Actuator Active, Device Active, quản lý task/inflight, interlock/trình tự và xử lý lỗi bơm chung. Những nghiệp vụ đó chưa được chốt trong tài liệu communication; không gọi adapter để triển khai tưới/phun tự động trước khi trao đổi.
+`apps/api/src/mqtt/mqtt.protocol.ts` parse/build; mqtt.transport.ts connection; persistence/database-mqtt.service.ts async routing; persistence/database-actuator-task-records.ts orchestration; mqtt/mqtt-diagnostics.ts diagnostics. Runtime guide và MONGO guides ghi đầy đủ providers/locks/tests/restart.
 
-Tham khảo API thư viện chính thức: [MQTT.js](https://github.com/mqttjs/MQTT.js). mqtt-packet9.0.2 chỉ là dev dependency cho broker test localhost.
+Unit/fake/TCP loopback kiểm packet reject, raw units, command shape, ACK correlation, timeout/reset/Stop/recovery. Full database/browser tests kiểm HTTP/MQTT/QR/restart. Đây chưa phải nghiệm thu ESP32/relay thật. Lệnh kiểm tra/fixture: [runtime guide](DATABASE_RUNTIME_IMPLEMENTATION.md).
 
-## Cấu hình local, không ghi đè .env
+## Khi nhận Configuration cuối
 
-.env.example đã thêm khóa. Theo yêu cầu bổ sung 2026-10-07, .env local đã được append các khóa MQTT còn thiếu, giữ nguyên nội dung/giá trị cũ, mặc định disabled. DEMO_DEVICE_STATION_ID chỉ ghi nhớ mã ESP32 để copy vào POST /api/devices; không auto-register hoặc dùng làm global station/filter/auth token. Operator điền broker và mã demo thật; xem [cấu hình trình diễn và UUID/phân quyền](MQTT_DEMO_AND_API_IDENTIFIERS.md). Không commit .env.
+1. Đọc toàn bộ bản người dùng gửi; ghi rõ version và nguồn chốt trong mục lục này.
+2. Đối chiếu host/port/TLS/credentials keys, topics, telemetry shape/units/timestamps, command targets/action, ACK correlation và ý nghĩa receipt, mapping IDs và timeouts.
+3. Nêu sai khác cùng tác động DEVICES/SENSORS/ACTUATORS/telemetry/tasks/UI. Không tự đổi nghiệp vụ hoặc migrations đã Applied; hỏi phần chưa rõ.
+4. Sửa parser/transport/adapters/tests/Postman/docs theo quyết định, giữ shared instances. Chỉ thêm migration khi schema thật sự cần thay đổi được duyệt.
+5. Chạy hồi quy cô lập, sau đó người dùng nghiệm thu hardware; ghi case/evidence thực, không đánh dấu pass từ fixture.
 
-| Khóa | Giá trị / điều kiện |
-|---|---|
-| MQTT_ENABLED | false mặc định; true mới mở kết nối |
-| MQTT_BROKER_HOST | hostname/IP, không scheme/path/credentials, bắt buộc khi bật |
-| MQTT_BROKER_PORT | 1..65535, bắt buộc khi bật; ví dụ1883/8883 theo broker |
-| MQTT_USERNAME / MQTT_PASSWORD | cùng trống hoặc đủ hai; không tạo device auth_token |
-| MQTT_USE_TLS | false/true, dùng mqtt/mqtts; không tắt certificate verification |
-| MQTT_OFFLINE_AFTER_MS | mặc định1800000, 1000..86400000; threshold UI cấu hình, không task timeout |
-| MQTT_RECONNECT_MS | mặc định3000, 1000..60000 |
-| MQTT_CONNECT_TIMEOUT_MS | mặc định10000, 1000..60000; connect/SUBACK/publish/shutdown transport timeout |
-| DEMO_DEVICE_STATION_ID | tham chiếu demo để operator copy vào body tạo Device; không đọc bởi MQTT router/config |
-
-Vì module nghiệp vụ hiện chỉ chạy trong mock mode, bật MQTT cần AUTH_MODE=mock và NODE_ENV development/test; production auth/persistence chưa có. Disabled không cần broker/credentials, không tạo network client. Env không hợp lệ fail startup bằng tên khóa, không in giá trị nhạy cảm. Không copy .env.example đè lên .env đã có.
-
-## API và Postman JSON trực tiếp
-
-JWT Bearer bắt buộc; **không POST inject/publish/control**.
-
-| Method / route | Quyền / kết quả |
-|---|---|
-| GET /api/mqtt/status | Admin Active; enabled, connected, subscribed, last_error, counters, diagnostic_limit; không host/user/password |
-| GET /api/mqtt/devices/:id/status | Quyền đọc Device hiện tại; device_id, status, last_seen_at, connectivity, broker_connected, receiver_ready, offline_after_ms |
-| GET /api/mqtt/devices/:id/messages?limit=20&offset=0 | Quyền đọc Device; packet mới nhất trước, total còn trong RAM, limit1..100/offset0..100000 |
-| Tất cả GET | 200; 400 UUID/query sai, 401 JWT, 403 role/state, 404 thiếu/outside Device scope |
-
-Chủ đọc Farm mình; Manager Farm hiện trong HTX mình; Farmer Accepted assignment đang hiệu lực. Hết phân công không có quyền diagnostics hiện tại, lịch sử assignment riêng vẫn giữ như trước. Không mở thêm quyền lịch sử IoT khi chưa có domain model.
-
-Import **docs/postman/MQTT-Communication-Local-Test.postman_collection.json**: literal URL/JSON, không scripts/variables/environment. Copy JWT và UUID bằng tay; giá trị PLACEHOLDER không hoạt động trước khi thay.
-
-1. Khởi động API bình thường khi MQTT_ENABLED=false. Import collection, login Admin/owner bằng tài khoản test phù hợp .env local, dán token. GET global thấy disabled; Device đã tạo có Unknown, messages rỗng.
-2. Dùng collections Farm/Zone/Devices/Sensors/Actuators tạo metadata; Device đã lắp có installed_at/cost, station đúng phần cứng, Sensor numeric stream khai báo **string** theo mapping thực tế; unit đúng kỳ vọng.
-3. Tự cấu hình broker local và bật MQTT, restart API. **Restart mất RAM**, cần tạo lại Farm/Zone/Device/Sensor; JWT cũ không còn hợp lệ. Không mở control hardware từ collection này.
-4. GET global đến connected/subscribed=true. Để hardware tự publish telemetry hoặc dùng MQTT client bên ngoài gửi packet giả lập dưới đây vào broker test riêng. Không có endpoint inject trong backend.
-5. GET Device status: last_seen_at/Online; messages Telemetry có UUID Sensor, value/receivedUnit/rawResult, reason và unit_mismatch. ACK xuất hiện Ack/ACK_WITHOUT_TASK_CORRELATION.
-6. Test mismatch, unknown stream, Inactive/Maintenance, retained, unit mismatch; đối chiếu reason/counters. Không thay stationId thật vào tài liệu/export Postman. Tắt broker xem receiver_ready=false; chờ ngưỡng xem Offline; không tự đổi Active.
-7. Kiểm thử rights: Farmer chưa Accepted và Manager ngoài HTX404; global với owner403; UUID/query sai400; thiếu JWT401. Khi broker bật lại chỉ subscribe lại, không replay control cũ.
-
-Ví dụ broker test synthetic, không định danh deployment:
-
-~~~json
-{"stationId":"DEMO_STATION","sensorRecords":[{"dataStreamId":301,"result":"26.54 C"},{"dataStreamId":302,"result":"77.80 %"},{"dataStreamId":303,"result":"0.00 %"}]}
-~~~
-
-Topic publish/station/DEMO_STATION, retain=false. Cần Device DEMO_STATION và Sensor mapping tương ứng; ví dụ numeric không tự gán loại302/303. ACK test: {"stationId":"DEMO_STATION","status":"ACK"}. Muốn xem MQTT bật cần broker/config do operator cung cấp; checks ở session này chỉ fake/localhost, chưa xác nhận phần cứng thật.
-
-Mã reject packet: INVALID_TOPIC, UNREGISTERED_STATION, RETAINED_MESSAGE, INVALID_PAYLOAD_SIZE, INVALID_JSON_UTF8, INVALID_MESSAGE_OBJECT, STATION_MISMATCH, INVALID_SENSOR_RECORDS, INVALID_SENSOR_RECORD, DUPLICATE_STREAM, INVALID_RESULT, RECEIVER_ERROR. Unknown: UNSUPPORTED_MESSAGE. Transport last_error: CONNECTION_FAILED/SUBSCRIPTION_FAILED/PUBLISH_FAILED. Dùng breakpoint ở mqtt.protocol.ts → mqtt.service.ts → mqtt.transport.ts và messages API để tìm lỗi; không bật log raw secret/payload. Debug mã lỗi đã có trong service.
-
-## Kiểm thử và session tiếp theo
-
-**134/134 tests**: 119 hồi quy +14 MQTT unit/HTTP/fake adapter +1 MQTT.js loopback TCP. Lint/typecheck/build đạt. Kiểm tra fake adapter denial/timeout/late SUBACK/reconnect/stop, đúng OFF0/ON1, no queue/retain, malformed/retained/identity/units/scopes/shared stores và bounded snapshots/counters. Loopback broker chạy port ngẫu nhiên127.0.0.1, đóng cuối test; không đọc .env thật/SMS/SMTP/DB writes/live MQTT.
-
-Ở root npm ci; sau đó:
-
-~~~powershell
-npm run lint --workspace @smart-durian/api
-npm run typecheck --workspace @smart-durian/api
-npm run test --workspace @smart-durian/api
-npm run build --workspace @smart-durian/api
-~~~
-
-Nếu npm wrapper Windows EPERM, từ apps/api dùng công cụ đã cài:
-
-~~~powershell
-node ../../node_modules/eslint/bin/eslint.js src test integration
-node ../../node_modules/typescript/bin/tsc --noEmit
-node ../../node_modules/typescript/bin/tsc --outDir .test-dist
-node --test --test-reporter=spec .test-dist/test
-node ../../node_modules/typescript/bin/tsc -p tsconfig.build.json
-~~~
-
-Đã chạy npm audit: runtime (--omit=dev)0; full2 critical từ **dev dependency đã có trước module** concurrently9.2.4 → shell-quote1.9.0, không từ mqtt. Không tự audit-fix toàn repo; xử lý dependency dev riêng có kiểm thử. Đây là kết quả tại session2026-10-07, có thể thay đổi theo advisories.
-
-Session mới: đọc AGENTS nếu có, status/branch/log, handoff/notes/plan/spec, hai guide mới và ba tài liệu nguồn nếu có. Checkout nhánh MQTT để có cả cập nhật metadata; nhánh metadata độc lập dừng ở939c350/119 tests. Main c71820d hiện chưa gồm IoT modules mới; đừng triển khai trùng. Không stage-all/reset/clean/ghi đè .env hoặc phục hồi deleted guides/file riêng. Branch MQTT chưa push/merge.
-
-Tiếp theo cần thảo luận riêng IOT_TELEMETRIES (timestamps/history/storage) và ACTUATOR_TASKS (taskId, short ACK, inflight, timeout, bơm/van interlock/retry/lỗi). Không coi TransportAccepted/Ack là Executed. Persistence PostgreSQL/MongoDB cũng phải được chốt riêng.
+Nguồn protocol/ERD/DOCX người dùng đang chỉnh được giữ nguyên trong lần dọn. Bản Configuration chưa gửi không được suy diễn thành contract mới.

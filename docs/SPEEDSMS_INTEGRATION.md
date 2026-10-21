@@ -33,15 +33,13 @@ AUTH_MODE=mock là tài khoản trong bộ nhớ; SMS_PROVIDER=speedsms mới g�
 
 Type 4/Verify cần được nhà cung cấp cho phép. Nếu họ yêu cầu type 2, đặt SPEEDSMS_SMS_TYPE=2 và SPEEDSMS_SENDER= (rỗng). Không tự fallback vì có thể gây chi phí.
 
-## Postman demo
+## Kiểm tra thủ công khi còn cần provider tương thích
 
-1. Điền .env, chạy npm run dev:api. Restart khi đổi cấu hình.
-2. Import docs/postman/SpeedSMS-Demo.postman_collection.json và SpeedSMS-Demo.postman_environment.json; chọn environment SpeedSMS Demo.
-3. Điền test_phone bằng số của bạn, test_password khớp .env.
-4. Gửi 01 Login rồi 02 Send real OTP một lần. Request 02 có thể trừ tiền thật.
-5. Đọc SMS trên điện thoại, điền 6 số vào biến otp. Request 03 hộp thư giả phải trả 404.
-6. Chạy 04 reset, 05 token cũ bị từ chối, 06 login password mới, 07 me.
-7. Restart API khôi phục password ban đầu. Không chạy collection runner/lặp khi gửi thật bật.
+Demo chính dùng [Twilio Verify](TWILIO_VERIFY_INTEGRATION.md). Bộ collection/environment SpeedSMS cũ đã được người dùng bỏ; không khôi phục hoặc tạo lại chỉ để chạy guide này.
+
+Nếu chủ động dùng SpeedSMS, các endpoint login/forgot-password/reset-password vẫn theo [Auth](AUTH_IMPLEMENTATION.md). Dùng collection Auth JSON literal, điền thông tin tài khoản local, copy JWT/OTP bằng tay; bỏ bước đọc hộp thư mock vì provider thật không công khai OTP. Thao tác gửi OTP có thể phát sinh phí, không dùng runner gửi lặp.
+
+Database mode dùng tài khoản đang có và không reset mật khẩu khi restart. Mật khẩu đã đổi phải dùng giá trị mới hoặc luồng reset; seed cũng không ghi đè. Không gửi credentials nhà cung cấp trong Postman.
 
 ## Xử lý lỗi
 
