@@ -17,6 +17,11 @@
     "db:status": "npm run db:status --workspace @smart-durian/api",
     "db:migrate": "npm run db:migrate --workspace @smart-durian/api",
     "db:seed": "npm run db:seed --workspace @smart-durian/api",
+    "db:backup": "npm run db:backup --workspace @smart-durian/api",
+    "db:demo:check": "npm run db:demo:check --workspace @smart-durian/api",
+    "db:backup:verify": "npm run db:backup:verify --workspace @smart-durian/api --",
+    "db:restore:check": "npm run db:restore:check --workspace @smart-durian/api --",
+    "db:restore:new": "npm run db:restore:new --workspace @smart-durian/api --",
     "test:persistence": "npm run test:persistence --workspace @smart-durian/api"
   },
   "engines": { "node": ">=20.19.0" },

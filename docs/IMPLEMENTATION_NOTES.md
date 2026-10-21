@@ -32,6 +32,8 @@ Xem [communication guide](MQTT_COMMUNICATION_IMPLEMENTATION.md). Đã nhận FIN
 
 ## Kiểm tra và tiếp tục
 
+Vận hành CLI backup/restore/demo-check đã có, xem [guide](DATABASE_BACKUP_RESTORE.md). Source snapshot giữ controller/migration lease và PG table SHARE locks trong Mongo snapshot; phải dừng API, không gọi là backup live hoặc transaction chung PG/Mongo. Restore chỉ database mới/rỗng; checksum khớp mới báo thành công. Root backups/ được ignore, không gửi archive chứa PII/password hash cho AI hoặc Git. Không khởi tạo Auth/SMTP/MQTT khi chạy CLI.
+
 Tự động dùng providers giả/broker loopback/DB fixture; không dùng credentials thật hoặc phát lệnh ra hardware để chạy regression. Giữ memory adapters và tests vì vẫn là chế độ được hỗ trợ. Giữ SpeedSMS vì còn provider/config/tests dùng; Twilio là lựa chọn demo hiện hành.
 
 Xem [kế hoạch](IMPLEMENTATION_PLAN.md) cho hardware/demo/backup/deploy; [mục lục](README.md) cho guide từng module. Báo cáo cũ đã hợp nhất, không hỏi lại các rule đã chốt. Phát hiện mâu thuẫn nghiệp vụ mới thì trao đổi trước khi triển khai.

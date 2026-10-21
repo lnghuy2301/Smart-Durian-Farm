@@ -1,6 +1,6 @@
 # Smart Durian Farm
 
-Ứng dụng quản lý vườn sầu riêng: React/TypeScript/Vite, NestJS, PostgreSQL, MongoDB và MQTT/ESP32. Checkpoint source nền: `1f6c1fd` (20/10/2026); dọn tài liệu ngày 21/10/2026.
+Ứng dụng quản lý vườn sầu riêng: React/TypeScript/Vite, NestJS, PostgreSQL, MongoDB và MQTT/ESP32. Cập nhật21/10/2026: MQTT FINAL (`fd7a4fb`) và công cụ backup/restore/demo-readiness, kế thừa database runtime `1f6c1fd` và cleanup `92ce66f`.
 
 ## Đọc trước
 
@@ -9,6 +9,7 @@
 - [Bàn giao session](docs/MODULE_HANDOFF.md), [quy tắc nghiệp vụ](docs/PROJECT_BUILD_SPEC.md), [kế hoạch tiếp theo](docs/IMPLEMENTATION_PLAN.md).
 - [Database runtime: cấu hình, source, kiểm thử, giới hạn](docs/DATABASE_RUNTIME_IMPLEMENTATION.md).
 - [MQTT đang triển khai và cách thay bản cấu hình](docs/MQTT_COMMUNICATION_IMPLEMENTATION.md).
+- [Backup/restore và kiểm tra demo](docs/DATABASE_BACKUP_RESTORE.md), [kết quả dữ liệu demo](docs/DEMO_READINESS_20261021.md).
 
 ## Chạy local
 
@@ -40,7 +41,7 @@ Development mặc định lưu database; test mặc định memory. `BUSINESS_ST
 
 Auth/Users/duyệt Manager, HTX, vật tư/tiêu chuẩn/liên kết, Farm/Zone/phân công, cây/thu hoạch, Device/Sensor/Actuator, MQTT/telemetry/điều khiển, nhật ký canh tác/hash-chain và QR public. Database runtime dùng chung pool/client/repositories cho HTTP, Auth, MQTT, workers và QR.
 
-Hai module AI và ứng dụng Android chưa triển khai. Hardware thật, SMS/email demo sau chuyển database và backup/restore vẫn cần nghiệm thu riêng. ACK xác nhận nhận command; không chứng minh trạng thái vật lý bơm/van.
+Hai module AI và ứng dụng Android chưa triển khai. MQTT FINAL hardware-tested đã tích hợp, có backup/restore rehearsal đạt và audit demo. Còn bước kết nối runtime theo cấu hình MQTT và hoàn tất Manager/SMS/email thật; xem checkpoint demo. ACK xác nhận nhận command, không chứng minh trạng thái vật lý bơm/van.
 
 ## Kiểm tra
 

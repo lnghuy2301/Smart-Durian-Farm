@@ -10,7 +10,7 @@ Cập nhật21/10/2026. API nghiệp vụ,13 PG adapters,3 Mongo adapters, share
 |2|Nghiệm thu ESP32 thật|Sáu streams đúng metadata/raw units; receipt correlation và thứ tự van/bơm; lỗi ACK/mất mạng/restart ghi evidence rõ|
 |3|Chốt dữ liệu và ba tài khoản demo chính|Farmer chủ Farm thật, Manager xác minh thật +Admin duyệt HTX, Admin riêng; giữ Farmer phụ để demo phân công/duyệt|
 |4|Smoke nghiệp vụ trên database+web|SMS/email, HTX/Farm approvals, assignment expiry, Harvest/Cultivation/correction, QR whitelist và restart|
-|5|Backup/restore và diễn thử|Backup PG+Mongo; phục hồi trên DB riêng và đối chiếu records/relations/history/hash-chain; không thử restore đè demo|
+|5|Backup/restore đã có; diễn thử với tài khoản thật|CLI và8 tests backup đạt; actual snapshot/restore-check demo khớp, không restore đè. Xem DATABASE_BACKUP_RESTORE/DEMO_READINESS_20261021|
 |6|Review release và triển khai đích|Tests, docs, config, Auth/deploy/TLS/broker; chỉ push/merge theo yêu cầu rõ ràng|
 
 AI chẩn đoán/chatbot vẫn hoãn. Android chưa có, là phạm vi riêng. Không tự chọn nhà cung cấp hoặc thêm nghiệp vụ mới để tăng phần trăm hoàn thành.

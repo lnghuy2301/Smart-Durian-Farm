@@ -1,6 +1,6 @@
 # Bàn giao các module — đọc đầu session
 
-Cập nhật 21/10/2026. Source tích hợp nền `1f6c1fd`; lần dọn tài liệu trên `chore/project-cleanup`. Không coi tên nhánh/commit trong guide cũ là trạng thái GitHub hiện tại; kiểm tra git trước khi làm. [Mục lục](README.md), [tiến độ](BACKEND_PROGRESS_CURRENT.md).
+Cập nhật21/10/2026. Nhánh hiện hành `feat/database-backup-restore` kế thừa MQTT final `fd7a4fb`, cleanup `92ce66f` và database runtime `1f6c1fd`. Không coi tên nhánh/commit trong guide cũ là trạng thái GitHub hiện tại; kiểm tra git trước khi làm. [Mục lục](README.md), [tiến độ](BACKEND_PROGRESS_CURRENT.md).
 
 ## Đọc và kiểm tra
 
@@ -15,7 +15,7 @@ Cập nhật 21/10/2026. Source tích hợp nền `1f6c1fd`; lần dọn tài li
 
 Development mặc định database; test mặc định memory; override `BUSINESS_STORAGE`. Auth `mock` vẫn phục vụ development/test và có thể đọc tài khoản PG. OTP dở xác minh lại sau restart; dữ liệu đã duyệt, token version và proposals lưu bền. Startup không tự migrate/seed/fallback RAM.
 
-Migrations001–014 đã Applied local tại checkpoint20/10. Trạm thật có đủ301–306 và bơm2/van3/4. Sensor303 expected unit cũ `%` còn giữ nguyên; chỉnh qua API theo [readiness](REAL_HARDWARE_DATABASE_READINESS.md) nếu cần `%rH`. Không reseed/reset volume để chữa unit hay mật khẩu.
+Migrations001–014 đã Applied local. Trạm thật có đủ301–306 và metadata recipe Active. Đợt21/10 đã backup/restore-check và đổi303 expected unit thành%rH,306 thànhµS/cm qua owner repository; ngoài hai metadata/version/audit giữ nguyên. [Readiness](REAL_HARDWARE_DATABASE_READINESS.md). Không reseed/reset volume để chữa unit hay mật khẩu.
 
 Kết quả nghiệm thu tự động của source nền:240 backend,263 persistence/17 suites,8 web unit,46 browser memory +4 browser database/MQTT TCP; quality checks đạt. Đây là checkpoint trước lần dọn, không thay thế báo cáo kiểm tra mới hoặc nghiệm thu ESP32 thật.
 
@@ -29,6 +29,8 @@ Kết quả nghiệm thu tự động của source nền:240 backend,263 persist
 - Code comment logic khó; cập nhật workflow/API/giới hạn/tests/cách tái lập sau mỗi thay đổi.
 
 ## Việc tiếp theo
+
+Backup/restore đã triển khai trên `feat/database-backup-restore` kế thừa `fd7a4fb`; [guide](DATABASE_BACKUP_RESTORE.md), [báo cáo demo](DEMO_READINESS_20261021.md). Actual backup/restore-check khớp trước/sau cập nhật owner units303/306, không đổi data ngoài phạm vi. CLI demo-check không lộ identity và không gửi OTP; Manager Active/Join HTX vẫn cần người dùng hoàn tất bằng OTP thật. Quyết định bật MQTT trong .env đang hỏi riêng, không tự đổi cấu hình.
 
 [Kế hoạch hiện hành](IMPLEMENTATION_PLAN.md): đã nhận MQTT FINAL v1.0 hardware-tested. Đọc [đối chiếu final](MQTT_FINAL_INTEGRATION.md); exact units/parser và metadata-based control đã cập nhật. Người dùng chốt purpose bất biến, đúng một mỗi vai trò và Active cho mọi ON/OFF. Nghiệm thu hardware thật và demo ba role, backup/restore, triển khai môi trường đích. AI và Android chưa triển khai, không đánh dấu đã có.
 

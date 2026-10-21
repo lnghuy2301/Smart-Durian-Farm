@@ -12,16 +12,16 @@ Migration001–014 đã Applied local. Trước/sau migration014 đã đối chi
 | --- | --- | --- | --- |
 |301|air_temperature|C|C, Active|
 |302|air_humidity|%|%, Active|
-|303|soil_moisture|%rH|**%**, Active; giữ cấu hình cũ|
+|303|soil_moisture|%rH|%rH, Active; đã cập nhật owner21/10|
 |304|soil_temperature|C|Đã thêm, Active|
 |305|soil_ph|H+|Đã thêm, Active|
-|306|soil_ec|µS/cm|Đã thêm, Active|
+|306|soil_ec|µS/cm|µS/cm, Active; đã cập nhật owner21/10|
 
 Actuator metadata đã có đủ pump2/shared, valve3/watering, valve4/spraying, đều Active. Không thay status hay purpose. Đăng ký Active không chứng minh hardware đang có điện hoặc relay đang bật.
 
-Sensor303 chưa tự đổi `%` sang `%rH` để giữ nguyên metadata đang có. Backend vẫn lưu raw `%rH` khi packet đến và báo unit mismatch; không convert/reject chỉ vì khác expected unit. Chủ Farmer có thể sửa đơn vị qua giao diện Sensor, hoặc PATCH sau khi đăng nhập. Đây là sửa metadata, không sửa readings đã lưu.
+Checkpoint20/10 giữ303 unit%. Đợt vận hành21/10 đã backup trước, rồi đổi expected unit303=%rH và306=µS/cm qua repository của Farmer chủ Farm, có version/audit; dữ liệu ngoài hai metadata này giữ nguyên. Backup sau điều chỉnh đã restore-check khớp. Đây là sửa metadata, không convert readings/thresholds hoặc thay status/IDs. [Báo cáo](DEMO_READINESS_20261021.md).
 
-FINAL v1.0 cũng xác nhận stream306 gửi micro sign `µ` (U+00B5), khác Greek mu `μ` (U+03BC) trong metadata seed cũ. Nếu Sensor306 vẫn dùng `μS/cm`, chủ có thể PATCH unit thành `µS/cm` theo cùng quyền. Đợt đối chiếu final chưa ghi đè rows hiện có; raw history giữ nguyên cả hai cách viết để phản ánh chính xác packet đã nhận.
+FINAL v1.0 xác nhận stream306 gửi micro sign `µ` (U+00B5), khác Greek mu `μ` (U+03BC) trong metadata seed cũ. Khi restore bản backup cũ, dùng hướng dẫn PATCH phía dưới để cập nhật đúng quyền nếu cần. Raw history giữ nguyên cả hai cách viết để phản ánh chính xác packet đã nhận.
 
 ## Tái lập bằng Postman nhập tay
 
