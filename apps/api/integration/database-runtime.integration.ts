@@ -69,7 +69,7 @@ test('full database AppModule uses shared PostgreSQL/Mongo ports for HTTP, MQTT,
       assert.equal((await app!.get(DatabaseService).postgres.query('SELECT current_database() AS name')).rows[0].name, f.name);
     });
     await t.test('MQTT six streams persist to Mongo, HTTP reads same data and malformed/retained packets do not refresh presence', async () => {
-      const units = ['C', '%', '%RH', 'C', 'H+', 'μS/cm'];
+      const units = ['C', '%', '%rH', 'C', 'H+', 'µS/cm'];
       transport.message(device.station_id, { stationId: device.station_id, sensorRecords: units.map((unit, index) => ({ dataStreamId: 301 + index, result: `${index + 1.5} ${unit}` })) });
       await until(async () => await f.mongo.db(f.name).collection('IOT_TELEMETRIES').countDocuments({ device_id: device.id }) === 6);
       const response = await request(`telemetry/devices/${device.id}/latest`);

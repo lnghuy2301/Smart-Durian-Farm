@@ -1,7 +1,7 @@
 import { ConflictException, ForbiddenException, HttpException, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { Pool, PoolClient } from 'pg';
 import { ControlOperation } from '../actuator-tasks/actuator-tasks.types';
-import { CONTROL_RECIPE } from '../actuator-tasks/task-rules';
+import { requireActiveCapabilities, resolveControlRecipe, startCapabilities } from '../actuator-tasks/task-rules';
 import { TaskAccess, TaskScope } from '../actuator-tasks/task-access';
 import { farmUuid } from '../farms/farm-validation';
 import { PostgresUsersRepository } from './postgres-users.repository';
@@ -58,8 +58,10 @@ export class PostgresTaskAccess extends TaskAccess {
     return this.transaction(async (client) => {
       // Internal OFF must survive actor revocation; Device → Actuators only.
       const device = (await this.devices.loadOnClient(client, deviceId, true)).device;
-      await this.recipe(client, deviceId);
-      return work({ stationId: device.station_id, from: -Infinity, to: Infinity });
+      const relays = await this.recipe(client, deviceId);
+      if (device.status !== 'Active') throw new ConflictException('Device phải Active, kể cả lệnh OFF');
+      return work({ stationId: device.station_id, from: -Infinity, to: Infinity, recipe: resolveControlRecipe(relays),
+        activeCapabilities: relays.filter((relay) => relay.status === 'Active').map((relay) => relay.capability_id) });
     });
   }
   private async withScope<T>(actor: string, deviceId: string, operation: 'read' | ControlOperation, work: (scope: TaskScope) => Promise<T>): Promise<T> {
@@ -82,22 +84,21 @@ export class PostgresTaskAccess extends TaskAccess {
       if (operation !== 'read') {
         if (context.actor.role !== 'Farmer') throw new ForbiddenException('Chỉ chủ Farmer hoặc Farmer đang phụ trách được điều khiển');
         const relays = await this.recipe(client, deviceId);
+        scope.recipe = resolveControlRecipe(relays);
+        scope.activeCapabilities = relays.filter((relay) => relay.status === 'Active').map((relay) => relay.capability_id);
+        if (device.status !== 'Active') throw new ConflictException('Device phải Active, kể cả lệnh OFF');
         if (operation !== 'Stop') {
-          if (device.status !== 'Active' || ![2, operation === 'Watering' ? 3 : 4].every((id) => relays.some((relay) => relay.capability_id === id && relay.status === 'Active'))) {
-            throw new ConflictException('Device và bơm/van tương ứng phải Active để Bật');
-          }
+          requireActiveCapabilities(startCapabilities(scope.recipe, operation), scope.activeCapabilities);
         }
       }
       return work(scope);
     });
   }
   private async recipe(client: PoolClient, device: string) {
-    const rows = await client.query<{ id: string }>('SELECT id FROM public.actuators WHERE device_id=$1 AND capability_id IN (2,3,4) ORDER BY id FOR UPDATE', [device]);
+    const rows = await client.query<{ id: string }>('SELECT id FROM public.actuators WHERE device_id=$1 ORDER BY id FOR UPDATE', [device]);
     const relays: TestActuator[] = [];
     for (const row of rows.rows) relays.push((await this.actuators.loadOnClient(client, row.id)).actuator);
-    if (!CONTROL_RECIPE.every((entry) => relays.some((relay) => relay.capability_id === entry.capability && relay.purpose === entry.purpose))) {
-      throw new ConflictException('Bộ điều khiển cần capability2/shared,3/watering,4/spraying');
-    }
+    resolveControlRecipe(relays);
     return relays;
   }
   private async transaction<T>(work: (client: PoolClient) => Promise<T>): Promise<T> {

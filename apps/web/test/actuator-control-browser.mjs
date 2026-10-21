@@ -136,8 +136,8 @@ export async function checkActuatorControl({
     const actuators = [];
     for (const [capability_id, purpose] of [
       [2, "shared"],
-      [3, "watering"],
-      [4, "spraying"],
+      [4, "watering"],
+      [3, "spraying"],
     ])
       actuators.push(
         await http(
@@ -158,7 +158,7 @@ export async function checkActuatorControl({
   for (const [stream, type, name, unit] of [
     ["301", "air_temperature", "Nhiệt độ không khí", "C"],
     ["302", "air_humidity", "Độ ẩm không khí", "%"],
-    ["303", "soil_moisture", "Độ ẩm đất", "%RH"],
+    ["303", "soil_moisture", "Độ ẩm đất", "%rH"],
   ]) {
     await http(
       "sensors",
@@ -176,7 +176,7 @@ export async function checkActuatorControl({
   broker.publish(device.station_id, [
     { dataStreamId: 301, result: "28.5 C" },
     { dataStreamId: 302, result: "78 %" },
-    { dataStreamId: 303, result: "65 %RH" },
+    { dataStreamId: 303, result: "65 %rH" },
   ]);
   const second = (await install("CONTROL_UI_OTHER")).device;
   const base = `actuator-tasks/devices/${device.id}`;
@@ -286,9 +286,9 @@ export async function checkActuatorControl({
             ]),
           [
             [2, 0],
-            [3, 0],
             [4, 0],
-            [3, 1],
+            [3, 0],
+            [4, 1],
             [2, 1],
           ],
         );
@@ -422,7 +422,7 @@ export async function checkActuatorControl({
       },
     );
     await check(
-      "control Inactive metadata blocks Start but retains Stop, history errors do not disable Stop",
+      "control Inactive metadata blocks ON and OFF; history errors alone do not disable valid Stop",
       async () => {
         await http(
           `actuators/${actuators[0].id}`,
@@ -438,10 +438,10 @@ export async function checkActuatorControl({
           .click();
         await until(
           async () =>
-            !owner.isClosed() && (await command(owner, "Dừng").isEnabled()),
+            !owner.isClosed() && (await command(owner, "Dừng").isDisabled()),
         );
         assert.equal(await command(owner, "Tưới nước").isDisabled(), true);
-        await stop();
+        assert.equal(await command(owner, "Dừng").isDisabled(), true);
         await http(
           `actuators/${actuators[0].id}`,
           "PATCH",

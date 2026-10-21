@@ -25,10 +25,13 @@ export function validateTask(task: ActuatorTask): void {
   taskInvariant(['Watering', 'Spraying', 'Stop', 'Reset', 'RecoveryStop'].includes(payload.operation) && payload.confirmation_kind === 'CommandReceipt');
   for (const link of [payload.parent_task_id, payload.reset_task_id, payload.recovery_task_id]) { id(link); taskInvariant(link !== task._id); }
   taskInvariant((payload.operation === 'Reset' || payload.operation === 'RecoveryStop') === (payload.parent_task_id !== null));
-  const caps = payload.operation === 'Watering' ? [[3, 2]] : payload.operation === 'Spraying' ? [[4, 2]]
-    : payload.operation === 'Stop' ? [[2, 3], [2, 4], [2, 3, 4]] : [[2, 3, 4]];
   const action = payload.operation === 'Watering' || payload.operation === 'Spraying' ? 1 : 0;
-  taskInvariant(Array.isArray(payload.steps) && caps.some((list) => JSON.stringify(list) === JSON.stringify(payload.steps.map((step) => step.tasking_capability_id))));
+  // Order is semantic (valve→pump ON, pump→valves OFF), not fixed numeric IDs.
+  // PG authority resolved roles before creation; retain historical capabilities
+  // without interpreting them using today's metadata or rewriting old receipts.
+  const lengths = payload.operation === 'Watering' || payload.operation === 'Spraying' ? [2] : payload.operation === 'Stop' ? [2, 3] : [3];
+  taskInvariant(Array.isArray(payload.steps) && lengths.includes(payload.steps.length)
+    && new Set(payload.steps.map((step) => step.tasking_capability_id)).size === payload.steps.length);
   taskInvariant(task.tasking_parameters.action === action && Array.isArray(task.targets) && task.targets.length === payload.steps.length);
   const ids = new Set([task.command_id]);
   payload.steps.forEach((step, index) => {

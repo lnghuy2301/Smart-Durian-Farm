@@ -71,8 +71,8 @@ test('persistence foundation on isolated PostgreSQL17/Mongo8', async (t) => {
       assert.equal((await sql.query("SELECT count(*) FROM public.trees WHERE tree_code<>'DRN-' || id::text")).rows[0].count, '0');
       assert.deepEqual((await sql.query('SELECT data_stream_id,sensor_type,unit FROM public.sensors WHERE device_id=$1 ORDER BY data_stream_id', [device.id])).rows,
         [{ data_stream_id: '301', sensor_type: 'air_temperature', unit: 'C' }, { data_stream_id: '302', sensor_type: 'air_humidity', unit: '%' },
-          { data_stream_id: '303', sensor_type: 'soil_moisture', unit: '%RH' }, { data_stream_id: '304', sensor_type: 'soil_temperature', unit: 'C' },
-          { data_stream_id: '305', sensor_type: 'soil_ph', unit: 'H+' }, { data_stream_id: '306', sensor_type: 'soil_ec', unit: 'μS/cm' }]);
+          { data_stream_id: '303', sensor_type: 'soil_moisture', unit: '%rH' }, { data_stream_id: '304', sensor_type: 'soil_temperature', unit: 'C' },
+          { data_stream_id: '305', sensor_type: 'soil_ph', unit: 'H+' }, { data_stream_id: '306', sensor_type: 'soil_ec', unit: 'µS/cm' }]);
       assert.deepEqual((await sql.query('SELECT capability_id,purpose FROM public.actuators WHERE device_id=$1 ORDER BY capability_id', [device.id])).rows,
         [{ capability_id: '2', purpose: 'shared' }, { capability_id: '3', purpose: 'watering' }, { capability_id: '4', purpose: 'spraying' }]);
       assert.deepEqual((await sql.query("SELECT status,gmail_verify FROM public.users WHERE role='Manager'")).rows[0], { status: 'Pending', gmail_verify: false });

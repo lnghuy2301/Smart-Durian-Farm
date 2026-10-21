@@ -1,6 +1,8 @@
 # Dữ liệu trạm thật trước khi nghiệm thu ESP32
 
-Checkpoint20/10/2026, [database runtime](DATABASE_RUNTIME_IMPLEMENTATION.md). Không có tin/lệnh được gửi tới broker/hardware thật trong bước chuẩn bị này.
+Checkpoint dữ liệu20/10/2026; protocol FINAL đối chiếu21/10/2026, [database runtime](DATABASE_RUNTIME_IMPLEMENTATION.md). Không có tin/lệnh được gửi tới broker/hardware thật trong bước chuẩn bị này.
+
+Người dùng đã xác nhận test trực tiếp telemetry301–306, pump/valves ON/OFF và ACK taskId/status/action theo [FINAL v1.0](MQTT_HARDWARE_PROTOCOL_FINAL_v1.0.md). Phần còn nghiệm thu trong guide là luồng xuyên suốt API/web/database/restart/recovery của bản server sau tích hợp, không phải yêu cầu kiểm thử lại protocol từ đầu.
 
 Station đã đăng ký: **E08CFE41DCAC**. UUID Device là ID nội bộ riêng, không thay station hoặc dùng station làm FK. Tài khoản chủ Farmer vẫn dùng cấu hình demo hiện có; không thay phone/password/OTP settings.
 
@@ -10,14 +12,16 @@ Migration001–014 đã Applied local. Trước/sau migration014 đã đối chi
 | --- | --- | --- | --- |
 |301|air_temperature|C|C, Active|
 |302|air_humidity|%|%, Active|
-|303|soil_moisture|%RH|**%**, Active; giữ cấu hình cũ|
+|303|soil_moisture|%rH|**%**, Active; giữ cấu hình cũ|
 |304|soil_temperature|C|Đã thêm, Active|
 |305|soil_ph|H+|Đã thêm, Active|
-|306|soil_ec|μS/cm|Đã thêm, Active|
+|306|soil_ec|µS/cm|Đã thêm, Active|
 
 Actuator metadata đã có đủ pump2/shared, valve3/watering, valve4/spraying, đều Active. Không thay status hay purpose. Đăng ký Active không chứng minh hardware đang có điện hoặc relay đang bật.
 
-Sensor303 chưa tự đổi `%` sang `%RH` để giữ nguyên metadata đang có. Backend vẫn lưu raw `%RH` khi packet đến và báo unit mismatch; không convert/reject chỉ vì khác expected unit. Chủ Farmer có thể sửa đơn vị qua giao diện Sensor, hoặc PATCH sau khi đăng nhập. Đây là sửa metadata, không sửa readings đã lưu.
+Sensor303 chưa tự đổi `%` sang `%rH` để giữ nguyên metadata đang có. Backend vẫn lưu raw `%rH` khi packet đến và báo unit mismatch; không convert/reject chỉ vì khác expected unit. Chủ Farmer có thể sửa đơn vị qua giao diện Sensor, hoặc PATCH sau khi đăng nhập. Đây là sửa metadata, không sửa readings đã lưu.
+
+FINAL v1.0 cũng xác nhận stream306 gửi micro sign `µ` (U+00B5), khác Greek mu `μ` (U+03BC) trong metadata seed cũ. Nếu Sensor306 vẫn dùng `μS/cm`, chủ có thể PATCH unit thành `µS/cm` theo cùng quyền. Đợt đối chiếu final chưa ghi đè rows hiện có; raw history giữ nguyên cả hai cách viết để phản ánh chính xác packet đã nhận.
 
 ## Tái lập bằng Postman nhập tay
 
@@ -34,10 +38,10 @@ Sensor303 chưa tự đổi `%` sang `%RH` để giữ nguyên metadata đang c�
 ```
 
 ```json
-{"device_id":"UUID_DEVICE","name":"EC đất","sensor_type":"soil_ec","data_stream_id":"306","unit":"μS/cm"}
+{"device_id":"UUID_DEVICE","name":"EC đất","sensor_type":"soil_ec","data_stream_id":"306","unit":"µS/cm"}
 ```
 
-4. Để đồng bộ expected unit303: GET `/api/sensors/by-stream/UUID_DEVICE/303`, copy `id` Sensor rồi PATCH `/api/sensors/UUID_SENSOR` với body `{"unit":"%RH"}`. Owner trực tiếp; Admin muốn sửa phải đi luồng đề xuất. Không sửa sensor_type hoặc data_stream_id.
+4. Để đồng bộ expected unit303: GET `/api/sensors/by-stream/UUID_DEVICE/303`, copy `id` Sensor rồi PATCH `/api/sensors/UUID_SENSOR` với body `{"unit":"%rH"}`. Owner trực tiếp; Admin muốn sửa phải đi luồng đề xuất. Không sửa sensor_type hoặc data_stream_id.
 5. Khi hardware được bật đúng broker cấu hình: GET `/api/mqtt/devices/UUID_DEVICE/status`, `/api/telemetry/devices/UUID_DEVICE/latest`, `/api/telemetry/devices/UUID_DEVICE/history` và xem UI IoT. Chu kỳ firmware15s, backend nhận tất cả packets hợp lệ; không bịa readings trước khi ESP32 gửi.
 
 Không cần Postman scripts/environments; UUID/OTP/JWT vẫn copy tay. Tài liệu này không chứa credential. Các JSON có placeholder UUID chỉ là hướng dẫn, phải thay trước khi gửi.

@@ -92,27 +92,43 @@ export async function loadTasks(
   return { page, root, linked };
 }
 export function recipeReady(actuators: Actuator[]) {
-  return [
-    [2, "shared"],
-    [3, "watering"],
-    [4, "spraying"],
-  ].every(([id, purpose]) =>
-    actuators.some(
-      (item) => item.capability_id === id && item.purpose === purpose,
-    ),
-  );
+  return !!controlRecipe(actuators);
+}
+export function controlRecipe(actuators: Actuator[]) {
+  const roles = ["shared", "watering", "spraying"] as const;
+  const recipe = {} as Record<(typeof roles)[number], Actuator>;
+  for (const role of roles) {
+    const matches = actuators.filter((item) => item.purpose === role);
+    if (matches.length !== 1) return null;
+    recipe[role] = matches[0];
+  }
+  return new Set(roles.map((role) => recipe[role].capability_id)).size === 3
+    ? recipe
+    : null;
 }
 export function startMetadataReady(
   data: ControlSnapshot,
   operation: "Watering" | "Spraying",
 ) {
-  return (
-    data.device.status === "Active" &&
-    recipeReady(data.actuators) &&
-    [2, operation === "Watering" ? 3 : 4].every((id) =>
-      data.actuators.some(
-        (item) => item.capability_id === id && item.status === "Active",
-      ),
-    )
-  );
+  const recipe = controlRecipe(data.actuators);
+  if (!recipe || data.device.status !== "Active") return false;
+  const required = data.state.reset_required
+    ? Object.values(recipe)
+    : [
+        recipe.shared,
+        recipe[operation === "Watering" ? "watering" : "spraying"],
+      ];
+  return required.every((item) => item.status === "Active");
+}
+export function stopMetadataReady(data: ControlSnapshot) {
+  const recipe = controlRecipe(data.actuators);
+  if (!recipe || data.device.status !== "Active") return false;
+  const mode = data.state.busy ? "Unknown" : data.state.acknowledged_mode;
+  const required =
+    mode === "Watering"
+      ? [recipe.shared, recipe.watering]
+      : mode === "Spraying"
+        ? [recipe.shared, recipe.spraying]
+        : Object.values(recipe);
+  return required.every((item) => item.status === "Active");
 }

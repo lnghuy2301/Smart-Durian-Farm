@@ -1,9 +1,31 @@
 import { ObjectId } from 'mongodb';
+import { ConflictException } from '@nestjs/common';
 import { ActuatorTask, AcknowledgedMode, TaskOperation, TaskStep } from './actuator-tasks.types';
 
-export const CONTROL_RECIPE = [{ capability: 2, purpose: 'shared' }, { capability: 3, purpose: 'watering' }, { capability: 4, purpose: 'spraying' }] as const;
-export function stopCapabilities(mode: AcknowledgedMode): number[] {
-  return mode === 'Watering' ? [2, 3] : mode === 'Spraying' ? [2, 4] : [2, 3, 4];
+export interface ControlRecipe { shared: number; watering: number; spraying: number }
+export function resolveControlRecipe(relays: readonly { capability_id: number; purpose: string }[]): ControlRecipe {
+  const recipe = {} as ControlRecipe;
+  // Firmware capability numbers carry no business meaning. Include Inactive
+  // metadata too: disabling a duplicate must not silently select another relay.
+  for (const purpose of ['shared', 'watering', 'spraying'] as const) {
+    const matches = relays.filter((relay) => relay.purpose === purpose);
+    if (matches.length !== 1) throw new ConflictException('Trạm cần đúng một bơm shared, một van watering và một van spraying');
+    recipe[purpose] = matches[0].capability_id;
+  }
+  if (new Set(Object.values(recipe)).size !== 3) throw new ConflictException('Các vai trò phải dùng capability khác nhau');
+  return recipe;
+}
+export function startCapabilities(recipe: ControlRecipe, operation: 'Watering' | 'Spraying'): number[] {
+  return [recipe[operation === 'Watering' ? 'watering' : 'spraying'], recipe.shared];
+}
+export function stopCapabilities(recipe: ControlRecipe, mode: AcknowledgedMode): number[] {
+  return mode === 'Watering' ? [recipe.shared, recipe.watering] : mode === 'Spraying' ? [recipe.shared, recipe.spraying]
+    : [recipe.shared, recipe.watering, recipe.spraying];
+}
+export function requireActiveCapabilities(capabilities: number[], active: readonly number[]): void {
+  if (!capabilities.every((capability) => active.includes(capability))) {
+    throw new ConflictException('Actuator nhận lệnh phải Active, kể cả lệnh OFF');
+  }
 }
 export function markTaskFailed(task: ActuatorTask, code: string): void {
   if (task.status !== 'Pending') return;

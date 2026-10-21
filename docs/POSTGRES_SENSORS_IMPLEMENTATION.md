@@ -8,7 +8,7 @@ Ngày19/10/2026. Nhánh **feat/postgres-sensors-persistence** kế thừa Device
 
 SENSORS đúng9 fields id/device_id/name/sensor_type/data_stream_id/unit/min_threshold/max_threshold/status. Device FK là DEVICES.id UUID, không station. Backend sinh Sensor UUID độc lập. Composite **UNIQUE(device_id,data_stream_id)**; stream đúng chuỗi ASCII `[A-Za-z0-9_-]` dài1–50, phân biệt hoa/thường; cùng stream ở hai Device hợp lệ. Inactive vẫn giữ cặp mã. id/device_id/data_stream_id/sensor_type bất biến cả API và SQL identity trigger. Không di chuyển/xóa Sensor hoặc tự đăng ký từ packet MQTT.
 
-Sáu types đã được user chốt: air_temperature,air_humidity,soil_moisture,soil_temperature,soil_ph,soil_ec. Bộ demo301/C,302/%,303/%RH,304/C,305/H+,306/μS/cm. Đây là mapping được đăng ký bằng metadata, không hardcode mọi station hoặc giới hạn stream tới306. unit là varchar16 không rỗng, sửa được và trim đầu/cuối; không áp lại enum hai đơn vị cũ đã được thay bởi spec hardware. Lịch sử readings giữ raw unit/value, sửa unit metadata không convert readings hoặc min/max cũ.
+Sáu types đã được user chốt: air_temperature,air_humidity,soil_moisture,soil_temperature,soil_ph,soil_ec. Bộ demo301/C,302/%,303/%rH,304/C,305/H+,306/µS/cm. Đây là mapping được đăng ký bằng metadata, không hardcode mọi station hoặc giới hạn stream tới306. unit là varchar16 không rỗng, sửa được và trim đầu/cuối; không áp lại enum hai đơn vị cũ đã được thay bởi spec hardware. Lịch sử readings giữ raw unit/value, sửa unit metadata không convert readings hoặc min/max cũ.
 
 name1–80 ký tự sau trim; statusActive|Inactive. Thresholds numeric(7,2) trong[-99999.99,99999.99], tối đa2 số thập phân; **cả hai null hoặc cả hai số với min<max**. Create bỏ cả hai mặc địnhnull. PATCH bỏ field giữ nguyên; null tường minh chỉ xóa ngưỡng nếu sau merge cả cặp cùngnull. PATCH một ngưỡng được nếu cặp sau merge hợp lệ; gửi một số khi ngưỡng kia null bị400. Không tự áp range vật lý pH/EC chưa được chốt. PATCH name/unit không kích hoạt Sensor Inactive. Metadata vẫn chỉnh được khi Device Inactive/Maintenance; telemetry/control kiểm tra status riêng.
 
@@ -37,7 +37,7 @@ Pending Create không đặt chỗ stream: owner trực tiếp hoặc proposal k
 Ví dụ body, thay placeholder bằng Device UUID thật:
 
 ```json
-{"device_id":"<DEVICE_UUID>","name":"EC đất","sensor_type":"soil_ec","data_stream_id":"306","unit":"μS/cm","min_threshold":null,"max_threshold":null,"status":"Active"}
+{"device_id":"<DEVICE_UUID>","name":"EC đất","sensor_type":"soil_ec","data_stream_id":"306","unit":"µS/cm","min_threshold":null,"max_threshold":null,"status":"Active"}
 ```
 
 Không gửi station thay UUID, numeric data_stream_id thay string, hoặc field do backend quản lý. HTTP rejects unknown fields/null ngoài ngưỡng; trusted PG methods cũng validate DTO thay vì dựa riêng ValidationPipe.

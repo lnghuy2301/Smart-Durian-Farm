@@ -281,7 +281,7 @@ test('MongoDB telemetry retains atomic FIFO across restart and enforces PostgreS
       async () => {
         await reset();
         const f = await mapped(),
-          units = ['C', '%', '%RH', 'C', 'H+', 'μS/cm'];
+          units = ['C', '%', '%rH', 'C', 'H+', 'µS/cm'];
         const types = [
           'air_temperature',
           'air_humidity',
@@ -312,8 +312,8 @@ test('MongoDB telemetry retains atomic FIFO across restart and enforces PostgreS
           assert.equal(Object.keys(record).length, 7);
           assert.match(record._id, /^[0-9a-f]{24}$/);
         }
-        assert.equal(result.items.find((r) => r.data_stream_id === '306')!.unit, 'μS/cm');
-        assert.equal(result.items.find((r) => r.data_stream_id === '303')!.unit, '%RH');
+        assert.equal(result.items.find((r) => r.data_stream_id === '306')!.unit, 'µS/cm');
+        assert.equal(result.items.find((r) => r.data_stream_id === '303')!.unit, '%rH');
         const stored = await mongo.db(name).collection('IOT_TELEMETRIES').findOne({ device_id: f.device.id });
         assert.ok(stored!._id instanceof ObjectId);
         assert.ok(stored!.received_at instanceof Date);

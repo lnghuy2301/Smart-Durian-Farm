@@ -1,5 +1,7 @@
 # Backend — trạng thái và việc tiếp theo
 
+Checkpoint21/10/2026 — `feat/mqtt-final-contract`: đã tích hợp [MQTT FINAL v1.0 hardware-tested](MQTT_HARDWARE_PROTOCOL_FINAL_v1.0.md). Parser/fresh seed exact units%rH vàµS/cm; control RAM/PG/Mongo journal/UI chọn capability theo purpose metadata. Người dùng chốt purpose bất biến, đúng một mỗi vai trò và Active cho mọi ON/OFF, không ngoại lệ Stop/Recovery. [Source/quy tắc/tests/tái lập](MQTT_FINAL_INTEGRATION.md). Đạt266 persistence/17 suites,11 web unit,46 browser memory +4 browser database/MQTT TCP; API/web quality checks đạt. Toàn backend246/246 tests đạt. Không ghi đè dữ liệu demo hoặc phát lệnh thật. Bảng20/10 dưới đây là nền trước thay đổi final; phần mapping/control/units dùng checkpoint21/10 này. Không còn câu hỏi MQTT đang chờ.
+
 Cập nhật20/10/2026, nhánh `feat/database-runtime-integration`, kế thừa `1a8a8bb`/`b6d3ed1`. Đây là tiến độ hiện hành; các mốc RAM/persistence chưa wiring trong tài liệu cũ là lịch sử. [Cách chạy/source/limits/tests](DATABASE_RUNTIME_IMPLEMENTATION.md).
 
 | Phần | Trạng thái thực tế | Còn lại |
@@ -20,7 +22,7 @@ Cultivation `1a8a8bb`: deadline15 phút, context assignment gốc/grace15 ngày,
 
 Kiểm chứng cuối: **240/240 backend,263/263 persistence (17 suites),8/8 web unit,46/46 browser RAM +4/4 browser full database/MQTT TCP**; API/web lint/typecheck/build và formatting đạt. Full database target9/9 được chạy lại sau kiểm tra thứ tự compound index. Suite kiểm tra HTTP/MQTT/QR, shared instances/no RAM store, fresh app/pool/client, thiếu migration, sai Mongo DB và crash/restart Node riêng. Test TCP/ACK vẫn là giả lập, không chứng minh tác động relay thật.
 
-Migration001–014 đã Applied local. Migration014 chỉ mở rộng validator technical-state cho CultivationLedger; đối chiếu count/hash13 business+4 technical PG và4 Mongo collections trước/sau giữ nguyên. Sau migration bổ sung riêng304–306 cho trạm thật, sensor cũ giữ nguyên; chạy lại không tạo trùng. Sensor303 vẫn có expected unit cũ `%`, Owner có thể chỉnh `%RH` theo [hướng dẫn](REAL_HARDWARE_DATABASE_READINESS.md). Không reseed hoặc tái tạo volume.
+Migration001–014 đã Applied local. Migration014 chỉ mở rộng validator technical-state cho CultivationLedger; đối chiếu count/hash13 business+4 technical PG và4 Mongo collections trước/sau giữ nguyên. Sau migration bổ sung riêng304–306 cho trạm thật, sensor cũ giữ nguyên; chạy lại không tạo trùng. Sensor303 vẫn có expected unit cũ `%`, Owner có thể chỉnh `%rH` theo [hướng dẫn](REAL_HARDWARE_DATABASE_READINESS.md). Không reseed hoặc tái tạo volume.
 
 Ba nhánh local kế tiếp nhau: `feat/mongo-actuator-tasks-persistence` (`b6d3ed1`) → `feat/mongo-cultivation-persistence` (`1a8a8bb`) → `feat/database-runtime-integration`. Không tự push/merge. Các feature cũ vẫn được giữ; không cần triển khai lại hoặc merge ngược main cũ để bắt đầu code.
 

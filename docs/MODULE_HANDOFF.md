@@ -15,7 +15,7 @@ Cập nhật 21/10/2026. Source tích hợp nền `1f6c1fd`; lần dọn tài li
 
 Development mặc định database; test mặc định memory; override `BUSINESS_STORAGE`. Auth `mock` vẫn phục vụ development/test và có thể đọc tài khoản PG. OTP dở xác minh lại sau restart; dữ liệu đã duyệt, token version và proposals lưu bền. Startup không tự migrate/seed/fallback RAM.
 
-Migrations001–014 đã Applied local tại checkpoint20/10. Trạm thật có đủ301–306 và bơm2/van3/4. Sensor303 expected unit cũ `%` còn giữ nguyên; chỉnh qua API theo [readiness](REAL_HARDWARE_DATABASE_READINESS.md) nếu cần `%RH`. Không reseed/reset volume để chữa unit hay mật khẩu.
+Migrations001–014 đã Applied local tại checkpoint20/10. Trạm thật có đủ301–306 và bơm2/van3/4. Sensor303 expected unit cũ `%` còn giữ nguyên; chỉnh qua API theo [readiness](REAL_HARDWARE_DATABASE_READINESS.md) nếu cần `%rH`. Không reseed/reset volume để chữa unit hay mật khẩu.
 
 Kết quả nghiệm thu tự động của source nền:240 backend,263 persistence/17 suites,8 web unit,46 browser memory +4 browser database/MQTT TCP; quality checks đạt. Đây là checkpoint trước lần dọn, không thay thế báo cáo kiểm tra mới hoặc nghiệm thu ESP32 thật.
 
@@ -30,6 +30,6 @@ Kết quả nghiệm thu tự động của source nền:240 backend,263 persist
 
 ## Việc tiếp theo
 
-[Kế hoạch hiện hành](IMPLEMENTATION_PLAN.md): nhận bản MQTT Configuration cuối, so sánh packet/ACK/topic/config với source; chỉ sửa sai khác đã thống nhất. Nghiệm thu hardware thật và demo ba role, backup/restore, triển khai môi trường đích. AI và Android chưa triển khai, không đánh dấu đã có.
+[Kế hoạch hiện hành](IMPLEMENTATION_PLAN.md): đã nhận MQTT FINAL v1.0 hardware-tested. Đọc [đối chiếu final](MQTT_FINAL_INTEGRATION.md); exact units/parser và metadata-based control đã cập nhật. Người dùng chốt purpose bất biến, đúng một mỗi vai trò và Active cho mọi ON/OFF. Nghiệm thu hardware thật và demo ba role, backup/restore, triển khai môi trường đích. AI và Android chưa triển khai, không đánh dấu đã có.
 
 Các báo cáo checkpoint trùng đã bỏ trong [đợt dọn](PROJECT_CLEANUP.md); lịch sử commit vẫn còn. Các guide module giữ để tra cứu chi tiết, nhưng không dùng câu “runtime còn RAM” ở checkpoint cũ làm backlog mới.

@@ -30,7 +30,7 @@ Chủ Farm tạo Device đã lắp đặt: zone_id UUID, station_id đúng ESP32
 | 3 | watering | Van tưới |
 | 4 | spraying | Van phun |
 
-Đây là recipe điều khiển **bộ demo đã được chốt**. Metadata generic vẫn cho capability khác, nhưng API control hiện đòi đủ 2/3/4 và purpose đúng; không tự suy capability từ thứ tự đăng ký. Start cần Device và bơm/van được chọn Active. Stop/reset/recovery cho OFF dù metadata Inactive/Maintenance để không chặn thao tác Dừng, nhưng vẫn phải có ba định danh đúng.
+Bảng là mapping seed demo mặc định, không là recipe hard-code. FINAL21/10: chọn capability theo purpose metadata, đúng một shared/watering/spraying; hai van có thể gán ngược lúc đăng ký, purpose vẫn bất biến sau đó. Thiếu/trùng vai trò trả409 trước tạo task. Device và actuator nhận lệnh phải Active cho cả ON/OFF, kể cả Stop/Reset/Recovery. Metadata đổi Inactive giữa chuỗi thì bước tiếp bị chặn, task lỗi và mode Unknown; kích hoạt lại metadata hợp lệ trước khi gửi Dừng mới. Không tự gửi OFF ngoại lệ.
 
 Sensors không bắt buộc cho API control. Nếu test giám sát cùng lúc, khai báo qua `POST /api/sensors`: stream string301 air_temperature/C;302 air_humidity/%;303 soil_moisture/%. Router không auto-register/hardcode mapping sensor.
 
@@ -125,7 +125,7 @@ Owner Farmer được điều khiển không cần phân công riêng. Farmer kh
 Import [Actuator-Tasks-Local-Test.postman_collection.json](postman/Actuator-Tasks-Local-Test.postman_collection.json) bằng JSON trực tiếp. Base URL literal localhost3000. Sửa các chuỗi `PASTE_OWNER_JWT`, `PASTE_ADMIN_JWT`, `PASTE_MANAGER_JWT`, `PASTE_FARMER_JWT`, `PASTE_ZONE_UUID`, `PASTE_DEVICE_UUID`, `PASTE_TASK_OBJECT_ID`, `PASTE_RESET_OBJECT_ID`, `PASTE_RECOVERY_OBJECT_ID`, `PASTE_STATION_ID` bằng tay trong request liên quan.
 
 1. Khởi động API từ root `npm run dev:api`; nếu process vừa restart, tái tạo Farm được Admin duyệt và Zone bằng các collection hiện có. Login lấy JWT, không chia sẻ JWT/log OTP.
-2. Đăng ký Device với station đúng firmware, installed_at/cost hợp lệ. Copy UUID response vào cả ba POST Actuator, state/list/commands; tạo bơm2/van3/van4 theo bảng.
+2. Đăng ký Device với station đúng firmware, installed_at/cost hợp lệ. Copy UUID response vào cả ba POST Actuator, state/list/commands; tạo mỗi purpose đúng một actuator theo lắp đặt; bảng2/3/4 chỉ là ví dụ seed.
 3. Xem broker status bằng AdminJWT, phải connected/subscribed=true. Đảm bảo trạm đã subscribe đúng topic, hardware phản hồi ACK v1 đúng taskId/action. State ban đầu Unknown.
 4. POST Watering, nhận202/Pending; copy _id/status_url và reset_task_id, GET tiến trình. Lần đầu gửi OFF2→OFF3→OFF4 trước ON3→ON2, mỗi bước chờ ACK10s. Hardware không online thì ResetFailed, không gửi ON.
 5. POST Stop, theo GET đến terminal. Khi đã Confirmed Watering chỉ OFF2→OFF3; Unknown/partial dùng OFF2→OFF3→OFF4. Chỉ sau Dừng đủ ACK mới Bật Spraying.

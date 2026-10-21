@@ -1,6 +1,6 @@
 # MQTT — implementation đang dùng và tiếp nhận Configuration cuối
 
-Cập nhật21/10/2026. Hợp nhất guide communication/contract v1/review sáu Sensor; source nền `1f6c1fd`. [Protocol người dùng hiện có](MQTT_HARDWARE_PROTOCOL_VERIFIED.md), [DOCX hiện có](MQTT_Configuration_Smart_Farm_Durian_v1.0.docx). Người dùng sẽ gửi Configuration chốt tiếp theo; đợt dọn này không đổi firmware, payload, topic hoặc credentials.
+Cập nhật21/10/2026. Hợp nhất guide communication/contract v1/review sáu Sensor; source nền `1f6c1fd`. [Protocol người dùng hiện có](MQTT_HARDWARE_PROTOCOL_FINAL_v1.0.md), [DOCX hiện có](MQTT_Configuration_Smart_Farm_Durian_v1.0.docx). Đã nhận FINAL v1.0 hardware-tested ngày21/10/2026. Parser/telemetry/seed và control metadata đã được đối chiếu; xem [tích hợp và phần còn chờ](MQTT_FINAL_INTEGRATION.md). Không đổi wire protocol hoặc credentials.
 
 ## Giao tiếp source đang triển khai
 
@@ -18,12 +18,12 @@ Topic station→DEVICES.station_id→DEVICES.id UUID; Sensor lookup device_id+da
 | --- | --- | --- |
 |301|air_temperature|C|
 |302|air_humidity|%|
-|303|soil_moisture|%RH|
+|303|soil_moisture|%rH|
 |304|soil_temperature|C|
 |305|soil_ph|H+|
-|306|soil_ec|μS/cm|
+|306|soil_ec|µS/cm|
 
-Đây là mapping bộ demo đã chốt, router vẫn resolve bằng metadata, không ép mọi station tương lai dùng cùng IDs. Sensor type/stream/Device bất biến; unit varchar16 sửa được. Metadata303 cũ% giữ nguyên tới khi chủ sửa; readings vẫn giữ raw%RH và diagnostic mismatch. Không tự convert, tự tạo Sensor hay tự đặt thresholds.
+Đây là mapping bộ demo đã chốt, router vẫn resolve bằng metadata, không ép mọi station tương lai dùng cùng IDs. Sensor type/stream/Device bất biến; unit varchar16 sửa được. Metadata303 cũ% giữ nguyên tới khi chủ sửa; readings vẫn giữ raw%rH và diagnostic mismatch. Không tự convert, tự tạo Sensor hay tự đặt thresholds.
 
 ## Runtime, quyền và lỗi
 
@@ -35,7 +35,7 @@ measured_at là backend packet arrival, received_at bước ghi Mongo, không th
 
 Farmer Accepted còn hiệu lực được đọc đúng scope/reading interval; hết phân công mất latest/history IoT. Diagnostic chứa readings cũng lọc theo assignment trước pagination. Không endpoint HTTP inject telemetry hoặc publish arbitrary MQTT.
 
-ACK đối chiếu taskId+Device+requested action+arrival time; sai/trùng/trễ/unknown không revive workflow. Confirmed/confirmed_at là receipt backend; physical_state vẫn Unknown. Chờ10s/step. Bơm2 shared, van3 watering, van4 spraying; Unknown trước Start phải OFF2→ACK→OFF3→ACK→OFF4→ACK rồi valveON→ACK→pumpON→ACK. Stop/recovery bơm trước van; không đồng thời tưới/phun. Restart không tự gửi command, pending cũ Failed và Start sau Reset. [Workflow](ACTUATOR_TASKS_WORKFLOW_DESIGN.md), [durable journal](MONGO_ACTUATOR_TASKS_IMPLEMENTATION.md).
+ACK đối chiếu taskId+Device+requested action+arrival time; sai/trùng/trễ/unknown không revive workflow. Confirmed/confirmed_at là receipt backend; physical_state vẫn Unknown. Chờ10s/step. Recipe lấy đúng một shared/watering/spraying từ metadata, không hard-code capability; Unknown trước Start phải OFF bơm→ACK→OFF van tưới→ACK→OFF van phun→ACK rồi valveON→ACK→pumpON→ACK. Mọi ON/OFF kiểm Device/actuator Active, kể cả Stop/Reset/Recovery; status Inactive không có ngoại lệ. Stop/recovery bơm trước van; không đồng thời tưới/phun. Restart không tự gửi command, pending cũ Failed và Start sau Reset. [Workflow](ACTUATOR_TASKS_WORKFLOW_DESIGN.md), [durable journal](MONGO_ACTUATOR_TASKS_IMPLEMENTATION.md).
 
 ## Cấu hình và kiểm tra thủ công
 
@@ -53,12 +53,10 @@ API diagnostic: GET `/api/mqtt/status`, `/api/mqtt/devices/:deviceId/status`, `/
 
 Unit/fake/TCP loopback kiểm packet reject, raw units, command shape, ACK correlation, timeout/reset/Stop/recovery. Full database/browser tests kiểm HTTP/MQTT/QR/restart. Đây chưa phải nghiệm thu ESP32/relay thật. Lệnh kiểm tra/fixture: [runtime guide](DATABASE_RUNTIME_IMPLEMENTATION.md).
 
-## Khi nhận Configuration cuối
+## Tích hợp Configuration cuối
 
-1. Đọc toàn bộ bản người dùng gửi; ghi rõ version và nguồn chốt trong mục lục này.
-2. Đối chiếu host/port/TLS/credentials keys, topics, telemetry shape/units/timestamps, command targets/action, ACK correlation và ý nghĩa receipt, mapping IDs và timeouts.
-3. Nêu sai khác cùng tác động DEVICES/SENSORS/ACTUATORS/telemetry/tasks/UI. Không tự đổi nghiệp vụ hoặc migrations đã Applied; hỏi phần chưa rõ.
-4. Sửa parser/transport/adapters/tests/Postman/docs theo quyết định, giữ shared instances. Chỉ thêm migration khi schema thật sự cần thay đổi được duyệt.
-5. Chạy hồi quy cô lập, sau đó người dùng nghiệm thu hardware; ghi case/evidence thực, không đánh dấu pass từ fixture.
+Đã nhận [MQTT_HARDWARE_PROTOCOL_FINAL_v1.0](MQTT_HARDWARE_PROTOCOL_FINAL_v1.0.md). Đây là authority về topic/payload/units/correlation; VERIFIED/DOCX cũ chỉ tham khảo lịch sử và giữ nguyên nguồn người dùng.
 
-Nguồn protocol/ERD/DOCX người dùng đang chỉnh được giữ nguyên trong lần dọn. Bản Configuration chưa gửi không được suy diễn thành contract mới.
+[Đối chiếu final](MQTT_FINAL_INTEGRATION.md) ghi chi tiết mapping theo purpose, status Active cho mọi ON/OFF, raw-unit spelling và bằng chứng kiểm thử. Purpose chọn lúc đăng ký rồi bất biến; thiếu/trùng một vai trò thì409 trước tạo task, không chọn actuator đầu hoặc bỏ qua duplicate Inactive. Không thay migrations đã Apply hoặc journal cũ.
+
+Không thay firmware, tự gửi command thật hoặc suy trạng thái relay từ ACK. User đã test protocol hardware; full server workflow/DB/UI có fixture acceptance, buổi live demo dùng đúng metadata và ghi evidence thực.

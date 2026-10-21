@@ -6,7 +6,7 @@ Cập nhật21/10/2026. API nghiệp vụ,13 PG adapters,3 Mongo adapters, share
 
 | Bước | Công việc | Điều kiện đạt |
 | --- | --- | --- |
-|1|Nhận MQTT Configuration cuối từ người dùng|Lập bảng sai khác config/topic/telemetry/command/ACK/IDs/timeout so với source; trao đổi phần chưa rõ trước khi sửa|
+|1|Tích hợp MQTT FINAL v1.0 đã nhận|Parser/wire/units và metadata-based control đã tích hợp; purpose bất biến, Active mọi ON/OFF; hoàn tất regression trước chuyển vận hành|
 |2|Nghiệm thu ESP32 thật|Sáu streams đúng metadata/raw units; receipt correlation và thứ tự van/bơm; lỗi ACK/mất mạng/restart ghi evidence rõ|
 |3|Chốt dữ liệu và ba tài khoản demo chính|Farmer chủ Farm thật, Manager xác minh thật +Admin duyệt HTX, Admin riêng; giữ Farmer phụ để demo phân công/duyệt|
 |4|Smoke nghiệp vụ trên database+web|SMS/email, HTX/Farm approvals, assignment expiry, Harvest/Cultivation/correction, QR whitelist và restart|
@@ -17,11 +17,11 @@ AI chẩn đoán/chatbot vẫn hoãn. Android chưa có, là phạm vi riêng. K
 
 ## Checklist hardware
 
-Dùng [nguồn MQTT hiện có](MQTT_HARDWARE_PROTOCOL_VERIFIED.md), [implementation](MQTT_COMMUNICATION_IMPLEMENTATION.md) và bản Configuration cuối khi đã nhận/đối chiếu. Không tự phát command thật trong test tự động.
+Dùng [nguồn MQTT hiện có](MQTT_HARDWARE_PROTOCOL_FINAL_v1.0.md), [implementation](MQTT_COMMUNICATION_IMPLEMENTATION.md) đã được người dùng xác nhận kiểm thử hardware; vẫn cần nghiệm thu full API/web/database với bản server đã tích hợp. Không tự phát command thật trong test tự động.
 
 1. Ghi revision, storage=database, readiness, broker connected/subscribed; không ghi credentials/JWT/OTP.
 2. Dùng Device station `E08CFE41DCAC` đã đăng ký, UUID nội bộ riêng. Không tạo station trùng. Đối chiếu [readiness](REAL_HARDWARE_DATABASE_READINESS.md).
-3. Streams301 air_temperature/C,302 air_humidity/%,303 soil_moisture/%RH,304 soil_temperature/C,305 soil_ph/H+,306 soil_ec/μS/cm. Legacy303 expected% được sửa qua quyền metadata khi cần; readings raw không sửa.
+3. Streams301 air_temperature/C,302 air_humidity/%,303 soil_moisture/%rH,304 soil_temperature/C,305 soil_ph/H+,306 soil_ec/µS/cm. Legacy303 expected% được sửa qua quyền metadata khi cần; readings raw không sửa.
 4. Quan sát packet khoảng15s; latest/history/last_seen_at cập nhật; measured_at backend arrival, received_at bước ghi. Packet lỗi/retained/stream lạ không làm receiver chết hoặc tự đăng ký Sensor.
 5. Bơm2/shared, van3/watering, van4/spraying. Start từ Unknown: OFF2→ACK→OFF3→ACK→OFF4→ACK, rồi van chức năng ON→ACK→bơm ON→ACK. Chờ10s mỗi bước.
 6. Stop bơm trước rồi các van theo workflow. Không tưới/phun đồng thời trên cùng Device. ACK đủ chỉ xác nhận nhận command; quan sát hardware riêng để xác nhận bơm/van thực sự hoạt động.

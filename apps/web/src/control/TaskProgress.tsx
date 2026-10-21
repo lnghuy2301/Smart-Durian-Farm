@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, Circle, Clock3, XCircle } from "lucide-react";
 import { Notice } from "../components/ui";
+import type { Actuator } from "../types/api";
 import {
   operationNames,
   taskStatusNames,
@@ -77,9 +78,11 @@ const stepNames: Record<ControlStep["status"], string> = {
 export function TaskProgress({
   task,
   timeout,
+  actuators = [],
 }: {
   task: ControlTask;
   timeout: number;
+  actuators?: Actuator[];
 }) {
   return (
     <article
@@ -99,14 +102,16 @@ export function TaskProgress({
       )}
       <ol className="control-steps">
         {task.response_payload.steps.map((step, index) => {
-          const target =
-            step.tasking_capability_id === 2
-              ? "bơm chung"
-              : step.tasking_capability_id === 3
-                ? "van tưới"
-                : step.tasking_capability_id === 4
-                  ? "van phun"
-                  : `thiết bị ${step.tasking_capability_id}`;
+          const actuator = actuators.find(
+            (item) => item.capability_id === step.tasking_capability_id,
+          );
+          const target = actuator
+            ? {
+                shared: "bơm chung",
+                watering: "van tưới",
+                spraying: "van phun",
+              }[actuator.purpose]
+            : `thiết bị ${step.tasking_capability_id}`;
           const Icon =
             step.status === "Acknowledged"
               ? CheckCircle2

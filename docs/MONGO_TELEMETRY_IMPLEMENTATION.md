@@ -6,7 +6,7 @@ Ngày19/10/2026. Nhánh **feat/mongo-telemetry-persistence**, base Actuator **89
 
 ## Quyết định giữ nguyên và API
 
-Hardware gửi khoảng15s/packet; không throttle xuống15 phút hoặc tự đổi firmware. Mỗi reading một document IOT_TELEMETRIES đúng7 fields: `_id`ObjectId→hex24 HTTP, device_idUUID, data_stream_idstring, measured_at,received_at,valueNumber,unitstring. Không thêm station/sensor/Zone/type/sequence vào bảng nghiệp vụ. Station topic→Device.station_id→DeviceUUID→(deviceUUID,stream). Sáu mappings301/C,302/%,303/%RH,304/C,305/H+,306/μS/cm; nhận future streams đã đăng ký, không cap306 hoặc global UNIQUE stream.
+Hardware gửi khoảng15s/packet; không throttle xuống15 phút hoặc tự đổi firmware. Mỗi reading một document IOT_TELEMETRIES đúng7 fields: `_id`ObjectId→hex24 HTTP, device_idUUID, data_stream_idstring, measured_at,received_at,valueNumber,unitstring. Không thêm station/sensor/Zone/type/sequence vào bảng nghiệp vụ. Station topic→Device.station_id→DeviceUUID→(deviceUUID,stream). Sáu mappings301/C,302/%,303/%rH,304/C,305/H+,306/µS/cm; nhận future streams đã đăng ký, không cap306 hoặc global UNIQUE stream.
 
 measured_at là lúc backend nhận packet, proxy cho thời điểm đo vì firmware hiện không gửi clock. received_at lấy từ clock backend tại bước chuẩn bị ghi batch Mongo, UTC ISO trên API/BSON Date trong DB; có thể bằng measured_at ở độ phân giải ms. Không khẳng định đây là clock đo thực ESP32 hoặc Mongo cluster logical time. FIFO dựa insertion order bền vững, không dùng hai timestamps/ObjectId để suy thứ tự. Hai packets cùng giá trị vẫn ghi riêng; không có messageID/exactly-once/dedup-value.
 

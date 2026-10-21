@@ -156,7 +156,9 @@ export async function seedDemo(pool: Pool, config: SeedConfig, now = new Date())
         const dataStream = String(301 + stream);
         await writer.row('sensors', `sensor-${i}-${stream}`, { device_id: device, name: ['Nhiệt độ không khí', 'Độ ẩm không khí', 'Độ ẩm đất', 'Nhiệt độ đất', 'pH đất', 'EC đất'][stream],
           sensor_type: ['air_temperature', 'air_humidity', 'soil_moisture', 'soil_temperature', 'soil_ph', 'soil_ec'][stream], data_stream_id: dataStream,
-          unit: ['C', '%', '%RH', 'C', 'H+', 'μS/cm'][stream], min_threshold: null, max_threshold: null, status: i === 1 ? 'Inactive' : 'Active' }, ['device_id', 'data_stream_id', 'sensor_type'],
+          // Final firmware spelling is significant: micro sign U+00B5 is not Greek mu U+03BC.
+          // Seed only applies this default to new rows; existing configured units remain unchanged.
+          unit: ['C', '%', '%rH', 'C', 'H+', 'µS/cm'][stream], min_threshold: null, max_threshold: null, status: i === 1 ? 'Inactive' : 'Active' }, ['device_id', 'data_stream_id', 'sensor_type'],
         { sql: 'SELECT * FROM public.sensors WHERE device_id=$1 AND data_stream_id=$2', values: [device, dataStream] }, { hardware_bundle: i === 0 ? 'Real' : 'Simulated' });
       }
       for (let stream = 0; stream < 3; stream++) {

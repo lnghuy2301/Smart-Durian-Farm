@@ -19,7 +19,7 @@ Cập nhật 21/10/2026. Đọc checkpoint hiện hành trước các báo cáo 
 1. Quyết định trực tiếp mới nhất của người dùng; nếu thay đổi nghiệp vụ chưa rõ, hỏi và chờ.
 2. Checkpoint hiện hành, workflow đã duyệt, source và migration cuối cùng: dùng để xác nhận điều đã triển khai. Nếu chúng mâu thuẫn, ghi vấn đề để xử lý, không tự đổi quy tắc.
 3. [ERD_DIAGRAM.xml](ERD_DIAGRAM.xml) và [IOT_CORE_TABLES_SPEC](IOT_CORE_TABLES_SPEC.md) là nguồn thiết kế do người dùng quản lý; có thể còn khác enum/constraints đã duyệt sau đó. Schema vật lý phải đọc đủ migrations, không chỉ ERD ban đầu.
-4. [MQTT_HARDWARE_PROTOCOL_VERIFIED](MQTT_HARDWARE_PROTOCOL_VERIFIED.md) là nguồn giao thức đang dùng; [DOCX hiện có](MQTT_Configuration_Smart_Farm_Durian_v1.0.docx) giữ để đối chiếu. Người dùng sẽ gửi bản Configuration chốt tiếp theo; chưa tự áp thay đổi chưa nhận được.
+4. [MQTT_HARDWARE_PROTOCOL_FINAL_v1.0](MQTT_HARDWARE_PROTOCOL_FINAL_v1.0.md) là nguồn giao thức cuối đã được người dùng kiểm thử hardware, đóng băng version1.0; [DOCX hiện có](MQTT_Configuration_Smart_Farm_Durian_v1.0.docx) giữ để đối chiếu. Bản FINAL thay thế VERIFIED/DOCX cũ về protocol. [Đối chiếu tích hợp](MQTT_FINAL_INTEGRATION.md) ghi rõ quyết định purpose bất biến, recipe lấy metadata và Active bắt buộc cho mọi ON/OFF đã triển khai.
 
 Các guide `*_IMPLEMENTATION.md` ghi cả phạm vi và kết quả ở thời điểm module được tạo. Mô tả RAM, số tests hoặc việc còn thiếu ở checkpoint cũ không thay thế trạng thái runtime hiện hành. Không sửa migrations đã Applied để khớp tài liệu cũ.
 

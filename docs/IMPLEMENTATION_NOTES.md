@@ -28,7 +28,7 @@ Cập nhật21/10/2026. [Quy tắc nghiệp vụ](PROJECT_BUILD_SPEC.md), [runti
 
 ## MQTT/control
 
-Xem [communication guide](MQTT_COMMUNICATION_IMPLEMENTATION.md). Chưa nhận bản Configuration cuối người dùng sắp gửi nên không tự đổi firmware/topic/payload. ACK là receipt;10s mỗi bước; Unknown trước Start phải Reset; restart không phát lệnh ON. Metadata Active khác connectivity và khác trạng thái vật lý.
+Xem [communication guide](MQTT_COMMUNICATION_IMPLEMENTATION.md). Đã nhận FINAL v1.0, freeze topic/payload; [đối chiếu final đã chốt](MQTT_FINAL_INTEGRATION.md). Purpose bất biến; control recipe lấy metadata với đúng một mỗi vai trò. Mọi ON/OFF cần Device/actuator Active, không ngoại lệ Stop/Recovery. ACK là receipt;10s mỗi bước; Unknown trước Start phải Reset; restart không phát lệnh ON. Metadata Active khác connectivity và khác trạng thái vật lý.
 
 ## Kiểm tra và tiếp tục
 

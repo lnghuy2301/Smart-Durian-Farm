@@ -83,7 +83,7 @@ Database tests tạo/migrate/seed/drop **chỉ database ngẫu nhiên** trên PG
 
 Kết quả: **240/240 backend,263/263 persistence (17 suites),8/8 web unit,46/46 browser RAM +4/4 browser database**, API/web lint/typecheck/build và formatting đạt. Target full database runtime9/9 được chạy lại sau kiểm tra compound-index field order. File test-results/.integration-dist bị ignore; không commit snapshots, log credentials hoặc secret environment. Không thay Postman riêng vì contract/routes/bodies giữ nguyên; JWT/UUID/OTP vẫn nhập tay.
 
-Migration014 đã Applied vào database demo local; so sánh hash/count21 nhóm dữ liệu trước/sau giữ nguyên (13 business+4 technical PG,4 Mongo). Sau đó bổ sung riêng sensor304–306 còn thiếu cho trạm thật, giữ sensor cũ và kiểm tra chạy lại không tạo trùng. Không reseed. Sensor303 còn expected unit cũ `%`; có hướng dẫn Owner PATCH sang `%RH` tại [chuẩn bị trạm thật](REAL_HARDWARE_DATABASE_READINESS.md), không tự ghi đè cấu hình này.
+Migration014 đã Applied vào database demo local; so sánh hash/count21 nhóm dữ liệu trước/sau giữ nguyên (13 business+4 technical PG,4 Mongo). Sau đó bổ sung riêng sensor304–306 còn thiếu cho trạm thật, giữ sensor cũ và kiểm tra chạy lại không tạo trùng. Không reseed. Sensor303 còn expected unit cũ `%`; có hướng dẫn Owner PATCH sang `%rH` tại [chuẩn bị trạm thật](REAL_HARDWARE_DATABASE_READINESS.md), không tự ghi đè cấu hình này.
 
 ## Còn cần nghiệm thu thực tế
 

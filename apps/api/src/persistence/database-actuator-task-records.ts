@@ -6,14 +6,14 @@ import { ACTUATOR_TASK_LIMIT } from '../actuator-tasks/actuator-tasks.service';
 import { ActuatorTasksConfig } from '../actuator-tasks/actuator-tasks.config';
 import { CreateControlDto, TaskPageDto, TaskIdParamDto } from '../actuator-tasks/actuator-tasks.dto';
 import { TaskAccess, TaskScope } from '../actuator-tasks/task-access';
-import { markTaskFailed, stopCapabilities } from '../actuator-tasks/task-rules';
+import { ControlRecipe, markTaskFailed, requireActiveCapabilities, startCapabilities, stopCapabilities } from '../actuator-tasks/task-rules';
 import { farmInput, farmUuid } from '../farms/farm-validation';
 import { BrokerState, MqttTransport } from '../mqtt/mqtt.transport';
 import { buildControlPublication } from '../mqtt/mqtt.protocol';
 import { MongoActuatorTaskStore, TaskJournal } from './mongo-actuator-task.store';
 import { taskInvariant } from './task-mappers';
 
-interface Run { device: string; actor: string; current: ActuatorTask; start?: ActuatorTask; index: number; epoch: number }
+interface Run { device: string; actor: string; current: ActuatorTask; start?: ActuatorTask; index: number; epoch: number; recipe: ControlRecipe }
 interface Wait { run: Run; id: number; action: 0 | 1; deadline: number; timer: NodeJS.Timeout; published: boolean; ackAt?: string }
 const visible = (task: ActuatorTask, scope: TaskScope) => Date.parse(task.created_at) >= scope.from && Date.parse(task.created_at) < scope.to;
 
@@ -54,27 +54,30 @@ export class DatabaseActuatorTaskRecords extends ActuatorTaskRecords implements 
     this.available();
     return this.serial(device, async () => {
       this.available();
-      return this.access.control(actor, device, operation, async () => {
+      return this.access.control(actor, device, operation, async (scope) => {
         this.available();
+        taskInvariant(scope.recipe && scope.activeCapabilities);
+        const recipe = scope.recipe;
         const old = this.runs.get(device), mode = this.modes.get(device) ?? 'Unknown';
         if (old && (operation !== 'Stop' || ['Stop', 'RecoveryStop'].includes(old.current.response_payload.operation))) {
           throw new ConflictException('Device đang có thao tác; không gửi trùng');
         }
         if (operation !== 'Stop' && ['Watering', 'Spraying'].includes(mode)) throw new ConflictException('Phải Dừng trước khi Bật lại/chuyển tưới–phun');
         const reset = operation !== 'Stop' && mode === 'Unknown', epoch = this.epoch;
+        const caps = operation === 'Stop' ? stopCapabilities(recipe, old ? 'Unknown' : mode) : startCapabilities(recipe, operation);
+        requireActiveCapabilities(reset ? stopCapabilities(recipe, 'Unknown') : caps, scope.activeCapabilities);
         const committed = await this.write((journal) => {
           // Capacity before cancellation: a refused Stop must not erase an active Start.
           journal.room(reset ? 2 : 1);
           if (old) this.cancelIn(journal, old, 'CANCELLED_BY_STOP');
-          const task = journal.create(device, operation, operation === 'Stop' ? stopCapabilities(old ? 'Unknown' : mode)
-            : operation === 'Watering' ? [3, 2] : [4, 2], operation === 'Stop' ? 0 : 1, this.now());
-          const first = reset ? journal.create(device, 'Reset', [2, 3, 4], 0, this.now(), task._id) : task;
+          const task = journal.create(device, operation, caps, operation === 'Stop' ? 0 : 1, this.now());
+          const first = reset ? journal.create(device, 'Reset', stopCapabilities(recipe, 'Unknown'), 0, this.now(), task._id) : task;
           if (reset) task.response_payload.reset_task_id = first._id;
           return { task, first };
         });
         this.available();
         if (old) this.clearWait(old);
-        const run: Run = { device, actor, current: committed.first, start: reset ? committed.task : undefined, index: 0, epoch };
+        const run: Run = { device, actor, current: committed.first, start: reset ? committed.task : undefined, index: 0, epoch, recipe };
         this.runs.set(device, run); this.modes.set(device, 'Unknown');
         this.advanceLater(run);
         return { task: structuredClone(committed.task), status_url: `/api/actuator-tasks/${committed.task._id}`,
@@ -178,6 +181,8 @@ export class DatabaseActuatorTaskRecords extends ActuatorTaskRecords implements 
         if (!this.live(run)) return;
         this.available();
         if (run.epoch !== this.epoch) { await this.failLocked(run, 'MQTT_DISCONNECTED'); return; }
+        taskInvariant(scope.activeCapabilities);
+        requireActiveCapabilities([step.tasking_capability_id], scope.activeCapabilities);
         const task = await this.write((journal) => {
           const task = journal.require(run.current._id), step = task.response_payload.steps[run.index];
           taskInvariant(task.status === 'Pending' && step.status === 'Queued');
@@ -244,13 +249,13 @@ export class DatabaseActuatorTaskRecords extends ActuatorTaskRecords implements 
       this.cancelIn(journal, run, code);
       if (failed.response_payload.operation !== 'Watering' && failed.response_payload.operation !== 'Spraying') return undefined;
       journal.room(1, [failed._id]);
-      const recovery = journal.create(run.device, 'RecoveryStop', [2, 3, 4], 0, this.now(), failed._id);
+      const recovery = journal.create(run.device, 'RecoveryStop', stopCapabilities(run.recipe, 'Unknown'), 0, this.now(), failed._id);
       failed.response_payload.recovery_task_id = recovery._id;
       return recovery;
     });
     this.clearWait(run); this.runs.delete(run.device); this.modes.set(run.device, 'Unknown');
     if (committed) {
-      const recovery: Run = { device: run.device, actor: run.actor, current: committed, index: 0, epoch: this.epoch };
+      const recovery: Run = { device: run.device, actor: run.actor, current: committed, index: 0, epoch: this.epoch, recipe: run.recipe };
       this.runs.set(run.device, recovery); this.advanceLater(recovery);
     }
   }

@@ -61,13 +61,13 @@ Workflow requests/version/audit/notifications dùng bảng kỹ thuật chung đ
 
 ## MQTT, telemetry và điều khiển
 
-Nguồn đang dùng: [MQTT_HARDWARE_PROTOCOL_VERIFIED](MQTT_HARDWARE_PROTOCOL_VERIFIED.md); [implementation hiện hành](MQTT_COMMUNICATION_IMPLEMENTATION.md). Người dùng sẽ gửi Configuration cuối tiếp theo; chưa tự thay source theo tài liệu chưa nhận.
+Nguồn đang dùng: [MQTT_HARDWARE_PROTOCOL_FINAL_v1.0](MQTT_HARDWARE_PROTOCOL_FINAL_v1.0.md); [implementation hiện hành](MQTT_COMMUNICATION_IMPLEMENTATION.md). Đã nhận FINAL v1.0 hardware-tested; topic/payload/IDs/action semantics được đóng băng. Recipe đã chuyển theo purpose metadata; purpose bất biến, mỗi vai trò đúng một actuator. Mọi command kể cả OFF cần Device/actuator Active theo chốt21/10.
 
 - Hardware lên publish/station/{stationId}, server xuống subscribe/station/{stationId}. station từ topic resolve Device UUID; payload có station phải khớp. Không auth_token firmware, không coi station là secret. Không tự đổi protocol.
 - Sáu stream demo301–306 theo metadata. Nhận packets hợp lệ khoảng15s từ hardware; không đổi thành15 phút. measured_at backend arrival, received_at bước ghi; giữ raw unit. FIFO tổng10.000 readings.
 - Farmer chỉ latest/history khi assignment còn hiệu lực và readings trong khoảng được phép hiện tại; Farmer cũ không xem lịch sử IoT. Chủ/Admin/Manager theo scope hiện có.
 - ACK taskId/status ACK/action0|1 là receipt ngay khi nhận command; confirmed_at backend ghi, không cho nhập tay, không chứng minh vật lý. Numeric hardware IDs phải positive safe integer.
-- Recipe2 bơm chung,3 van tưới,4 van phun; không tưới/phun cùng Device đồng thời. Start van trước rồi bơm; Stop bơm trước rồi van. Chờ ACK10s mỗi bước.
+- Recipe theo purpose shared/watering/spraying (seed demo mặc định2/3/4, hai van được gán ngược lúc đăng ký); không tưới/phun cùng Device đồng thời. Start van trước rồi bơm; Stop bơm trước rồi van. Chờ ACK10s mỗi bước.
 - Restart/disconnect mode Unknown; trước Start tự Reset OFF2/OFF3/OFF4 đủ ACK. Partial Start có recovery Stop riêng. Không false Off, không replay ON; journal và allocator lưu bền, một controller lease.
 
 ## Quy ước phát triển và giới hạn

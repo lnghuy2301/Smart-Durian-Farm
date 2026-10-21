@@ -14,10 +14,10 @@ import { buildControlPublication } from '../mqtt/mqtt.protocol';
 import { ACTUATOR_TASKS_CONFIG, ActuatorTasksConfig } from './actuator-tasks.config';
 import { TaskPageDto } from './actuator-tasks.dto';
 import { AcknowledgedMode, ActuatorTask, ControlOperation, TaskOperation, TaskStep } from './actuator-tasks.types';
-import { CONTROL_RECIPE, createControlTask, markTaskFailed, stopCapabilities } from './task-rules';
+import { ControlRecipe, createControlTask, markTaskFailed, requireActiveCapabilities, resolveControlRecipe, startCapabilities, stopCapabilities } from './task-rules';
 
 export const ACTUATOR_TASK_LIMIT = 5000;
-interface Run { deviceId: string; actorId: string; current: ActuatorTask; start?: ActuatorTask; index: number }
+interface Run { deviceId: string; actorId: string; current: ActuatorTask; start?: ActuatorTask; index: number; recipe: ControlRecipe }
 interface Wait { run: Run; step: TaskStep; deadline: number; timer: NodeJS.Timeout; published: boolean; ackAt?: string }
 
 @Injectable()
@@ -57,19 +57,20 @@ export class ActuatorTasksService implements OnModuleDestroy {
       this.requireStart(actorId, deviceId, operation);
       if (mode === 'Watering' || mode === 'Spraying') { throw new ConflictException('Phải Dừng trước khi Bật lại/chuyển tưới–phun'); }
     }
-    this.requireRecipe(deviceId);
+    const recipe = this.requireRecipe(deviceId);
     // Capacity kiểm tra trước khi hủy run đang chạy. Journal chỉ eviction terminal, không mất pending/control lock.
     const reset = operation !== 'Stop' && mode === 'Unknown';
+    const caps = operation === 'Stop' ? stopCapabilities(recipe, previous ? 'Unknown' : mode) : startCapabilities(recipe, operation);
+    this.requireActive(deviceId, reset ? stopCapabilities(recipe, 'Unknown') : caps);
     this.makeRoom(reset ? 2 : 1);
     if (previous) { this.cancel(previous, 'CANCELLED_BY_STOP'); }
-    const caps = operation === 'Stop' ? this.stopCapabilities(previous ? 'Unknown' : mode) : operation === 'Watering' ? [3, 2] : [4, 2];
     const task = this.newTask(deviceId, operation, caps, operation === 'Stop' ? 0 : 1);
     let current = task;
     if (reset) {
-      current = this.newTask(deviceId, 'Reset', [2, 3, 4], 0, task._id);
+      current = this.newTask(deviceId, 'Reset', stopCapabilities(recipe, 'Unknown'), 0, task._id);
       task.response_payload.reset_task_id = current._id;
     }
-    const run: Run = { deviceId, actorId, current, start: reset ? task : undefined, index: 0 };
+    const run: Run = { deviceId, actorId, current, start: reset ? task : undefined, index: 0, recipe };
     this.runs.set(deviceId, run);
     this.modes.set(deviceId, 'Unknown');
     // HTTP trả snapshot Pending/202 ngay, không giữ request 20–50s. Không có await trước lock/commit RAM.
@@ -133,6 +134,8 @@ export class ActuatorTasksService implements OnModuleDestroy {
     try {
       if (!this.ready || this.closing) { throw new Error('MQTT_UNAVAILABLE'); }
       this.requireRecipe(run.deviceId);
+      // Recheck every publication, including internal OFF after actor revocation.
+      this.requireActive(run.deviceId, [step.tasking_capability_id]);
       if (step.action === 1) { this.requireStart(run.actorId, run.deviceId, run.current.response_payload.operation as ControlOperation); }
       const device = this.devices.getRecord(run.deviceId);
       const publication = buildControlPublication(device.station_id,
@@ -182,7 +185,7 @@ export class ActuatorTasksService implements OnModuleDestroy {
     if (failed.response_payload.operation !== 'Watering' && failed.response_payload.operation !== 'Spraying') { return; }
     // Recovery là bản ghi riêng để không che lỗi Start. OFF không phụ thuộc quyền của tác giả sau khi mất assignment.
     this.makeRoom(1);
-    const recovery = this.newTask(run.deviceId, 'RecoveryStop', [2, 3, 4], 0, failed._id);
+    const recovery = this.newTask(run.deviceId, 'RecoveryStop', stopCapabilities(run.recipe, 'Unknown'), 0, failed._id);
     failed.response_payload.recovery_task_id = recovery._id;
     const next: Run = { ...run, current: recovery, start: undefined, index: 0 };
     this.runs.set(run.deviceId, next);
@@ -209,20 +212,14 @@ export class ActuatorTasksService implements OnModuleDestroy {
   }
   private requireStart(actorId: string, deviceId: string, operation: ControlOperation): void {
     this.requireController(actorId, deviceId);
-    if (this.devices.getRecord(deviceId).status !== 'Active') { throw new ConflictException('Device phải Active để Bật'); }
-    for (const id of [2, operation === 'Watering' ? 3 : 4]) {
-      if (this.actuators.getRecordByCapability(deviceId, id).status !== 'Active') { throw new ConflictException('Actuator phải Active để Bật'); }
-    }
+    this.requireActive(deviceId, startCapabilities(this.requireRecipe(deviceId), operation as 'Watering' | 'Spraying'));
   }
-  private requireRecipe(deviceId: string): void {
-    for (const entry of CONTROL_RECIPE) {
-      if (this.actuators.getRecordByCapability(deviceId, entry.capability).purpose !== entry.purpose) {
-        throw new ConflictException('Bộ demo cần capability2/shared,3/watering,4/spraying');
-      }
-    }
+  private requireRecipe(deviceId: string): ControlRecipe {
+    return resolveControlRecipe(this.actuators.getRecordsForDevice(deviceId));
   }
-  private stopCapabilities(mode: AcknowledgedMode): number[] {
-    return stopCapabilities(mode);
+  private requireActive(deviceId: string, capabilities: number[]): void {
+    if (this.devices.getRecord(deviceId).status !== 'Active') throw new ConflictException('Device phải Active, kể cả lệnh OFF');
+    requireActiveCapabilities(capabilities, this.actuators.getRecordsForDevice(deviceId).filter((relay) => relay.status === 'Active').map((relay) => relay.capability_id));
   }
   private visible(actorId: string, task: ActuatorTask): boolean {
     try {

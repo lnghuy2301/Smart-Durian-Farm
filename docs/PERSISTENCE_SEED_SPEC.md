@@ -19,12 +19,12 @@ Database đã seed từ profile cũ có thể chưa đủ sáu Sensors trên m�
 | station_id | E08CFE41DCAC |
 | installed_at minh họa | 2026-09-01T08:30:00+07:00 |
 | cost minh họa | 10237500 VNĐ |
-| Sensors |301 air_temperature/C,302 air_humidity/%,303 soil_moisture/%RH,304 soil_temperature/C,305 soil_ph/H+,306 soil_ec/μS/cm|
+| Sensors |301 air_temperature/C,302 air_humidity/%,303 soil_moisture/%rH,304 soil_temperature/C,305 soil_ph/H+,306 soil_ec/µS/cm|
 | Actuators |2 shared/bơm,3 watering/van tưới,4 spraying/van phun|
 
 Ngày lắp/chi phí là metadata demo được người dùng cho phép chọn, không tuyên bố là hóa đơn/thời điểm lắp thực tế. DEMO_DEVICE_STATION_ID/INSTALLED_AT/COST từ cấu hình local; station là identifier, không secret/token. Seed không cấu hình broker cho firmware.
 
-Device UUID khác station; Sensors/Actuators FK bằng Device UUID. Các station mô phỏng SIM_DEMO_001/SIM_DEMO_002 có namespace riêng, không route fallback vào trạm thật. Raw units giữ nguyên;303 expected unit legacy% không được rerun tự đổi sang%RH. Chủ sửa metadata qua API khi muốn đồng bộ.
+Device UUID khác station; Sensors/Actuators FK bằng Device UUID. Các station mô phỏng SIM_DEMO_001/SIM_DEMO_002 có namespace riêng, không route fallback vào trạm thật. Raw units giữ nguyên;303 expected unit legacy% không được rerun tự đổi sang%rH. Chủ sửa metadata qua API khi muốn đồng bộ.
 
 ## Không ghi đè và không giả kết quả hardware
 

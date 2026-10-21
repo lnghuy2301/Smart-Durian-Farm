@@ -81,14 +81,14 @@ export async function taskPersistenceFixture() {
       return { id: result.user.id, phone };
     };
     const standard = await catalogs.standards.create(admin, { code: 'TASK-STD', name: 'Task standard', description: '', certifying_body: 'Test' });
-    const deviceFixture = async () => {
+    const deviceFixture = async (mapping: readonly (readonly [number, 'shared' | 'watering' | 'spraying'])[] = [[2, 'shared'], [3, 'watering'], [4, 'spraying']]) => {
       const owner = await farmer(), worker = await farmer();
       const proposal = await farms.createRequest(owner.id, { area_size: 2, address: 'Task fixture farm', certificate_number: `TASK-${number}`, longitude: 106, latitude: 10 });
       const farm = (await farms.approve(admin, proposal.id)).farm_id!;
       const zone = await zones.create(owner.id, { farm_id: farm, standard_id: standard.id, zone_name: 'Task fixture zone', area_size: 1, longitude: 106, latitude: 10 });
       const device = await devices.create(owner.id, { zone_id: zone.id, station_id: `TASK_${randomUUID()}`, installed_at: '2026-09-01T08:30:00+07:00', cost: 10 });
       const relays = [];
-      for (const [capability_id, purpose] of [[2, 'shared'], [3, 'watering'], [4, 'spraying']] as const) relays.push(await actuators.create(owner.id, { device_id: device.id, name: purpose, capability_id, purpose }));
+      for (const [capability_id, purpose] of mapping) relays.push(await actuators.create(owner.id, { device_id: device.id, name: purpose, capability_id, purpose }));
       return { owner, worker, farm, zone, device, relays };
     };
     const store = new MongoActuatorTaskStore(mongo, mongo.db(name));

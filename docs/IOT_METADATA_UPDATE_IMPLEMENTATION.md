@@ -32,6 +32,6 @@ Proposal không reserve mã; Create recheck unique khi approve. Update giữ ver
 
 Import collections Devices/Sensors/Actuators JSON trực tiếp, copy JWT/UUID thủ công. Database mode dùng tài nguyên đã có, restart không phải tạo lại fixtures; test memory mới mất dữ liệu. Owner trực tiếp, Admin đề xuất/chủ duyệt, Manager/Farmer chỉ đọc đúng scope. Không chèn SQL để bỏ metadata/proposal/audit.
 
-[Trạm thật](REAL_HARDWARE_DATABASE_READINESS.md) đã đủ six streams và three actuators;303 expected unit cũ% có thể sửa%RH qua API đúng quyền, raw readings giữ nguyên. MQTT nhận các stream đã đăng ký, không tự tạo metadata. ACK taskId/status/action chỉ receipt; không dùng short ACK legacy hoặc metadata Active để kết luận relay đã bật.
+[Trạm thật](REAL_HARDWARE_DATABASE_READINESS.md) đã đủ six streams và three actuators;303 expected unit cũ% có thể sửa%rH qua API đúng quyền, raw readings giữ nguyên. MQTT nhận các stream đã đăng ký, không tự tạo metadata. ACK taskId/status/action chỉ receipt; không dùng short ACK legacy hoặc metadata Active để kết luận relay đã bật.
 
 Source/tests/quyền/history/locks/migrations chi tiết ở ba adapter guides phía trên. Regression dùng fake providers, metadata fixtures và broker loopback; không đọc .env thật hoặc điều khiển hardware trong automated tests. Hardware thật và Configuration cuối còn theo [kế hoạch](IMPLEMENTATION_PLAN.md).

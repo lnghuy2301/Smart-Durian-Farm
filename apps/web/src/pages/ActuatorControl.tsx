@@ -28,6 +28,7 @@ import {
   loadControl,
   loadTasks,
   recipeReady,
+  stopMetadataReady,
   scopedTask,
   startMetadataReady,
   taskInterval,
@@ -289,7 +290,7 @@ function ControlWorkspace({
     state?.busy &&
     (data?.active?.response_payload.operation === "Stop" ||
       data?.active?.response_payload.operation === "RecoveryStop");
-  const canStop = !locked && !stopping;
+  const canStop = !locked && !stopping && !!data && stopMetadataReady(data);
   function check() {
     if (mutation.busy) return;
     issuedVersion.current = core.version;
@@ -482,7 +483,7 @@ function ControlWorkspace({
                                   state.acknowledged_mode === "Spraying"
                                 ? "Chọn Dừng và đợi đủ phản hồi trước khi chuyển tưới / phun."
                                 : data?.device.status !== "Active"
-                                  ? "Trạm đang ngừng sử dụng hoặc bảo trì. Chỉ có thể gửi Dừng."
+                                  ? "Trạm đang ngừng sử dụng hoặc bảo trì. Không thể gửi lệnh bật hoặc tắt."
                                   : "Chọn Tưới nước hoặc Phun thuốc. Mỗi lần chỉ chạy một chế độ."}
               </div>
               {data &&
@@ -492,7 +493,7 @@ function ControlWorkspace({
                   !startMetadataReady(data, "Spraying")) && (
                   <Notice kind="warning">
                     Bơm hoặc van tương ứng đang ngừng sử dụng. Chỉ bật khi cấu
-                    hình được kích hoạt.
+                    hình được kích hoạt; lệnh tắt cũng cần thiết bị đang Active.
                   </Notice>
                 )}
             </>
@@ -559,11 +560,13 @@ function ControlWorkspace({
                       key={task._id}
                       task={task}
                       timeout={state?.ack_timeout_ms ?? 10000}
+                      actuators={data?.actuators}
                     />
                   ))}
                 <TaskProgress
                   task={progress.root}
                   timeout={state?.ack_timeout_ms ?? 10000}
+                  actuators={data?.actuators}
                 />
                 {progress.linked
                   .filter(
@@ -575,6 +578,7 @@ function ControlWorkspace({
                       key={task._id}
                       task={task}
                       timeout={state?.ack_timeout_ms ?? 10000}
+                      actuators={data?.actuators}
                     />
                   ))}
               </>

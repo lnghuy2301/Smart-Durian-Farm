@@ -43,14 +43,14 @@ class FakeTransport extends MqttTransport {
 }
 const page = { limit: 100, offset: 0 };
 const status = (code: number) => (error: unknown) => error instanceof HttpException && error.getStatus() === code;
-async function fixture(timeout = 10000) {
+async function fixture(timeout = 10000, mapping: readonly (readonly ['shared' | 'watering' | 'spraying', number])[] = [['shared', 2], ['watering', 3], ['spraying', 4]]) {
   const transport = new FakeTransport();
   const f = await zoneFixture({ mqtt: { ...readMqttConfig({}), enabled: true, host: 'broker.invalid', port: 1883 },
     transport, actuatorTasks: { ackTimeoutMs: timeout } });
   const zone = f.zones.create(f.owner.id, f.input), devices = f.app.get(DevicesService), actuators = f.app.get(ActuatorsService);
   const install = (station: string) => {
     const device = devices.create(f.owner.id, { zone_id: zone.id, station_id: station, installed_at: '2026-10-07T00:00:00Z', cost: 0 });
-    const relays = ([['shared', 2], ['watering', 3], ['spraying', 4]] as const).map(([purpose, capability_id]) =>
+    const relays = mapping.map(([purpose, capability_id]) =>
       actuators.create(f.owner.id, { device_id: device.id, name: purpose, purpose, capability_id }));
     return { device, relays };
   };
@@ -248,17 +248,63 @@ test('Recheck actor assignment before each ON; loss after valve ACK suppresses p
   } finally { await f.app.close(); }
 });
 
-test('Recheck availability before pump ON; Stop remains available on Inactive metadata', async () => {
+test('Inactive metadata blocks every ON/OFF; failed recovery stays Unknown until metadata is Active again', async () => {
   const f = await fixture();
   try {
     await f.off(); const task = f.tasks.command(f.owner.id, f.device.id, 'Watering').task; await turn();
     f.actuators.update(f.owner.id, f.relays[0].id, { status: 'Inactive' });
     f.devices.update(f.owner.id, f.device.id, { status: 'Maintenance' }); await f.acknowledge();
     assert.equal(f.get(task._id).status, 'Failed');
-    for (let i = 0; i < 3; i++) { await f.acknowledge(); }
+    assert.equal(f.get(f.get(task._id).response_payload.recovery_task_id!).status, 'Failed');
+    assert.equal(f.tasks.state(f.owner.id, f.device.id).acknowledged_mode, 'Unknown');
+    const sent = f.transport.sent.length;
     assert.throws(() => f.tasks.command(f.owner.id, f.device.id, 'Watering'), status(409));
+    assert.throws(() => f.tasks.command(f.owner.id, f.device.id, 'Stop'), status(409));
+    assert.equal(f.transport.sent.length, sent);
+    f.devices.update(f.owner.id, f.device.id, { status: 'Active' });
+    f.actuators.update(f.owner.id, f.relays[0].id, { status: 'Active' });
     f.tasks.command(f.owner.id, f.device.id, 'Stop'); await turn(); assert.deepEqual(f.shape().at(-1), [2, 0]);
   } finally { await f.app.close(); }
+});
+
+test('Swapped valve purposes resolve from metadata for Reset, both Starts, Stop and timeout Recovery', async () => {
+  const f = await fixture(10000, [['shared', 2], ['watering', 4], ['spraying', 3]]);
+  try {
+    const watering = f.tasks.command(f.owner.id, f.device.id, 'Watering').task;
+    await turn();
+    for (let i = 0; i < 5; i++) await f.acknowledge();
+    assert.deepEqual(f.shape(), [[2, 0], [4, 0], [3, 0], [4, 1], [2, 1]]);
+    assert.equal(f.get(watering._id).status, 'Confirmed');
+    f.tasks.command(f.owner.id, f.device.id, 'Stop'); await turn();
+    await f.acknowledge(); await f.acknowledge();
+    assert.deepEqual(f.shape().slice(-2), [[2, 0], [4, 0]]);
+    const spraying = f.tasks.command(f.owner.id, f.device.id, 'Spraying').task; await turn();
+    await f.acknowledge(); await f.acknowledge();
+    assert.deepEqual(f.shape().slice(-2), [[3, 1], [2, 1]]);
+    assert.equal(f.get(spraying._id).status, 'Confirmed');
+    f.tasks.command(f.owner.id, f.device.id, 'Stop'); await turn();
+    await f.acknowledge(); await f.acknowledge();
+    const broken = f.tasks.command(f.owner.id, f.device.id, 'Watering').task; await turn();
+    f.transport.ack(undefined, { action: 0 }); // Wrong action never advances the valve ON.
+    f.tasks.receiveAck(f.device.id, f.transport.sent.at(-1)!.wire.targets[0].taskId, 1, Date.now() + 10001);
+    await turn();
+    const recovery = f.get(f.get(broken._id).response_payload.recovery_task_id!);
+    assert.deepEqual(recovery.targets.map((target) => target.tasking_capability_id), [2, 4, 3]);
+  } finally { await f.app.close(); }
+});
+
+test('Missing or ambiguous purpose blocks control instead of selecting the first Active actuator', async () => {
+  for (const mapping of [
+    [['shared', 2], ['watering', 3]],
+    [['shared', 2], ['watering', 3], ['watering', 1], ['spraying', 4]],
+  ] as const) {
+    const f = await fixture(10000, mapping);
+    try {
+      assert.throws(() => f.tasks.command(f.owner.id, f.device.id, 'Watering'), status(409));
+      assert.throws(() => f.tasks.command(f.owner.id, f.device.id, 'Stop'), status(409));
+      assert.equal(f.transport.sent.length, 0);
+    } finally { await f.app.close(); }
+  }
 });
 
 test('Fast ACK waits for publish success; publish failure never confirms or leaks transport errors', async () => {

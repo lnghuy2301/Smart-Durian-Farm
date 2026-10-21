@@ -48,8 +48,8 @@ class PausingTaskStore extends MongoActuatorTaskStore {
 
 test('Mongo actuator journal, durable IDs and PostgreSQL control authority', async (t) => {
   const f = await taskPersistenceFixture();
-  const controller = async (timeout = 10000) => {
-    const setup = await f.deviceFixture(), execution = await f.engine(new TaskTransport(), timeout);
+  const controller = async (timeout = 10000, mapping?: readonly (readonly [number, 'shared' | 'watering' | 'spraying'])[]) => {
+    const setup = await f.deviceFixture(mapping), execution = await f.engine(new TaskTransport(), timeout);
     wireDevices.set(execution.service, setup.device.id);
     return { ...setup, ...execution };
   };
@@ -60,6 +60,59 @@ test('Mongo actuator journal, durable IDs and PostgreSQL control authority', asy
     return result.task;
   };
   try {
+    await t.test('swapped valve purposes persist exact sequences and remain readable after engine restart', async () => {
+      const c = await controller(10000, [[2, 'shared'], [4, 'watering'], [3, 'spraying']]);
+      let restarted: DatabaseActuatorTaskRecords | undefined;
+      let originalClosed = false;
+      try {
+        const task = await c.service.command(c.owner.id, c.device.id, 'Watering');
+        await finish(c.service, c.transport, 0, 5);
+        assert.deepEqual(c.transport.sent.map(({ wire }) => [wire.targets[0].taskingCapabilityId, wire.taskingParameters.action]),
+          [[2, 0], [4, 0], [3, 0], [4, 1], [2, 1]]);
+        const stop = await c.service.command(c.owner.id, c.device.id, 'Stop');
+        await finish(c.service, c.transport, 5, 2);
+        assert.deepEqual((await c.service.get(c.owner.id, stop.task._id)).targets.map((target) => target.tasking_capability_id), [2, 4]);
+        const spray = await c.service.command(c.owner.id, c.device.id, 'Spraying');
+        await finish(c.service, c.transport, 7, 2);
+        assert.deepEqual((await c.service.get(c.owner.id, spray.task._id)).targets.map((target) => target.tasking_capability_id), [3, 2]);
+        await c.service.onModuleDestroy();
+        originalClosed = true;
+        restarted = (await f.engine()).service;
+        assert.equal((await restarted.get(c.owner.id, task.task._id)).status, 'Confirmed');
+        assert.equal((await restarted.state(c.owner.id, c.device.id)).acknowledged_mode, 'Unknown');
+      } finally { await restarted?.onModuleDestroy(); if (!originalClosed) await c.service.onModuleDestroy(); }
+    });
+    await t.test('missing or duplicate purpose refuses control without allocating a journal record', async () => {
+      for (const mapping of [
+        [[2, 'shared'], [3, 'watering']],
+        [[2, 'shared'], [3, 'watering'], [4, 'spraying'], [1, 'watering']],
+      ] as const) {
+        const c = await controller(10000, mapping);
+        try {
+          const count = (await c.service.list(c.owner.id, c.device.id, page)).total;
+          await assert.rejects(c.service.command(c.owner.id, c.device.id, 'Watering'), status(409));
+          await assert.rejects(c.service.command(c.owner.id, c.device.id, 'Stop'), status(409));
+          assert.equal(c.transport.sent.length, 0);
+          assert.equal((await c.service.list(c.owner.id, c.device.id, page)).total, count);
+        } finally { await c.service.onModuleDestroy(); }
+      }
+    });
+    await t.test('each Reset OFF rechecks current relay status; Inactive valve stops the sequence without false Off', async () => {
+      const c = await controller();
+      try {
+        const result = await c.service.command(c.owner.id, c.device.id, 'Watering');
+        await until(() => c.transport.sent.length === 1);
+        await f.actuators.update(c.owner.id, c.relays[1].id, { status: 'Inactive' });
+        await acknowledge(c.service, c.transport, 0);
+        await until(async () => (await c.service.get(c.owner.id, result.task._id)).status === 'Failed');
+        assert.equal(c.transport.sent.length, 1);
+        assert.equal((await c.service.get(c.owner.id, result.task.response_payload.reset_task_id!)).status, 'Failed');
+        assert.equal((await c.service.state(c.owner.id, c.device.id)).acknowledged_mode, 'Unknown');
+        await assert.rejects(c.service.command(c.owner.id, c.device.id, 'Stop'), status(409));
+        await f.actuators.update(c.owner.id, c.relays[1].id, { status: 'Active' });
+        await off(c);
+      } finally { await c.service.onModuleDestroy(); }
+    });
     await t.test('Unknown Start commits Reset and numeric IDs before publishing, then valve ON before pump ON', async () => {
       const c = await controller();
       try {
@@ -179,12 +232,17 @@ test('Mongo actuator journal, durable IDs and PostgreSQL control authority', asy
         await finish(c.service, c.transport, oldCount, 5);
       } finally { await c.service.onModuleDestroy(); }
     });
-    await t.test('Inactive Device and relays block ON but do not prevent explicit Stop', async () => {
+    await t.test('Inactive Device and relays block both ON and OFF before any journal or publication', async () => {
       const c = await controller();
       try {
         await f.devices.update(c.owner.id, c.device.id, { status: 'Maintenance' });
         await f.actuators.update(c.owner.id, c.relays[0].id, { status: 'Inactive' });
         await assert.rejects(c.service.command(c.owner.id, c.device.id, 'Watering'), status(409));
+        await assert.rejects(c.service.command(c.owner.id, c.device.id, 'Stop'), status(409));
+        assert.equal(c.transport.sent.length, 0);
+        await f.devices.update(c.owner.id, c.device.id, { status: 'Active' });
+        await assert.rejects(c.service.command(c.owner.id, c.device.id, 'Stop'), status(409));
+        await f.actuators.update(c.owner.id, c.relays[0].id, { status: 'Active' });
         await off(c); assert(c.transport.sent.every(({ wire }) => wire.taskingParameters.action === 0));
       } finally { await c.service.onModuleDestroy(); }
     });

@@ -19,7 +19,7 @@ JWT private dưới `/api`; không thêm API giả ACK, sửa trạng thái, res
 
 Admin chỉ đọc toàn hệ thống; Manager chỉ đọc theo Farm thuộc HTX hiện tại. Chủ Farmer được điều khiển Farm của mình; Farmer khác cần assignment Accepted đang hiệu lực `[start,end)`. Assignee chỉ đọc task có `created_at` trong phân công hiện tại. Kết thúc phân công mất quyền đọc IoT hiện tại/lịch sử và quyền gửi lệnh mới; phân công mới không mở lại history cũ. Scope và filter được áp dụng trước total/pagination, kể cả journal rỗng. UUID được chuẩn hóa chữ thường.
 
-Start yêu cầu Device và bơm/van tương ứng Active, đúng recipe capability2/shared,3/watering,4/spraying. Stop vẫn được gửi khi metadata Inactive/Maintenance. Trước **mỗi ON** kiểm tra lại actor/assignment/metadata; internal OFF đã được workflow nhận không phụ thuộc việc actor còn quyền, để việc thu hồi phân công không chặn recovery. Không thay metadata/duyệt Admin, không tự đăng ký Device/Actuator.
+FINAL21/10: resolve capability từ metadata purpose, đúng một shared/watering/spraying; purpose chọn lúc đăng ký rồi bất biến. Không gắn cứng số2/3/4. Trước mỗi ON/OFF kiểm Device và actuator nhận lệnh Active, gồm Stop/Reset/Recovery; OFF không có ngoại lệ Inactive/Maintenance. Actor/assignment được kiểm lại trước mỗi ON; OFF nội bộ đã nhận vẫn không phụ thuộc actor còn quyền, nhưng luôn cần metadata Active. Snapshot recipe trong live run, sequence capability lưu trên task; validator kiểm cấu trúc/số bước/ID khác nhau, không diễn giải lại journal cũ theo mã capability cố định. Không đổi schema/migration hoặc wire protocol.
 
 ## Journal và BSON mapping
 

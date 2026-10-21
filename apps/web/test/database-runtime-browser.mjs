@@ -139,10 +139,10 @@ try {
       broker.publish(device.station_id, [
         { dataStreamId: 301, result: "26.54 C" },
         { dataStreamId: 302, result: "70 %" },
-        { dataStreamId: 303, result: "45 %RH" },
+        { dataStreamId: 303, result: "45 %rH" },
         { dataStreamId: 304, result: "25 C" },
         { dataStreamId: 305, result: "6.5 H+" },
-        { dataStreamId: 306, result: "1200 μS/cm" },
+        { dataStreamId: 306, result: "1200 µS/cm" },
       ]);
       await until(
         async () =>
