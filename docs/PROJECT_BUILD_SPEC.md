@@ -12,6 +12,8 @@ Workflow requests/version/audit/notifications dùng bảng kỹ thuật chung đ
 
 ## Tài khoản và HTX
 
+Ngoại lệ dữ liệu khởi tạo22/10 theo yêu cầu người dùng: [profile lịch sử1 tháng](RICH_OPERATIONAL_DATASET.md) được tạo Manager Active/Pending, HTX/membership/phân công sẵn với provenance GeneratedInitialization, không phải OTP/chữ ký thật. Ngoại lệ chỉ ở CLI development/test; đăng ký/duyệt/xác minh qua HTTP vẫn giữ các rule dưới đây. Trường REFERENCE_MANAGER_* trong .env dành cho tài khoản Manager chính tự đăng ký thật.
+
 - Farmer đăng ký Active ngay; email tùy chọn. Email thuộc tối đa một tài khoản.
 - Manager phải xác minh email thật, đăng ký Pending; Admin duyệt và tạo/gắn HTX mới Active. Một Manager quản lý một HTX. Admin không đăng ký công khai.
 - Admin được tạo HTX chưa có Manager. Sau7 ngày cảnh báo,30 ngày xóa nếu vẫn chưa có Manager và không có tham chiếu nghiệp vụ; có tham chiếu thì giữ và cảnh báo.

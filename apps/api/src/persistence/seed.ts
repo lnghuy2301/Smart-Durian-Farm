@@ -11,13 +11,13 @@ type Fields = Record<string, string | number | boolean | null>;
 interface SeedResult { inserted: number; reused: number; real_device_id: string; real_zone_id: string; primary_farmer_id: string }
 const PROFILE = 'durian-demo-v1';
 
-class SeedWriter {
+export class SeedWriter {
   inserted = 0;
   reused = 0;
-  constructor(private readonly client: PoolClient, private readonly timestamp: string) {}
+  constructor(private readonly client: PoolClient, private readonly timestamp: string, private readonly profile = PROFILE) {}
 
   async row(table: Table, key: string, fields: Fields, immutable: string[] = [], natural?: { sql: string; values: unknown[] }, extra: Record<string, unknown> = {}): Promise<string> {
-    const seedKey = `${PROFILE}:${key}`;
+    const seedKey = `${this.profile}:${key}`;
     const metadata = await this.client.query('SELECT entity_key,data FROM technical.entity_metadata WHERE entity_type=$1 AND data->>\'seed_key\'=$2', [table, seedKey]);
     let existing: Fields | undefined;
     if (metadata.rowCount) {
@@ -52,7 +52,7 @@ class SeedWriter {
 
   async standardMaterial(key: string, standardId: string, materialId: string): Promise<void> {
     const entityKey = `${standardId}:${materialId}`;
-    const seedKey = `${PROFILE}:${key}`;
+    const seedKey = `${this.profile}:${key}`;
     const metadata = await this.client.query("SELECT entity_key FROM technical.entity_metadata WHERE entity_type='standard_materials' AND data->>'seed_key'=$1", [seedKey]);
     const existing = await this.client.query('SELECT 1 FROM public.standard_materials WHERE standard_id=$1 AND material_id=$2', [standardId, materialId]);
     if (metadata.rowCount) {

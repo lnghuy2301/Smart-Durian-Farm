@@ -1,5 +1,7 @@
 # Seed demo — profile hiện hành
 
+Profile mở rộng22/10 `operational-month-v1`: [bộ dữ liệu một tháng](RICH_OPERATIONAL_DATASET.md), người dùng cho phép tạo Manager đã/chưa duyệt, Farm trong/ngoài HTX; nội dung ĐBSCL/Tây Nguyên,130 Cultivation/160 Harvest qua nghiệp vụ với clock CLI lịch sử. Đây là profile riêng sau bước chuẩn hóa; db:seed gốc vẫn không tự chạy mở rộng. Không xóa dữ liệu người dùng và không giả các lần gửi/nhận OTP.
+
 Ưu tiên checkpoint22/10: [profile nội dung vận hành](OPERATIONAL_DATA_REFRESH.md) dùng tên/quy trình/vật tư/Zone tự tạo tự nhiên và hai station B48A0A6C912E/C8F09E7D2B14. CLI seed cho database mới không tạo Manager Pending giả; các con số/tên/namespace bên dưới là lịch sử profile cũ/test fixture. Giữ provenance nội bộ và credentials hiện có; không gọi dữ liệu tự tạo là hồ sơ/chứng nhận/hardware đã xác minh.
 
 Ngoài seed metadata gốc bên dưới, đã có công cụ riêng [IoT demo offline](OFFLINE_DEMO_TELEMETRY.md). Hai Device mẫu hiện có đủ sáu Sensor và1.440 readings; trạm thật không có readings giả. `db:seed` vẫn chỉ seed metadata, không tự chạy công cụ telemetry. Không chạy lại import khi journal đã có dữ liệu.
