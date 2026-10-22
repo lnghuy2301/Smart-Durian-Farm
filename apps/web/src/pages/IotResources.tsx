@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Badge, dateTime, number } from "../components/ui";
+import { ReadableValue } from "../components/ReadableValue";
 import { ResourceList, treeDefinition, type Definition } from "./Resources";
 import { RecordTools } from "../workflows/RecordTools";
 import { HistoryPanel } from "../workflows/shared";
@@ -56,6 +57,10 @@ export const sensorDefinition: Definition<Sensor> = {
   ],
   detail: [
     { label: "Tên", value: (x) => x.name },
+    {
+      label: "Trạm IoT",
+      value: (x) => <ReadableValue field="device_id" value={x.device_id} />,
+    },
     { label: "Loại", value: (x) => sensorNames[x.sensor_type] },
     { label: "Luồng dữ liệu", value: (x) => x.data_stream_id },
     { label: "Đơn vị", value: (x) => x.unit },
@@ -98,6 +103,10 @@ export const actuatorDefinition: Definition<Actuator> = {
   ],
   detail: [
     { label: "Tên", value: (x) => x.name },
+    {
+      label: "Trạm IoT",
+      value: (x) => <ReadableValue field="device_id" value={x.device_id} />,
+    },
     { label: "Mã khả năng phần cứng", value: (x) => x.capability_id },
     { label: "Mục đích", value: (x) => purposeNames[x.purpose] },
     { label: "Trạng thái cấu hình", value: (x) => <Badge status={x.status} /> },
@@ -138,7 +147,11 @@ export const deviceDefinition: Definition<Device> = {
     { label: "Tín hiệu gần nhất", value: (x) => dateTime(x.last_seen_at) },
     {
       label: "Khu vực",
-      value: (x) => <Link to={`/zones/${x.zone_id}`}>Xem khu vực lắp đặt</Link>,
+      value: (x) => (
+        <Link to={`/zones/${x.zone_id}`}>
+          <ReadableValue field="zone_id" value={x.zone_id} />
+        </Link>
+      ),
     },
   ],
   links: (x) => (

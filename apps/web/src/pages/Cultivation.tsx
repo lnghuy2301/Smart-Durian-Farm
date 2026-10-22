@@ -33,6 +33,7 @@ import {
   type Journal,
 } from "../types/cultivation";
 import type { Page, Tree, Zone } from "../types/api";
+import { RecordReference } from "../components/ReadableValue";
 import { vietnamDay, type Period } from "./managerOverview";
 
 function LockState({
@@ -315,7 +316,23 @@ export function JournalDetailPage() {
                     <dt>Đối tượng</dt>
                     <dd>
                       {event.target_type === "Zone" ? "Khu vực" : "Cây"} ·{" "}
-                      {event.target_id}
+                      <RecordReference
+                        kind="cultivation-events"
+                        id={event._id}
+                        field="target_id"
+                        value={event.target_id}
+                      />
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Người ghi nhật ký</dt>
+                    <dd>
+                      <RecordReference
+                        kind="cultivation-events"
+                        id={event._id}
+                        field="farmer_id"
+                        value={event.farmer_id}
+                      />
                     </dd>
                   </div>
                   <div>

@@ -4,6 +4,8 @@ Cập nhật21/10/2026. [Quy tắc nghiệp vụ](PROJECT_BUILD_SPEC.md), [runti
 
 ## Authority và cấu hình
 
+- Lớp [hiển thị nghiệp vụ](frontend/modules/READABLE_BUSINESS_INFORMATION.md) chỉ định dạng dữ liệu API. `display-references/{kind}/{id}` phải kiểm tra quyền nguồn rồi mới tra tên; không biến thành API tra user tùy ý, không trả contact/credentials hoặc nối vào QR. Tên hiện tại không sửa snapshot lịch sử.
+
 - `AppModule` chọn trọn vẹn database hoặc memory. Mặc định database ngoài NODE_ENV=test; test mặc định memory. Không trộn HTTP PG với MQTT/store RAM trong database mode.
 - Một DatabaseService sở hữu pool PostgreSQL/MongoClient. DatabaseRuntimeModule/PersistenceRuntimeModule chia sẻ bundle; ports dùng useExisting aliases khi provider có lifecycle hooks, tránh init/destroy hai lần.
 - AUTH_MODE=mock chỉ bật Auth development/test; không đồng nghĩa account/business data lưu RAM. Production Auth còn cần thiết kế/cấu hình riêng.

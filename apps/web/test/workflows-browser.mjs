@@ -315,6 +315,26 @@ export async function checkWorkflows({
           undefined,
           ownerToken,
         );
+        await visit(owner, `/requests?kind=harvest&id=${requests.items[0].id}`);
+        const snapshot = owner.locator(".workflow-summary");
+        await snapshot
+          .getByRole("row")
+          .filter({ hasText: /người tạo/i })
+          .getByText(worker.user.user_name, { exact: true })
+          .waitFor();
+        await snapshot.getByText(tree.tree_code, { exact: true }).waitFor();
+        const snapshotText = await snapshot.textContent();
+        assert.ok(snapshotText.includes("Người tạo"));
+        assert.ok(snapshotText.includes("Thời điểm tạo"));
+        assert.ok(!snapshotText.includes("created_by"));
+        assert.ok(!snapshotText.includes("created_at"));
+        assert.ok(!snapshotText.includes("tree_id"));
+        assert.ok(!snapshotText.includes(worker.user.id));
+        assert.ok(!/\d{4}-\d{2}-\d{2}T\d{2}:/.test(snapshotText));
+        await owner.screenshot({
+          path: `${screenshots}/readable-harvest-request.png`,
+          fullPage: true,
+        });
         await review(owner, "harvest", requests.items[0].id);
         assert.equal(
           (

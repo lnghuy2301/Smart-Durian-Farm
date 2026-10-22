@@ -1,5 +1,6 @@
 import { useSession } from "../auth/session";
 import { Field, PageHeader } from "../components/ui";
+import { valueLabels } from "../components/presentation";
 export function AccountPage() {
   const { user } = useSession();
   return (
@@ -13,7 +14,7 @@ export function AccountPage() {
         <dl className="details">
           <div>
             <dt>Vai trò</dt>
-            <dd>{user.role}</dd>
+            <dd>{valueLabels[user.role]}</dd>
           </div>
           <div>
             <dt>Số điện thoại</dt>

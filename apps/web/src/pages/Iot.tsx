@@ -327,7 +327,7 @@ function ReadingCard({
     <article className="sensor-card">
       <div className="sensor-card-heading">
         <Icon size={19} />
-        <span>{sensor?.name ?? `Stream ${reading.data_stream_id}`}</span>
+        <span>{sensor?.name ?? `Luồng ${reading.data_stream_id}`}</span>
       </div>
       <strong>
         {number(reading.value)}
@@ -337,9 +337,9 @@ function ReadingCard({
         <Clock size={12} />
         {dateTime(reading.received_at)}
       </p>
-      <small>Nhận packet: {dateTime(reading.measured_at)}</small>
+      <small>Nhận gói tin: {dateTime(reading.measured_at)}</small>
       <small>
-        Stream {reading.data_stream_id}
+        Luồng {reading.data_stream_id}
         {sensor?.status === "Inactive" ? " · Cảm biến đã ngừng sử dụng" : ""}
       </small>
       {mismatch && (

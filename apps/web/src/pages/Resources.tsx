@@ -1,4 +1,10 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
+import {
+  ReadableValue,
+  ReferenceScope,
+  RecordReference,
+} from "../components/ReadableValue";
+import { calendarDate } from "../components/presentation";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowUpRight, Search, RefreshCw } from "lucide-react";
 import { queryString } from "../api/client";
@@ -140,11 +146,25 @@ export const farmDefinition: Definition<Farm> = {
     { label: "Diện tích", value: (x) => number(x.area_size) },
     {
       label: "Hợp tác xã",
-      value: (x) => (x.cooperative_id ? "Đã tham gia HTX" : "Chưa tham gia"),
+      value: (x) =>
+        x.cooperative_id ? (
+          <RecordReference
+            kind="farms"
+            id={x.id}
+            field="cooperative_id"
+            value={x.cooperative_id}
+          />
+        ) : (
+          "Chưa tham gia"
+        ),
     },
   ],
   detail: [
     { label: "Số chứng nhận", value: (x) => x.certificate_number },
+    {
+      label: "Chủ vườn",
+      value: (x) => <ReadableValue field="owner_id" value={x.owner_id} />,
+    },
     { label: "Địa chỉ", value: (x) => x.address },
     { label: "Diện tích", value: (x) => number(x.area_size) },
     { label: "Vĩ độ, kinh độ", value: coordinates },
@@ -156,7 +176,9 @@ export const farmDefinition: Definition<Farm> = {
       label: "Hợp tác xã",
       value: (x) =>
         x.cooperative_id ? (
-          <Link to={`/cooperatives/${x.cooperative_id}`}>Xem hợp tác xã</Link>
+          <Link to={`/cooperatives/${x.cooperative_id}`}>
+            <ReadableValue field="cooperative_id" value={x.cooperative_id} />
+          </Link>
         ) : (
           "Chưa tham gia"
         ),
@@ -187,13 +209,17 @@ export const zoneDefinition: Definition<Zone> = {
     {
       label: "Tiêu chuẩn",
       value: (x) => (
-        <Link to={`/standards/${x.standard_id}`}>Xem tiêu chuẩn</Link>
+        <Link to={`/standards/${x.standard_id}`}>
+          <ReadableValue field="standard_id" value={x.standard_id} />
+        </Link>
       ),
     },
     {
       label: "Vườn",
       value: (x) => (
-        <Link to={`/farms/${x.farm_id}`}>Xem vườn (cần quyền của vườn)</Link>
+        <Link to={`/farms/${x.farm_id}`}>
+          <ReadableValue field="farm_id" value={x.farm_id} />
+        </Link>
       ),
     },
   ],
@@ -241,7 +267,11 @@ export const treeDefinition: Definition<Tree> = {
     { label: "Vĩ độ, kinh độ", value: coordinates },
     {
       label: "Khu vực",
-      value: (x) => <Link to={`/zones/${x.zone_id}`}>Xem khu vực</Link>,
+      value: (x) => (
+        <Link to={`/zones/${x.zone_id}`}>
+          <ReadableValue field="zone_id" value={x.zone_id} />
+        </Link>
+      ),
     },
   ],
   links: (x) => (
@@ -278,22 +308,34 @@ export const harvestDefinition: Definition<Harvest> = {
   ],
   columns: [
     { label: "Mùa vụ", value: (x) => x.season_name },
-    { label: "Ngày thu hoạch", value: (x) => x.harvest_date },
+    { label: "Ngày thu hoạch", value: (x) => calendarDate(x.harvest_date) },
     { label: "Khối lượng", value: (x) => `${number(x.total_weight_kg)} kg` },
     { label: "Trạng thái", value: (x) => <Badge status={x.status} /> },
   ],
   detail: [
     { label: "Mã lô", value: (x) => x.batch_code },
     { label: "Mùa vụ", value: (x) => x.season_name },
-    { label: "Ngày thu hoạch", value: (x) => x.harvest_date },
+    { label: "Ngày thu hoạch", value: (x) => calendarDate(x.harvest_date) },
     { label: "Số quả", value: (x) => number(x.fruit_count) },
     { label: "Khối lượng", value: (x) => `${number(x.total_weight_kg)} kg` },
     { label: "Trạng thái", value: (x) => <Badge status={x.status} /> },
+    {
+      label: "Người tạo",
+      value: (x) => <ReadableValue field="created_by" value={x.created_by} />,
+    },
+    {
+      label: "Người cập nhật",
+      value: (x) => <ReadableValue field="updated_by" value={x.updated_by} />,
+    },
     { label: "Tạo lúc", value: (x) => dateTime(x.created_at) },
     { label: "Cập nhật lúc", value: (x) => dateTime(x.updated_at) },
     {
       label: "Cây",
-      value: (x) => <Link to={`/trees/${x.tree_id}`}>Xem cây</Link>,
+      value: (x) => (
+        <Link to={`/trees/${x.tree_id}`}>
+          <ReadableValue field="tree_id" value={x.tree_id} />
+        </Link>
+      ),
     },
   ],
 };
@@ -591,46 +633,48 @@ function ResourceDetail<T extends { id: string }>({
         }
       />
       {message && <Notice kind="success">{message}</Notice>}
-      <DataState resource={resource}>
-        {(data) => (
-          <>
-            <section className="panel">
-              <h2 className="break-word">{def.name(data)}</h2>
-              {recordConfigs[def.path] && (
-                <RecordTools
-                  key={`${def.path}/${id}`}
-                  path={def.path}
-                  item={data}
-                  onSaved={() => {
-                    setMessage(
-                      def.path === "farms" || user.role === "Admin"
-                        ? "Đã gửi đề xuất. Mở Phiếu đề xuất để theo dõi phê duyệt."
-                        : "Đã lưu thông tin.",
-                    );
-                    resource.reload();
-                  }}
-                />
-              )}
-              {def.path === "tree-harvests" && (
-                <HarvestTools
-                  item={data as unknown as Harvest}
-                  onSaved={resource.reload}
-                />
-              )}
-              <dl className="details">
-                {def.detail.map((field) => (
-                  <div key={field.label}>
-                    <dt>{field.label}</dt>
-                    <dd>{field.value(data)}</dd>
-                  </div>
-                ))}
-              </dl>
-              {def.links && <div className="actions">{def.links(data)}</div>}
-            </section>
-            {def.extra?.(data)}
-          </>
-        )}
-      </DataState>
+      <ReferenceScope kind={def.path} id={id}>
+        <DataState resource={resource}>
+          {(data) => (
+            <>
+              <section className="panel">
+                <h2 className="break-word">{def.name(data)}</h2>
+                {recordConfigs[def.path] && (
+                  <RecordTools
+                    key={`${def.path}/${id}`}
+                    path={def.path}
+                    item={data}
+                    onSaved={() => {
+                      setMessage(
+                        def.path === "farms" || user.role === "Admin"
+                          ? "Đã gửi đề xuất. Mở Phiếu đề xuất để theo dõi phê duyệt."
+                          : "Đã lưu thông tin.",
+                      );
+                      resource.reload();
+                    }}
+                  />
+                )}
+                {def.path === "tree-harvests" && (
+                  <HarvestTools
+                    item={data as unknown as Harvest}
+                    onSaved={resource.reload}
+                  />
+                )}
+                <dl className="details">
+                  {def.detail.map((field) => (
+                    <div key={field.label}>
+                      <dt>{field.label}</dt>
+                      <dd>{field.value(data)}</dd>
+                    </div>
+                  ))}
+                </dl>
+                {def.links && <div className="actions">{def.links(data)}</div>}
+              </section>
+              {def.extra?.(data)}
+            </>
+          )}
+        </DataState>
+      </ReferenceScope>
     </>
   );
 }

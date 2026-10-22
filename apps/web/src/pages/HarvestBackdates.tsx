@@ -9,6 +9,8 @@ import {
   uuidPattern,
 } from "../workflows/shared";
 import type { Page } from "../types/api";
+import { ReferenceScope, ReadableValue } from "../components/ReadableValue";
+import { calendarDate } from "../components/presentation";
 interface Grant {
   id: string;
   user_id: string;
@@ -64,27 +66,37 @@ export function HarvestBackdatesPage() {
                 </thead>
                 <tbody>
                   {data.items.map((item) => (
-                    <tr key={item.id}>
-                      <td className="break-word">{item.user_id}</td>
-                      <td className="break-word">{item.zone_id}</td>
-                      <td>{item.harvest_date}</td>
-                      <td>
-                        {item.revoked_at
-                          ? `Đã thu hồi · ${dateTime(item.revoked_at)}`
-                          : dateTime(item.expires_at)}
-                      </td>
-                      <td>{item.reason}</td>
-                      <td>
-                        {user.role === "Admin" && !item.revoked_at && (
-                          <button
-                            className="button secondary"
-                            onClick={() => setRevoke(item.id)}
-                          >
-                            Thu hồi
-                          </button>
-                        )}
-                      </td>
-                    </tr>
+                    <ReferenceScope
+                      kind="harvest-backdate-permissions"
+                      id={item.id}
+                      key={item.id}
+                    >
+                      <tr>
+                        <td className="break-word">
+                          <ReadableValue field="user_id" value={item.user_id} />
+                        </td>
+                        <td className="break-word">
+                          <ReadableValue field="zone_id" value={item.zone_id} />
+                        </td>
+                        <td>{calendarDate(item.harvest_date)}</td>
+                        <td>
+                          {item.revoked_at
+                            ? `Đã thu hồi · ${dateTime(item.revoked_at)}`
+                            : dateTime(item.expires_at)}
+                        </td>
+                        <td>{item.reason}</td>
+                        <td>
+                          {user.role === "Admin" && !item.revoked_at && (
+                            <button
+                              className="button secondary"
+                              onClick={() => setRevoke(item.id)}
+                            >
+                              Thu hồi
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    </ReferenceScope>
                   ))}
                 </tbody>
               </table>

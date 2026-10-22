@@ -25,6 +25,7 @@ import { CultivationEventsModule } from './cultivation-events/cultivation-events
 import { TraceabilityModule } from './traceability/traceability.module';
 import { readTraceabilityConfig } from './traceability/traceability.config';
 import { DatabaseRuntimeModule } from './persistence/database-runtime.module';
+import { DisplayModule } from './display/display.controller';
 
 @Module({})
 export class AppModule {
@@ -53,13 +54,16 @@ export class AppModule {
       const harvestsModule = TreeHarvestsModule.forMock(authModule, usersModule, farmsModule, zonesModule, treesModule);
       const cultivationModule = CultivationEventsModule.forMock([authModule, farmsModule, zonesModule, treesModule, assignmentsModule,
         materialsModule, standardsModule, standardMaterialsModule]);
+      const cooperativesModule = CooperativesModule.forMock(config.auth, authModule, usersModule, farmsModule);
       imports.push(
         usersModule,
         materialsModule,
         standardsModule,
         standardMaterialsModule,
         farmsModule,
-        CooperativesModule.forMock(config.auth, authModule, usersModule, farmsModule),
+        cooperativesModule,
+        DisplayModule.register([authModule, farmsModule, zonesModule, treesModule, devicesModule, sensorsModule,
+          actuatorsModule, harvestsModule, assignmentsModule, cultivationModule, cooperativesModule, standardsModule, materialsModule]),
         zonesModule,
         treesModule,
         devicesModule,

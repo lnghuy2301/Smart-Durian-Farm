@@ -17,6 +17,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 import type { Resource } from "../hooks/useResource";
+import { displayDateTime, valueLabels } from "./presentation";
+export { calendarDate } from "./presentation";
 
 export function PageHeader({
   title,
@@ -111,7 +113,7 @@ export function Badge({ status }: { status: string }) {
   };
   return (
     <span className={`badge status-${status.toLowerCase()}`}>
-      {labels[status] ?? status}
+      {labels[status] ?? valueLabels[status] ?? status}
     </span>
   );
 }
@@ -222,13 +224,6 @@ export function Field({
     </div>
   );
 }
-export const dateTime = (value: string | null) =>
-  value
-    ? new Intl.DateTimeFormat("vi-VN", {
-        dateStyle: "short",
-        timeStyle: "short",
-        timeZone: "Asia/Ho_Chi_Minh",
-      }).format(new Date(value))
-    : "Chưa có";
+export const dateTime = displayDateTime;
 export const number = (value: number) =>
   new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 3 }).format(value);

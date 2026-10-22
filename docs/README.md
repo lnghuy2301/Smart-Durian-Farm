@@ -51,6 +51,7 @@ Các guide `*_IMPLEMENTATION.md` ghi cả phạm vi và kết quả ở thời �
 - [Backup/restore CLI](DATABASE_BACKUP_RESTORE.md), [demo readiness21/10](DEMO_READINESS_20261021.md): thao tác vận hành, role/HTX scope và báo cáo kiểm chứng thực tế.
 - Các guide `POSTGRES_*_IMPLEMENTATION.md`: SQL, quyền, locks, proposals, restart và tái lập riêng từng adapter.
 - [Frontend](frontend/README.md), [các workflow UI](frontend/REFERENCE_WORKFLOWS_IMPLEMENTATION.md), tài liệu từng màn hình trong `frontend/modules/`.
+- [Thông tin hiển thị tiếng Việt](frontend/modules/READABLE_BUSINESS_INFORMATION.md): tên liên quan theo quyền xem, ngày giờ Việt Nam, số và mã tra cứu.
 - `postman/`: import collection cần dùng, thay JWT/UUID/OTP thủ công; giữ các collection người dùng đang chỉnh.
 - [SpeedSMS](SPEEDSMS_INTEGRATION.md) còn là provider tương thích được source/tests sử dụng. Demo hiện tại ưu tiên Twilio; không xóa adapter chỉ vì không dùng trong buổi demo.
 

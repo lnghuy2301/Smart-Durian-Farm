@@ -1,3 +1,4 @@
+import { RecordReference } from "../components/ReadableValue";
 import { useCallback, useEffect, useState } from "react";
 import {
   Link,
@@ -341,7 +342,16 @@ export function CooperativeDetailPage() {
                 <div>
                   <dt>Quản lý HTX</dt>
                   <dd>
-                    {coop.manager_id ? "Đã gắn Manager" : "Chưa có Manager"}
+                    {coop.manager_id ? (
+                      <RecordReference
+                        kind="cooperatives"
+                        id={coop.id}
+                        field="manager_id"
+                        value={coop.manager_id}
+                      />
+                    ) : (
+                      "Chưa có người quản lý"
+                    )}
                   </dd>
                 </div>
                 <div>

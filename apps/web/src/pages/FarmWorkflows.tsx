@@ -19,6 +19,7 @@ import {
 } from "../workflows/shared";
 import { queryString } from "../api/client";
 import type { AssignmentHistory, Farm, Page } from "../types/api";
+import { RecordReference } from "../components/ReadableValue";
 export function MembershipPage() {
   const { id } = useParams();
   const { user } = useSession();
@@ -170,9 +171,12 @@ export function AssignmentsPage() {
                         </Link>
                       </td>
                       <td className="break-word">
-                        {item.assignment.user_id === user.id
-                          ? "Bạn"
-                          : item.assignment.user_id}
+                        <RecordReference
+                          kind="zone-assignments"
+                          id={item.assignment.id}
+                          field="user_id"
+                          value={item.assignment.user_id}
+                        />
                       </td>
                       <td>
                         {dateTime(item.assignment.start_date)}
@@ -301,7 +305,15 @@ export function FarmNotificationsPage() {
                 <article key={item.id}>
                   <strong>Vườn đã rời hợp tác xã</strong>
                   <p>{dateTime(item.created_at)}</p>
-                  <p className="break-word">Mã vườn: {item.farm_id}</p>
+                  <p className="break-word">
+                    Vườn:{" "}
+                    <RecordReference
+                      kind="farms"
+                      id={item.farm_id}
+                      field="farm_id"
+                      value={item.farm_id}
+                    />
+                  </p>
                   <Link to={`/requests?kind=farm&id=${item.request_id}`}>
                     Xem phiếu đã xử lý
                   </Link>

@@ -25,6 +25,7 @@ export default tseslint.config(
       "test/workflows-browser.mjs",
       "test/actuator-control-browser.mjs",
       "test/role-navigation-browser.mjs",
+      "test/database-runtime-browser.mjs",
     ],
     languageOptions: {
       globals: {

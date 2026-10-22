@@ -167,6 +167,47 @@ try {
     },
   );
   await check(
+    "database display references resolve names through scoped records without opening a user directory",
+    async () => {
+      const token = await page.evaluate(() =>
+        sessionStorage.getItem("smart-durian.access-token"),
+      );
+      const owner = (await f.users.loadByPhone(taskAuth.phoneNumber)).user;
+      const zone = await f.zones.get(owner.id, device.zone_id);
+      const farm = await f.farms.get(owner.id, zone.farm_id);
+      const endpoint = `${apiUrl}/api/display-references/farms/${farm.id}`;
+      const result = await fetch(endpoint, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      assert.equal(result.status, 200);
+      const body = await result.json();
+      assert.equal(body.labels[owner.id], owner.user_name);
+      assert.equal(body.labels[farm.id], farm.address);
+      assert(!JSON.stringify(body).includes(taskAuth.phoneNumber));
+      await visit(`/farms/${farm.id}`);
+      await page
+        .locator(".details")
+        .getByText(owner.user_name, { exact: true })
+        .waitFor();
+      const outsider = await f.farmer();
+      const login = await fetch(`${apiUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone_number: outsider.phone,
+          // f.farmer() deliberately reuses the isolated fixture Admin hash.
+          password: taskAuth.admin.password,
+        }),
+      });
+      assert.equal(login.status, 200);
+      const other = await login.json();
+      const denied = await fetch(endpoint, {
+        headers: { Authorization: `Bearer ${other.access_token}` },
+      });
+      assert([403, 404].includes(denied.status));
+    },
+  );
+  await check(
     "database control uses Reset then valve-pump ACK and Stop through existing dialogs",
     async () => {
       await visit(`/actuator-control?device_id=${device.id}`);

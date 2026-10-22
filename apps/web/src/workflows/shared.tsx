@@ -8,6 +8,8 @@ import { useTask } from "../hooks/useTask";
 import { DataState, Field, Modal, Notice, dateTime } from "../components/ui";
 import type { Farm, Page } from "../types/api";
 import "./workflows.css";
+import { fieldLabels } from "../components/presentation";
+import { ReadableValue, ReferenceScope } from "../components/ReadableValue";
 
 export type Values = Record<string, string | number | null>;
 export interface InputField {
@@ -430,28 +432,28 @@ export function Diff({
   snapshot?: Record<string, unknown> | null;
   labels?: Record<string, string>;
 }) {
-  const format = (value: unknown) =>
-    value === undefined || value === null
-      ? "—"
-      : typeof value === "object"
-        ? JSON.stringify(value)
-        : String(value);
   return (
     <div className="table-scroll">
       <table>
         <thead>
           <tr>
             <th>Thông tin</th>
-            <th>Trước thay đổi</th>
-            <th>Đề xuất</th>
+            {snapshot && <th>Trước thay đổi</th>}
+            <th>{snapshot ? "Đề xuất" : "Giá trị ghi nhận"}</th>
           </tr>
         </thead>
         <tbody>
           {Object.entries(changes).map(([key, value]) => (
             <tr key={key}>
-              <th>{labels[key] ?? key}</th>
-              <td className="break-word">{format(snapshot?.[key])}</td>
-              <td className="workflow-diff-new break-word">{format(value)}</td>
+              <th>{labels[key] ?? fieldLabels[key] ?? "Thông tin bổ sung"}</th>
+              {snapshot && (
+                <td className="break-word">
+                  <ReadableValue field={key} value={snapshot[key]} />
+                </td>
+              )}
+              <td className="workflow-diff-new break-word">
+                <ReadableValue field={key} value={value} />
+              </td>
             </tr>
           ))}
         </tbody>
@@ -477,47 +479,52 @@ export function HistoryPanel({
     }>
   >(`${path}${queryString({ limit: 20, offset })}`);
   return (
-    <section className="panel">
-      <h2>{title}</h2>
-      <DataState resource={resource} empty={resource.data?.items.length === 0}>
-        {(data) => (
-          <div className="workflow-timeline">
-            {data.items.map((item) => (
-              <article key={item.id}>
-                <strong>
-                  Phiên bản {item.version} ·{" "}
-                  {item.action === "Create" ? "Tạo mới" : "Cập nhật"}
-                </strong>
-                <p className="muted">{dateTime(item.changed_at)}</p>
-                <Diff changes={item.after} />
-              </article>
-            ))}
+    <ReferenceScope kind={path.split("/")[0]} id={path.split("/")[1]}>
+      <section className="panel">
+        <h2>{title}</h2>
+        <DataState
+          resource={resource}
+          empty={resource.data?.items.length === 0}
+        >
+          {(data) => (
+            <div className="workflow-timeline">
+              {data.items.map((item) => (
+                <article key={item.id}>
+                  <strong>
+                    Phiên bản {item.version} ·{" "}
+                    {item.action === "Create" ? "Tạo mới" : "Cập nhật"}
+                  </strong>
+                  <p className="muted">{dateTime(item.changed_at)}</p>
+                  <Diff changes={item.after} />
+                </article>
+              ))}
+            </div>
+          )}
+        </DataState>
+        {resource.data && (
+          <div className="actions">
+            <button
+              className="button secondary"
+              disabled={!offset}
+              onClick={() => setOffset(Math.max(0, offset - 20))}
+            >
+              Trước
+            </button>
+            <span>
+              {offset + resource.data.items.length} / {resource.data.total}
+            </span>
+            <button
+              className="button secondary"
+              disabled={
+                offset + 20 >= resource.data.total || offset + 20 > 100000
+              }
+              onClick={() => setOffset(offset + 20)}
+            >
+              Sau
+            </button>
           </div>
         )}
-      </DataState>
-      {resource.data && (
-        <div className="actions">
-          <button
-            className="button secondary"
-            disabled={!offset}
-            onClick={() => setOffset(Math.max(0, offset - 20))}
-          >
-            Trước
-          </button>
-          <span>
-            {offset + resource.data.items.length} / {resource.data.total}
-          </span>
-          <button
-            className="button secondary"
-            disabled={
-              offset + 20 >= resource.data.total || offset + 20 > 100000
-            }
-            onClick={() => setOffset(offset + 20)}
-          >
-            Sau
-          </button>
-        </div>
-      )}
-    </section>
+      </section>
+    </ReferenceScope>
   );
 }

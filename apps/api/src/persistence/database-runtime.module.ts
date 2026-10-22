@@ -29,6 +29,7 @@ import { TraceabilityController } from '../traceability/traceability.controller'
 import { DatabaseMqttService } from './database-mqtt.service';
 import { PersistenceRuntimeModule } from './persistence-runtime.module';
 import { RUNTIME_REPOSITORIES, RuntimeRepositories } from './runtime-repositories';
+import { DisplayController } from '../display/display.controller';
 
 @Module({})
 export class DatabaseRuntimeModule {
@@ -46,7 +47,7 @@ export class DatabaseRuntimeModule {
         FarmsController, FarmRequestsController, FarmAccessController, ZonesController, ZoneRequestsController, AssignmentsController, AssignmentRequestsController,
         TreesController, TreeRequestsController, TreeHarvestsController, HarvestRequestsController, HarvestBackdateController,
         DevicesController, DeviceRequestsController, SensorsController, SensorRequestsController, ActuatorsController, ActuatorRequestsController,
-        TelemetryController, ActuatorTasksController, CultivationEventsController, TraceabilityController, MqttController],
+        TelemetryController, ActuatorTasksController, CultivationEventsController, TraceabilityController, MqttController, DisplayController],
       providers: [{ provide: DatabaseMqttService, inject: [RUNTIME_REPOSITORIES, MqttTransport], useFactory: (r: RuntimeRepositories, wire: MqttTransport) =>
         new DatabaseMqttService(config.mqtt ?? readMqttConfig({}), wire, r.devices, r.sensors, r.telemetry, r.users, r.tasks, r.access) },
       { provide: MqttDiagnostics, useExisting: DatabaseMqttService }], exports: [persistence] };

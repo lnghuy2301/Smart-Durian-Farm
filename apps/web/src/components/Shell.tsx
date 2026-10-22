@@ -17,6 +17,7 @@ import {
   routeRoles,
 } from "./navigation";
 import type { Role } from "../types/api";
+import { valueLabels } from "./presentation";
 import "./RoleNavigation.css";
 
 export function ProtectedLayout() {
@@ -152,7 +153,7 @@ function Shell() {
             </span>
             <div>
               <strong>{user.user_name}</strong>
-              <small>{user.role}</small>
+              <small>{valueLabels[user.role]}</small>
             </div>
           </div>
           <button className="logout" onClick={logout}>

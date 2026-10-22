@@ -1,3 +1,4 @@
+import { calendarDate } from "../components/presentation";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -516,7 +517,7 @@ function ManagerContent({
                       </strong>
                       <small>
                         {zone ? farmName(zone.farm_id) : ""} · Mã lô{" "}
-                        {item.batch_code} · {item.harvest_date}
+                        {item.batch_code} · {calendarDate(item.harvest_date)}
                       </small>
                     </div>
                     <div className="activity-right">
