@@ -1,5 +1,7 @@
 # Tài nguyên frontend và hướng dẫn module
 
+Cập nhật điều hướng/dashboard21/10 — `feat/web-role-navigation-dashboard` từ `1cd9447`: sidebar dùng một cấu hình theo vai trò, bốn nhóm thu gọn; dashboard ưu tiên phiếu cần xử lý và dữ liệu công việc thật. Farmer có hai ngữ cảnh Vườn của tôi/Công việc được giao, owner xét từng Farm.owner_id, không dùng is_owner để mở quyền. Có `/assigned-work` frontend và link lịch sử cá nhân sau End; Manager không thấy menu quản trị/chủ vườn. [Cấu trúc menu, nguồn API, quyền, source và tái lập](modules/ROLE_NAVIGATION_DASHBOARDS.md). **16/16 unit,54/54 browser memory/API +4/4 browser database/MQTT TCP; lint/typecheck/build/format đạt**. Giữ API/backend/database/auth/OTP/brand và các thay đổi riêng; không AI hoặc lệnh hardware thật.
+
 Cập nhật21/10/2026. Các workflow web và màn hình điều khiển đã có; backend development dùng shared database runtime. [Chạy web](../../apps/web/README.md), [runtime](../DATABASE_RUNTIME_IMPLEMENTATION.md), [workflows UI](REFERENCE_WORKFLOWS_IMPLEMENTATION.md), [control](modules/ACTUATOR_CONTROL_WEB.md). Các guide cũ ghi checkpoint triển khai; dùng [tiến độ hiện hành](../BACKEND_PROGRESS_CURRENT.md) để xác định phần còn thiếu.
 
 Brand kit chính thức giữ tại assets/brand; HTML/screenshots riêng là nguồn thiết kế, không xóa chỉ vì không import runtime.

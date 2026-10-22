@@ -24,6 +24,7 @@ export default tseslint.config(
       "test/traceability-browser.mjs",
       "test/workflows-browser.mjs",
       "test/actuator-control-browser.mjs",
+      "test/role-navigation-browser.mjs",
     ],
     languageOptions: {
       globals: {

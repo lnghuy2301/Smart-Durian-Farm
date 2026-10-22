@@ -2,6 +2,8 @@
 
 React + TypeScript + Vite. Giao diện ba role, Farm/Zone/phân công, cây, thu hoạch, canh tác, IoT metadata/monitor/control, HTX approvals/verification và QR public đã nối API. Backend development hiện dùng shared database runtime; [hướng dẫn](../../docs/DATABASE_RUNTIME_IMPLEMENTATION.md), [tiến độ](../../docs/BACKEND_PROGRESS_CURRENT.md).
 
+Sidebar/dashboard21/10: nhóm thu gọn theo Admin/Manager/Farmer, hai ngữ cảnh Farmer Vườn của tôi và Công việc được giao; `/assigned-work` dẫn đến khu vực đang phụ trách và các màn hiện có. Owner theo từng Farm.owner_id, giữ lịch sử cá nhân sau phân công. [Menu/nguồn API/quyền/tái lập](../../docs/frontend/modules/ROLE_NAVIGATION_DASHBOARDS.md). Kiểm chứng16 unit,54 browser memory/API và4 browser database; lint/typecheck/build/format đạt. Không đổi backend/auth/OTP hoặc thêm AI.
+
 Chạy từ root:
 
 ```powershell

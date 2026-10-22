@@ -6,7 +6,9 @@ import {
   RegisterPage,
   ForgotPasswordPage,
 } from "./pages/AuthPages";
-import { ProtectedLayout, AdminGuard } from "./components/Shell";
+import { ProtectedLayout, AdminGuard, RoleGuard } from "./components/Shell";
+import { routeRoles } from "./components/navigation";
+import { AssignedWorkPage } from "./pages/FarmerWorkspace";
 import {
   ResourcePage,
   materialDefinition,
@@ -72,15 +74,27 @@ function SessionRoutes() {
         <Route path="requests" element={<RequestsPage />} />
         <Route path="actuator-control" element={<ActuatorControlPage />} />
         <Route path="account" element={<AccountPage />} />
-        <Route
-          path="cooperative-updates"
-          element={<CooperativeUpdatesPage />}
-        />
+        <Route element={<RoleGuard roles={routeRoles.cooperativeUpdates} />}>
+          <Route
+            path="cooperative-updates"
+            element={<CooperativeUpdatesPage />}
+          />
+        </Route>
+        <Route element={<RoleGuard roles={routeRoles.assignedWork} />}>
+          <Route path="assigned-work" element={<AssignedWorkPage />} />
+        </Route>
         <Route path="cultivation-events" element={<CultivationPage />} />
         <Route path="cultivation-events/:id" element={<JournalDetailPage />} />
         <Route path="harvest-backdates" element={<HarvestBackdatesPage />} />
         <Route path="assignments" element={<AssignmentsPage />} />
-        <Route path="farm-notifications" element={<FarmNotificationsPage />} />
+        <Route
+          element={<RoleGuard roles={routeRoles.cooperativeNotifications} />}
+        >
+          <Route
+            path="farm-notifications"
+            element={<FarmNotificationsPage />}
+          />
+        </Route>
         <Route path="farms/:id/membership" element={<MembershipPage />} />
         <Route
           path="materials"

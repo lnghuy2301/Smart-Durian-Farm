@@ -1,52 +1,24 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, Navigate, Outlet, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
-  Leaf,
-  Trees,
-  Map,
-  Building2,
-  Package,
-  ClipboardCheck,
-  Radio,
-  Users,
   LogOut,
   Menu,
   X,
-  Sprout,
-  Droplets,
+  ChevronDown,
+  UserRound,
 } from "lucide-react";
 import { useAuth, useSession } from "../auth/session";
 import { Brand } from "./Brand";
 import { Notice, PageHeader } from "./ui";
+import {
+  navigationForRole,
+  selectedNavigation,
+  routeRoles,
+} from "./navigation";
+import type { Role } from "../types/api";
+import "./RoleNavigation.css";
 
-const nav = [
-  { to: "/", title: "Tổng quan", icon: LayoutDashboard },
-  { to: "/farms", title: "Vườn trồng", icon: Leaf },
-  { to: "/zones", title: "Khu vực", icon: Map },
-  { to: "/assignments", title: "Phân công", icon: Users },
-  { to: "/requests", title: "Phiếu đề xuất", icon: ClipboardCheck },
-  {
-    to: "/farm-notifications",
-    title: "Thông báo HTX",
-    icon: Building2,
-    manager: true,
-  },
-  { to: "/trees", title: "Cây trồng", icon: Trees },
-  {
-    to: "/cultivation-events",
-    title: "Nhật ký canh tác",
-    icon: ClipboardCheck,
-  },
-  { to: "/tree-harvests", title: "Thu hoạch", icon: Sprout },
-  { to: "/iot", title: "Giám sát IoT", icon: Radio },
-  { to: "/actuator-control", title: "Điều khiển tưới / phun", icon: Droplets },
-  { to: "/devices", title: "Thiết bị IoT", icon: Radio },
-  { to: "/cooperatives", title: "Hợp tác xã", icon: Building2 },
-  { to: "/pending-managers", title: "Duyệt Manager", icon: Users, admin: true },
-  { to: "/materials", title: "Vật tư", icon: Package },
-  { to: "/standards", title: "Tiêu chuẩn", icon: ClipboardCheck },
-];
 export function ProtectedLayout() {
   const auth = useAuth();
   if (auth.loading)
@@ -59,11 +31,25 @@ function Shell() {
   const { logout } = useAuth();
   const [open, setOpen] = useState(false);
   const location = useLocation();
-  const selected = nav.find((item) =>
-    item.to === "/"
-      ? location.pathname === "/"
-      : location.pathname.startsWith(item.to),
+  const selected = selectedNavigation(user.role, location.pathname);
+  const [expanded, setExpanded] = useState<string | undefined>(
+    selected?.group.id,
   );
+  const menuButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    setExpanded(selected?.group.id);
+  }, [location.pathname, selected?.group.id]);
+  useEffect(() => {
+    if (!open) return;
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        menuButton.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", escape);
+    return () => window.removeEventListener("keydown", escape);
+  }, [open]);
   const roleLabel = {
     Admin: "Quản trị hệ thống",
     Farmer: "Nhà vườn",
@@ -81,7 +67,10 @@ function Shell() {
           onClick={() => setOpen(false)}
         />
       )}
-      <aside className={`sidebar ${open ? "open" : ""}`}>
+      <aside
+        id="workspace-sidebar"
+        className={`sidebar role-sidebar ${open ? "open" : ""}`}
+      >
         <div className="sidebar-brand">
           <Link to="/" onClick={() => setOpen(false)}>
             <Brand />
@@ -99,33 +88,70 @@ function Shell() {
           <strong>{roleLabel}</strong>
         </div>
         <nav aria-label="Điều hướng chính">
-          {nav
-            .filter(
-              (item) =>
-                (!item.admin || user.role === "Admin") &&
-                (!item.manager || user.role === "Manager"),
-            )
-            .map(({ to, title, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={to === "/"}
-                onClick={() => setOpen(false)}
-              >
-                <Icon size={19} />
-                {title}
-              </NavLink>
-            ))}
+          <NavLink to="/" end onClick={() => setOpen(false)}>
+            <LayoutDashboard size={19} />
+            {user.role === "Admin"
+              ? "Tổng quan quản trị"
+              : user.role === "Manager"
+                ? "Tổng quan HTX"
+                : "Tổng quan"}
+          </NavLink>
+          {navigationForRole(user.role).map((group) => {
+            const Icon = group.icon,
+              isOpen = expanded === group.id;
+            return (
+              <div className="role-nav-group" key={group.id}>
+                <button
+                  type="button"
+                  className={`role-nav-toggle ${selected?.group.id === group.id ? "current" : ""}`}
+                  aria-expanded={isOpen}
+                  aria-controls={`nav-${group.id}`}
+                  onClick={() => setExpanded(isOpen ? undefined : group.id)}
+                >
+                  <Icon size={19} />
+                  <span>{group.title}</span>
+                  <ChevronDown size={16} className={isOpen ? "expanded" : ""} />
+                </button>
+                <div
+                  id={`nav-${group.id}`}
+                  className="role-nav-items"
+                  hidden={!isOpen}
+                >
+                  {group.items.map(({ to, title }) => (
+                    <Link
+                      key={to}
+                      to={to}
+                      className={
+                        selected?.item.to === to ? "active" : undefined
+                      }
+                      aria-current={
+                        selected?.item.to === to ? "page" : undefined
+                      }
+                      onClick={() => setOpen(false)}
+                    >
+                      {title}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </nav>
         <div className="sidebar-bottom">
+          <NavLink
+            className="role-account-link"
+            to="/account"
+            onClick={() => setOpen(false)}
+          >
+            <UserRound size={18} />
+            Tài khoản
+          </NavLink>
           <div className="user-block">
             <span className="avatar">
               {user.user_name.slice(0, 1).toUpperCase()}
             </span>
             <div>
-              <Link to="/account" onClick={() => setOpen(false)}>
-                <strong>{user.user_name}</strong>
-              </Link>
+              <strong>{user.user_name}</strong>
               <small>{user.role}</small>
             </div>
           </div>
@@ -142,12 +168,19 @@ function Shell() {
               className="icon-button mobile-menu"
               aria-label="Mở menu"
               aria-expanded={open}
+              aria-controls="workspace-sidebar"
+              ref={menuButton}
               onClick={() => setOpen(true)}
             >
               <Menu size={20} />
             </button>
             <span className="breadcrumb">
-              Smart Durian <span>/</span> {selected?.title ?? "Chi tiết"}
+              Smart Durian <span>/</span>{" "}
+              {location.pathname === "/"
+                ? "Tổng quan"
+                : location.pathname === "/account"
+                  ? "Tài khoản"
+                  : (selected?.item.title ?? "Chi tiết")}
             </span>
           </div>
           <span className="topbar-role">
@@ -166,12 +199,17 @@ function Shell() {
   );
 }
 export function AdminGuard() {
-  return useSession().user.role === "Admin" ? (
+  return <RoleGuard roles={routeRoles.administration} />;
+}
+export function RoleGuard({ roles }: { roles: readonly Role[] }) {
+  return roles.includes(useSession().user.role) ? (
     <Outlet />
   ) : (
     <>
       <PageHeader title="Không có quyền truy cập" />
-      <Notice kind="warning">Trang này dành cho Admin.</Notice>
+      <Notice kind="warning">
+        Trang này không thuộc quyền truy cập của vai trò hiện tại.
+      </Notice>
       <Link className="button" to="/">
         Về tổng quan
       </Link>

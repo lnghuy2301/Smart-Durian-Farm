@@ -1,0 +1,107 @@
+.role-context-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.role-context-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+.role-context-card .panel-heading {
+  margin-bottom: 0;
+}
+.role-context-card > .button {
+  align-self: start;
+  margin-top: auto;
+}
+.role-context-list {
+  display: grid;
+  gap: 10px;
+}
+.role-context-list a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+.role-context-list a svg {
+  flex-shrink: 0;
+}
+.role-context-list a span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.role-context-list small {
+  display: block;
+  color: var(--sd-muted);
+}
+.role-context-actions,
+.role-history-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.role-history-links {
+  margin: 0 0 24px;
+  font-size: var(--sd-font-caption);
+}
+.role-workspace .role-context-grid > .panel {
+  margin-bottom: 16px;
+}
+.role-inbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 12px;
+}
+.role-inbox-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid var(--sd-border);
+  border-radius: 10px;
+  padding: 16px;
+  background: #f8fcf9;
+  color: var(--sd-text);
+}
+.role-inbox-item > svg {
+  flex-shrink: 0;
+  color: var(--sd-brand);
+}
+.role-inbox-item > span {
+  flex: 1;
+  min-width: 0;
+}
+.role-inbox-item small {
+  display: block;
+  color: var(--sd-muted);
+  margin-top: 4px;
+}
+.role-inbox-footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
+  font-size: var(--sd-font-caption);
+}
+.role-getting-started {
+  border-left: 3px solid var(--sd-action);
+}
+@media (max-width: 1000px) {
+  .role-context-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+@media (max-width: 600px) {
+  .role-inbox .panel-heading {
+    align-items: start;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .role-context-actions > .button {
+    flex: 1;
+  }
+}

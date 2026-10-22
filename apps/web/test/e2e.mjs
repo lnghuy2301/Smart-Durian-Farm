@@ -9,6 +9,7 @@ import { loopbackBroker } from "./loopback-broker.mjs";
 import { checkTraceability } from "./traceability-browser.mjs";
 import { checkWorkflows } from "./workflows-browser.mjs";
 import { checkActuatorControl } from "./actuator-control-browser.mjs";
+import { checkRoleNavigation } from "./role-navigation-browser.mjs";
 
 // Backend thật, RAM cô lập, không đọc .env root và không gửi SMTP/SMS thật.
 const webRoot = fileURLToPath(new URL("..", import.meta.url));
@@ -611,7 +612,12 @@ try {
     );
     await page.getByRole("button", { name: "Mở menu", exact: true }).click();
     await page.locator(".sidebar.open").waitFor();
-    await page.getByRole("link", { name: "Cây trồng", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Canh tác & theo dõi", exact: true })
+      .click();
+    await page
+      .getByRole("link", { name: "Khu vực, cây & thiết bị", exact: true })
+      .click();
     await page.locator("tbody tr").first().waitFor();
     assert.equal(await page.locator(".sidebar.open").count(), 0);
     await visit("/");
@@ -1271,6 +1277,20 @@ try {
     ownerToken,
     adminToken,
     standard,
+    screenshots,
+    errors,
+  });
+  await checkRoleNavigation({
+    browser,
+    origin,
+    http,
+    check,
+    app,
+    apiModule,
+    ownerToken,
+    adminToken,
+    standard,
+    codes,
     screenshots,
     errors,
   });

@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowUpRight,
@@ -24,6 +24,8 @@ import { ManagerDashboard } from "./ManagerDashboard";
 import { RecentJournals } from "./Cultivation";
 import { Stat } from "../components/Stat";
 import { IotMonitor } from "./Iot";
+import { FarmerWorkspace } from "./FarmerWorkspace";
+import { RequestInbox } from "./RequestInbox";
 import type {
   Page,
   Farm,
@@ -41,6 +43,7 @@ export function Dashboard() {
 }
 function FarmerDashboard() {
   const { api, user } = useSession();
+  const [refresh, setRefresh] = useState(0);
   const load = useCallback(
     async (signal: AbortSignal) => {
       const [zones, trees, harvests, confirmed] = await Promise.all([
@@ -65,12 +68,20 @@ function FarmerDashboard() {
         title={`Xin chào, ${user.user_name}`}
         subtitle="Tổng quan vườn trồng và công việc trong phạm vi của bạn."
         actions={
-          <button className="button secondary" onClick={resource.reload}>
+          <button
+            className="button secondary"
+            onClick={() => {
+              resource.reload();
+              setRefresh((value) => value + 1);
+            }}
+          >
             <RefreshCw size={16} />
             Làm mới
           </button>
         }
       />
+      <FarmerWorkspace key={`workspace:${refresh}`} />
+      <RequestInbox key={`inbox:${refresh}`} />
       <DataState resource={resource}>
         {(data) => (
           <>
@@ -204,6 +215,7 @@ function QuickLinks() {
 }
 function AdminDashboard() {
   const { api } = useSession();
+  const [refresh, setRefresh] = useState(0);
   const load = useCallback(
     async (signal: AbortSignal) => {
       const [cooperatives, farms, zones, pending] = await Promise.all([
@@ -225,16 +237,31 @@ function AdminDashboard() {
         title="Tổng quan hệ thống"
         subtitle="Quản lý hợp tác xã, tài nguyên và tài khoản Manager chờ duyệt."
         actions={
-          <button className="button secondary" onClick={resource.reload}>
+          <button
+            className="button secondary"
+            onClick={() => {
+              resource.reload();
+              setRefresh((value) => value + 1);
+            }}
+          >
             <RefreshCw size={16} />
             Làm mới
           </button>
         }
       />
+      <RequestInbox key={refresh} />
       <DataState resource={resource}>
         {(data) => (
           <>
             <div className="stats-grid">
+              <Stat
+                title="Manager chờ duyệt"
+                value={data.pending.users.length}
+                icon={Users}
+                to="/pending-managers"
+                note="Tài khoản cần xem xét"
+                accent
+              />
               <Stat
                 title="Hợp tác xã"
                 value={data.cooperatives.total}
@@ -255,14 +282,6 @@ function AdminDashboard() {
                 icon={Map}
                 to="/zones"
                 note="Khu vực đã được tạo"
-              />
-              <Stat
-                title="Manager chờ duyệt"
-                value={data.pending.users.length}
-                icon={Users}
-                to="/pending-managers"
-                note="Tài khoản cần xem xét"
-                accent
               />
             </div>
             <section className="panel">
