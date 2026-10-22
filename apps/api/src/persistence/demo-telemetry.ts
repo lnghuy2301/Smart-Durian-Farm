@@ -3,6 +3,7 @@ import { Pool } from 'pg';
 import { TelemetryRecord } from '../telemetry/telemetry.types';
 import { MIGRATIONS, migrationChecksum } from './migrations';
 import { MongoTelemetryStore } from './mongo-telemetry.store';
+import { OPERATIONAL_STATIONS } from './operational-data-profile';
 
 export class DemoTelemetryError extends Error {}
 export const DEMO_STREAMS = [
@@ -62,8 +63,8 @@ export async function seedOfflineTelemetry(pool: Pool, mongo: MongoClient, db: D
     for (let i = 1; i <= 2; i++) {
       const result = await client.query(`SELECT d.id FROM public.devices d
         JOIN technical.entity_metadata m ON m.entity_type='devices' AND m.entity_key=d.id::text
-        WHERE d.station_id=$1 AND m.data->>'seed_key'=$2 AND m.data->>'seed_origin'='Simulated'`,
-      [`SIM_DEMO_00${i}`, `durian-demo-v1:device-sim-${i}`]);
+        WHERE d.station_id=ANY($1::text[]) AND m.data->>'seed_key'=$2 AND m.data->>'seed_origin'='Simulated'`,
+      [[`SIM_DEMO_00${i}`, OPERATIONAL_STATIONS[i - 1]], `durian-demo-v1:device-sim-${i}`]);
       if (result.rowCount !== 1) throw new DemoTelemetryError('DEMO_SIMULATED_METADATA_REQUIRED');
       const id = result.rows[0].id as string;
       const sensors = (await client.query('SELECT data_stream_id,sensor_type,unit FROM public.sensors WHERE device_id=$1 ORDER BY data_stream_id', [id])).rows;

@@ -8,6 +8,7 @@ import { PostgresTreesRepository } from './postgres-trees.repository';
 import { PostgresDevicesRepository } from './postgres-devices.repository';
 import { PostgresSensorsRepository } from './postgres-sensors.repository';
 import { MIGRATIONS, migrationChecksum } from './migrations';
+import { OPERATIONAL_STATIONS, SENSOR_NAMES } from './operational-data-profile';
 
 // Repair only the known old demo profile, through the normal owner repository.
 // Each operation commits its audit/version independently: retries reuse it;
@@ -36,8 +37,8 @@ export async function prepareOfflineSensors(pool: Pool) {
       const result = await client.query(`SELECT d.id,f.owner_id FROM public.devices d
         JOIN public.zones z ON z.id=d.zone_id JOIN public.farms f ON f.id=z.farm_id
         JOIN technical.entity_metadata m ON m.entity_type='devices' AND m.entity_key=d.id::text
-        WHERE d.station_id=$1 AND m.data->>'seed_key'=$2 AND m.data->>'seed_origin'='Simulated'`,
-      [`SIM_DEMO_00${i}`, `durian-demo-v1:device-sim-${i}`]);
+        WHERE d.station_id=ANY($1::text[]) AND m.data->>'seed_key'=$2 AND m.data->>'seed_origin'='Simulated'`,
+      [[`SIM_DEMO_00${i}`, OPERATIONAL_STATIONS[i - 1]], `durian-demo-v1:device-sim-${i}`]);
       if (result.rowCount !== 1) throw new DemoTelemetryError('DEMO_SIMULATED_METADATA_REQUIRED');
       const device = result.rows[0];
       const existing = (await client.query('SELECT id,data_stream_id,sensor_type,unit FROM public.sensors WHERE device_id=$1', [device.id])).rows;
@@ -55,7 +56,7 @@ export async function prepareOfflineSensors(pool: Pool) {
       if (item.sensorId) { await sensors.update(item.owner, item.sensorId, { unit: item.stream.unit }); updated++; }
       else {
         await sensors.create(item.owner, { device_id: item.device, data_stream_id: item.stream.id,
-          sensor_type: item.stream.type, name: `Demo ${item.stream.type}`, unit: item.stream.unit });
+          sensor_type: item.stream.type, name: SENSOR_NAMES[Number(item.stream.id) - 301], unit: item.stream.unit });
         created++;
       }
     }

@@ -130,7 +130,13 @@ test('persistence foundation on isolated PostgreSQL17/Mongo8', async (t) => {
       await assert.rejects(sql.query('UPDATE public.farms SET area_size=1.0 WHERE id=$1', [primaryZone.farm_id]), { code: '23514' });
     });
     await t.test('assignment exclusion uses [start,end) allowing adjacent but rejecting overlap', async () => {
-      const zone = zones.at(-1)!;
+      // UUID order is random; the last seeded Zone may already have an open
+      // assignment. Test exclusion in a clean Zone instead of colliding with
+      // the fixture's existing Accepted assignment before the actual assertion.
+      const zone = (await sql.query(`SELECT z.id FROM public.zones z
+        WHERE NOT EXISTS (SELECT 1 FROM public.users_zones a WHERE a.zone_id=z.id)
+        ORDER BY z.id LIMIT 1`)).rows[0];
+      assert(zone);
       await sql.query('INSERT INTO public.users_zones(user_id,zone_id,start_date,end_date) VALUES ($1,$2,$3,$4)', [seed.primary_farmer_id, zone.id, '2027-01-01Z', '2027-02-01Z']);
       await sql.query('INSERT INTO public.users_zones(user_id,zone_id,start_date,end_date) VALUES ($1,$2,$3,$4)', [seed.primary_farmer_id, zone.id, '2027-02-01Z', '2027-03-01Z']);
       await assert.rejects(sql.query('INSERT INTO public.users_zones(user_id,zone_id,start_date,end_date) VALUES ($1,$2,$3,$4)', [seed.primary_farmer_id, zone.id, '2027-01-15Z', '2027-02-02Z']), { code: '23P01' });

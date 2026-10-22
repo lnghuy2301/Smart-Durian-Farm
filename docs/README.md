@@ -40,6 +40,8 @@ Các guide `*_IMPLEMENTATION.md` ghi cả phạm vi và kết quả ở thời �
 
 ## Persistence, demo và frontend
 
+- [Chuẩn hóa dữ liệu khởi tạo22/10](OPERATIONAL_DATA_REFRESH.md): profile tên/nội dung nghiệp vụ mới, ngoại lệ đổi hai station mô phỏng, backup và cách kiểm tra giao diện từng vai trò.
+
 - [Persistence design](PERSISTENCE_DESIGN.md): phân chia PG/Mongo và metadata kỹ thuật.
 - [Foundation](PERSISTENCE_FOUNDATION_IMPLEMENTATION.md): CLI, migration/seed và nguyên tắc không ghi đè.
 - [Seed spec hiện hành](PERSISTENCE_SEED_SPEC.md), [chuẩn bị hardware thật](REAL_HARDWARE_DATABASE_READINESS.md).

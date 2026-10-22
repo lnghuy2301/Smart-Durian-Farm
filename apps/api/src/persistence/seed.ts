@@ -4,6 +4,7 @@ import { hashPassword } from '../auth/password';
 import { SeedConfig, phoneIdentity } from './seed-config';
 import { inPostgresTransaction } from './transactions';
 import { MIGRATIONS, migrationChecksum } from './migrations';
+import { OPERATIONAL_NAMES, OPERATIONAL_STANDARDS, OPERATIONAL_MATERIALS, OPERATIONAL_DOSAGE, OPERATIONAL_FARMS, OPERATIONAL_ZONES } from './operational-data-profile';
 
 type Table = 'users' | 'cooperatives' | 'farming_standards' | 'agricultural_materials' | 'farms' | 'zones' | 'trees' | 'devices' | 'sensors' | 'actuators' | 'users_zones';
 type Fields = Record<string, string | number | boolean | null>;
@@ -65,7 +66,7 @@ class SeedWriter {
   }
 
   async account(key: string, phone: string, passwordHash: string, role: string, owner: boolean, status = 'Active', gmail: string | null = null): Promise<string> {
-    const userId = await this.row('users', key, { user_name: key === 'primary-farmer' ? 'Chủ vườn demo' : key === 'admin' ? 'Admin demo' : key === 'sample-manager' ? 'Manager chờ duyệt (mẫu)' : 'Farmer mẫu',
+    const userId = await this.row('users', key, { user_name: key === 'primary-farmer' ? OPERATIONAL_NAMES.farmer : key === 'admin' ? OPERATIONAL_NAMES.admin : key === 'sample-manager' ? 'Manager chờ duyệt (mẫu)' : OPERATIONAL_NAMES.worker,
       phone_number: phone, password: passwordHash, role, status, is_owner: owner, gmail, gmail_verify: false, created_at: this.timestamp }, ['role', 'is_owner'],
     { sql: `SELECT * FROM public.users WHERE (CASE WHEN ltrim(phone_number,'+') ~ '^0[0-9]{9}$' THEN '84' || substr(ltrim(phone_number,'+'),2) ELSE ltrim(phone_number,'+') END)=$1`, values: [phoneIdentity(phone)] },
     { token_version: 0 });
@@ -76,7 +77,8 @@ class SeedWriter {
   }
 }
 
-export async function seedDemo(pool: Pool, config: SeedConfig, now = new Date()): Promise<SeedResult> {
+export async function seedDemo(pool: Pool, config: SeedConfig, now = new Date(), includePlaceholderManager = true,
+  simulatedStations: readonly string[] = ['SIM_DEMO_001', 'SIM_DEMO_002']): Promise<SeedResult> {
   const timestamp = now.toISOString();
   if (Date.parse(config.device.installedAt) > now.getTime()) { throw new Error('Demo installation date is in the future'); }
   // Hash trước transaction để không giữ khóa DB trong lúc scrypt. Password mẫu
@@ -92,26 +94,25 @@ export async function seedDemo(pool: Pool, config: SeedConfig, now = new Date())
     const admin = await writer.account('admin', config.admin.phone, adminHash, 'Admin', false);
     const farmer = await writer.account('primary-farmer', config.farmer.phone, farmerHash, 'Farmer', true);
     const sampleFarmer = await writer.account('sample-farmer', '0990000011', farmerHash, 'Farmer', true);
-    await writer.account('sample-manager', '0990000012', farmerHash, 'Manager', false, 'Pending', 'manager.demo@example.invalid');
-    await writer.row('cooperatives', 'cooperative-unmanaged', { manager_id: null, director: 'Ban quản trị mẫu', cooperative_name: 'HTX Sầu Riêng Demo', certificate_number: 'DEMO-HTX-001', address: 'Địa chỉ HTX minh họa — Đắk Lắk', contact_number: '0990000012' }, [], undefined, { created_at: timestamp });
+    // The extra Pending identity exists only in isolated test fixtures. The
+    // operational CLI must not recreate an unverified placeholder Manager.
+    if (includePlaceholderManager) await writer.account('sample-manager', '0990000012', farmerHash, 'Manager', false, 'Pending', 'manager.demo@example.invalid');
+    await writer.row('cooperatives', 'cooperative-unmanaged', { manager_id: null, director: OPERATIONAL_NAMES.director, cooperative_name: OPERATIONAL_NAMES.cooperative, certificate_number: 'HS-HTX-2026-001', address: OPERATIONAL_FARMS[0].address, contact_number: config.farmer.phone }, [], undefined, { created_at: timestamp });
     const standards: string[] = [];
     for (let i = 0; i < 3; i++) {
-      standards.push(await writer.row('farming_standards', `standard-${i}`, { code: ['DEMO-VIETGAP', 'DEMO-IPM', 'DEMO-OLD'][i],
-        name: ['Thực hành VietGAP (mẫu)', 'Quản lý dịch hại tổng hợp (mẫu)', 'Quy trình cũ (mẫu)'][i],
-        description: 'Dữ liệu minh họa, không phải chứng nhận hoặc hướng dẫn liều dùng thực tế.', certifying_body: 'Đơn vị minh họa', status: i === 2 ? 'Inactive' : 'Active' }));
+      standards.push(await writer.row('farming_standards', `standard-${i}`, { ...OPERATIONAL_STANDARDS[i], status: i === 2 ? 'Inactive' : 'Active' }));
     }
-    const materialNames = ['Phân hữu cơ vi sinh (mẫu)', 'NPK cho cây trưởng thành (mẫu)', 'Chế phẩm Trichoderma (mẫu)', 'Vật tư bảo vệ thực vật (mẫu)', 'Vật tư ngưng dùng (mẫu)'];
+    const materialNames = OPERATIONAL_MATERIALS;
     for (let i = 0; i < materialNames.length; i++) {
       const material = await writer.row('agricultural_materials', `material-${i}`, { name: materialNames[i], material_type: ['Fertilizer', 'Fertilizer', 'Biological', 'Pesticide', 'Biological'][i],
-        default_dosage: 'Theo nhãn sản phẩm; dữ liệu demo không chỉ định liều', unit: i === 3 ? 'ml' : 'kg', quarantine_days: i === 3 ? 14 : 0, status: i === 4 ? 'Inactive' : 'Active' });
+        default_dosage: OPERATIONAL_DOSAGE, unit: i === 3 ? 'ml' : 'kg', quarantine_days: i === 3 ? 14 : 0, status: i === 4 ? 'Inactive' : 'Active' });
       if (i < 4) { await writer.standardMaterial(`standard-material-${i}`, standards[i % 2], material); }
     }
     const zones: string[] = [];
     for (let farmIndex = 0; farmIndex < 3; farmIndex++) {
       const owner = farmIndex === 2 ? sampleFarmer : farmer;
       const farm = await writer.row('farms', `farm-${farmIndex}`, { owner_id: owner, cooperative_id: null, join_cooperative_date: null, area_size: [1.2, 1.8, 2.4][farmIndex],
-        address: ['Vườn demo Krông Pắc, Đắk Lắk', 'Vườn demo Cái Bè, Tiền Giang', 'Vườn demo Đạ Huoai, Lâm Đồng'][farmIndex],
-        certificate_number: `DEMO-FARM-00${farmIndex + 1}`, longitude: [108.3, 106.05, 107.64][farmIndex], latitude: [12.67, 10.33, 11.43][farmIndex] }, ['owner_id']);
+        ...OPERATIONAL_FARMS[farmIndex], longitude: [108.3, 106.05, 107.64][farmIndex], latitude: [12.67, 10.33, 11.43][farmIndex] }, ['owner_id']);
       // Các hồ sơ tạo sẵn đã được cho phép ở profile demo; provenance nói rõ đây
       // là fixture, không giả chữ ký/email/SMS của một người dùng thực.
       const provenance = await client.query("SELECT 1 FROM technical.audit_events WHERE entity_type='farms' AND entity_key=$1 AND action='DemoSeedCreate'", [farm]);
@@ -122,7 +123,7 @@ export async function seedDemo(pool: Pool, config: SeedConfig, now = new Date())
       for (let zoneIndex = 0; zoneIndex < 2; zoneIndex++) {
         const index = farmIndex * 2 + zoneIndex;
         const zone = await writer.row('zones', `zone-${index}`, { farm_id: farm, standard_id: standards[index % 2],
-          zone_name: index === 0 ? 'Khu A — trạm ESP32 thật' : `Khu ${index + 1} — dữ liệu mẫu`, area_size: [[0.5, 0.6], [0.8, 0.9], [1, 1.2]][farmIndex][zoneIndex],
+          zone_name: OPERATIONAL_ZONES[index], area_size: [[0.5, 0.6], [0.8, 0.9], [1, 1.2]][farmIndex][zoneIndex],
           longitude: [108.3, 106.05, 107.64][farmIndex] + zoneIndex * 0.001, latitude: [12.67, 10.33, 11.43][farmIndex] + zoneIndex * 0.001 }, ['farm_id']);
         zones.push(zone);
         for (let treeIndex = 0; treeIndex < 9; treeIndex++) {
@@ -145,7 +146,7 @@ export async function seedDemo(pool: Pool, config: SeedConfig, now = new Date())
     }
     const deviceIds: string[] = [];
     for (let i = 0; i < 3; i++) {
-      const station = i === 0 ? config.device.stationId : `SIM_DEMO_00${i}`;
+      const station = i === 0 ? config.device.stationId : simulatedStations[i - 1];
       const device = await writer.row('devices', i === 0 ? 'device-real' : `device-sim-${i}`, { zone_id: zones[i * 2], station_id: station,
         installed_at: i === 0 ? config.device.installedAt : `2026-08-${i === 1 ? '10' : '25'}T01:30:00.000Z`,
         cost: i === 0 ? config.device.cost : i === 1 ? 9847500 : 10682500, status: ['Active', 'Inactive', 'Maintenance'][i], last_seen_at: null }, ['station_id', 'zone_id'],

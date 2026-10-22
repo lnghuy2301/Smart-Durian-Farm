@@ -2,6 +2,7 @@ import { validateSync } from 'class-validator';
 import { randomUUID } from 'node:crypto';
 import { CreateDeviceDto } from '../devices/devices.dto';
 import { phoneIdentity } from '../auth/account-identity';
+import { OPERATIONAL_STATIONS } from './operational-data-profile';
 export { phoneIdentity } from '../auth/account-identity';
 
 export interface SeedConfig {
@@ -40,6 +41,6 @@ export function readSeedConfig(env: NodeJS.ProcessEnv): SeedConfig {
     const names: Record<string, string> = { station_id: 'DEMO_DEVICE_STATION_ID', installed_at: 'DEMO_DEVICE_INSTALLED_AT', cost: 'DEMO_DEVICE_COST' };
     throw new Error(`Invalid ${errors.map((error) => names[error.property] ?? error.property).join(', ')}`);
   }
-  if (['SIM_DEMO_001', 'SIM_DEMO_002'].includes(stationId)) { throw new Error('Real station collides with synthetic namespace'); }
+  if (['SIM_DEMO_001', 'SIM_DEMO_002', ...OPERATIONAL_STATIONS].includes(stationId)) { throw new Error('Real station collides with synthetic namespace'); }
   return { farmer, admin, device: { stationId, installedAt: new Date(installedAt).toISOString(), cost: Number(costText) } };
 }

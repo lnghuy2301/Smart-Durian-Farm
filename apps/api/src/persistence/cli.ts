@@ -5,6 +5,7 @@ import { DatabaseService } from '../database/database.service';
 import { migrationStatus, runMigrations } from './migrations';
 import { readSeedConfig } from './seed-config';
 import { seedDemo } from './seed';
+import { OPERATIONAL_STATIONS } from './operational-data-profile';
 
 export async function persistenceCommand(command: string, env: NodeJS.ProcessEnv): Promise<void> {
   if (!['status', 'migrate', 'seed'].includes(command)) { throw new Error('Use status, migrate or seed'); }
@@ -17,7 +18,7 @@ export async function persistenceCommand(command: string, env: NodeJS.ProcessEnv
   try {
     if (command === 'status') { console.log(JSON.stringify(await migrationStatus(database.postgres), null, 2)); }
     else if (command === 'migrate') { console.log(JSON.stringify({ applied: await runMigrations(database.postgres, database.mongo.db()) }, null, 2)); }
-    else { console.log(JSON.stringify(await seedDemo(database.postgres, seedConfig!), null, 2)); }
+    else { console.log(JSON.stringify(await seedDemo(database.postgres, seedConfig!, new Date(), env.NODE_ENV === 'test', OPERATIONAL_STATIONS), null, 2)); }
   } finally { await database.onApplicationShutdown(); }
 }
 

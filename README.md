@@ -11,6 +11,7 @@
 - [MQTT đang triển khai và cách thay bản cấu hình](docs/MQTT_COMMUNICATION_IMPLEMENTATION.md).
 - [Backup/restore và kiểm tra demo](docs/DATABASE_BACKUP_RESTORE.md), [kết quả dữ liệu demo](docs/DEMO_READINESS_20261021.md).
 - [Dữ liệu IoT mẫu offline](docs/OFFLINE_DEMO_TELEMETRY.md): đã nạp1.440 readings cho hai Device mô phỏng; MQTT vẫn tắt, trạm thật giữ nguyên.
+- [Chuẩn hóa dữ liệu khởi tạo và kiểm tra từng vai trò](docs/OPERATIONAL_DATA_REFRESH.md): nội dung nghiệp vụ tự tạo, bỏ nhãn demo; giữ tài khoản và hardware thật.
 
 ## Chạy local
 

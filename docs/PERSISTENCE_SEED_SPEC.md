@@ -1,5 +1,7 @@
 # Seed demo — profile hiện hành
 
+Ưu tiên checkpoint22/10: [profile nội dung vận hành](OPERATIONAL_DATA_REFRESH.md) dùng tên/quy trình/vật tư/Zone tự tạo tự nhiên và hai station B48A0A6C912E/C8F09E7D2B14. CLI seed cho database mới không tạo Manager Pending giả; các con số/tên/namespace bên dưới là lịch sử profile cũ/test fixture. Giữ provenance nội bộ và credentials hiện có; không gọi dữ liệu tự tạo là hồ sơ/chứng nhận/hardware đã xác minh.
+
 Ngoài seed metadata gốc bên dưới, đã có công cụ riêng [IoT demo offline](OFFLINE_DEMO_TELEMETRY.md). Hai Device mẫu hiện có đủ sáu Sensor và1.440 readings; trạm thật không có readings giả. `db:seed` vẫn chỉ seed metadata, không tự chạy công cụ telemetry. Không chạy lại import khi journal đã có dữ liệu.
 
 Cập nhật21/10/2026. Profile `durian-demo-v1` trong [seed.ts](../apps/api/src/persistence/seed.ts), cấu hình qua [seed-config.ts](../apps/api/src/persistence/seed-config.ts). Database runtime đã dùng dữ liệu PG/Mongo chung; mô tả API RAM ở checkpoint foundation không còn hiện hành.

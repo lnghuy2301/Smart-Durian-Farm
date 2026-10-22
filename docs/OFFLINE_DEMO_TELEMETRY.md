@@ -1,5 +1,7 @@
 # Dữ liệu IoT mẫu khi chưa bật hardware
 
+Thay đổi22/10: hai station khởi tạo đã có quyết định chuyển sang B48A0A6C912E và C8F09E7D2B14 theo [đợt chuẩn hóa](OPERATIONAL_DATA_REFRESH.md), giữ Device UUID và lịch sử. Khi xem giao diện sau chuyển đổi, dùng hai mã mới; namespace SIM_DEMO_* bên dưới mô tả lúc import21/10. Các công cụ hiện nhận cả hai tên đúng provenance, không thêm readings cho trạm thật.
+
 Cập nhật 21/10/2026, branch `feat/offline-demo-telemetry`, kế thừa `71fb723`. Không cần bật MQTT hoặc thay `.env`. Không có endpoint HTTP nhập telemetry giả.
 
 ## Phạm vi
