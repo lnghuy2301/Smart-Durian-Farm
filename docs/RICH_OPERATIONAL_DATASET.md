@@ -2,20 +2,24 @@
 
 Ngày22/10/2026, branch `feat/rich-operational-dataset` kế thừa `d39e841`. Người dùng chốt lịch sử khoảng một tháng, ưu tiên ĐBSCL và giữ Tây Nguyên/Đắk Lắk; cho phép khởi tạo Manager đã duyệt/chờ duyệt, HTX có/chưa có Manager và Farm đã/chưa tham gia HTX.
 
-## Tài khoản trong .env
+## Tài khoản và hướng dẫn kiểm tra — cập nhật23/10
 
-Đã thêm `REFERENCE_FARMER_NAME/PHONE/PASSWORD` cho Lê Văn Phúc, xác nhận mật khẩu bằng hash trong database trước khi ghi. Tài khoản này nhận việc tại Farm khác và cũng có Farm riêng. Giữ nguyên mọi nội dung .env cũ, không reset password trong DB.
+[Checklist từng module](MODULE_ACCEPTANCE_CHECKLIST.md) là bản chia sẻ không có mật khẩu. Bản đầy đủ có thông tin đăng nhập/tài nguyên theo tài khoản là `docs/LOCAL_MODULE_ACCEPTANCE.private.md`, được Git bỏ qua; mở trực tiếp tại máy, không gửi AI khác hoặc commit.
 
-Chừa trống `REFERENCE_MANAGER_NAME/PHONE/EMAIL/PASSWORD` để người dùng điền Manager chính, đăng ký/xác minh thật rồi được Admin duyệt. Đây là ghi chú đăng nhập local: không phải cấu hình tự tạo user, SMTP hay allowlist SMS.
+`.env` chỉ giữ bốn nhóm tài khoản:
 
-Sau khi chạy công cụ mở rộng:
+- `AUTH_TEST_PHONE/PASSWORD`: chủ vườn chính, giữ nguyên.
+- `AUTH_TEST_ADMIN_PHONE/PASSWORD`: Admin chính, giữ nguyên.
+- `REFERENCE_FARMER_NAME/PHONE/PASSWORD`: Nguyễn Văn An, Farmer chỉ nhận việc, không sở hữu vườn. Đây là nhóm chính thay cho `REFERENCE_ASSIGNED_FARMER_*` cũ; Lê Văn Phúc đã chuyển sang hướng dẫn local vì còn sở hữu Farm.
+- `REFERENCE_MANAGER_NAME/PHONE/EMAIL/PASSWORD`: dành cho Manager thật sẽ tự đăng ký/xác minh và được Admin duyệt. Chưa điền thì để trống, không tự tạo user.
 
-- `REFERENCE_ASSIGNED_FARMER_NAME/PHONE/PASSWORD`: Nguyễn Văn An, chỉ nhận việc và không sở hữu Farm; dùng nhóm này để kiểm Farmer bình thường.
+Đã chuyển thông tin Farmer/Manager bổ sung ra khỏi `.env`, không xóa tài khoản khỏi database. Bản local có14 tài khoản hiện có (đối chiếu14 mật khẩu khớp hash ở thời điểm lập file) và một vị trí cho Manager thật sẽ đăng ký. Có tên, phone/password tham khảo, trạng thái, mã tài khoản, HTX/vườn/Zone và phân công liên quan. Nếu đổi mật khẩu sau đó, cập nhật ghi chú bằng tay; không reset DB để khớp cấu hình.
 
-- `REFERENCE_EXTRA_FARMER_1_*` đến `REFERENCE_EXTRA_FARMER_8_*`: NAME/PHONE/PASSWORD của các Farmer thêm.
-- `REFERENCE_SEEDED_MANAGER_1_*` và `2_*`: Manager Active đã gắn HTX; `3_*`: Manager Pending để thử duyệt. Mỗi nhóm có NAME/PHONE/PASSWORD/EMAIL/STATUS.
-- Password chỉ được bổ sung nếu khớp hash của tài khoản; các key đã có không bị ghi đè. Không in password/hash/phone/email thật ra console và không commit .env.
-- Trường tham khảo không tự đổi thông tin tài khoản khi chỉnh .env. Đổi mật khẩu bằng workflow hiện hành.
+CLI tạo dữ liệu không bổ sung các nhóm tài khoản vào `.env` nữa. Sau khi kiểm hash, ghi thông tin còn thiếu vào file `.private.md` nói trên, có marker chống trùng; giữ nguyên kết quả kiểm tra thủ công/mật khẩu đã ghi, không ghi đè. Mật khẩu chưa xác nhận là null. Các tên marker `REFERENCE_EXTRA_*`/`REFERENCE_SEEDED_*` chỉ là mã nội bộ trong bản local, không phải biến môi trường cần thêm lại.
+
+Máy mới clone không có bản private và mật khẩu thật. Người vận hành giữ/chuyển bản private bằng phương thức riêng phù hợp, hoặc sao chép checklist công khai rồi tự điền tài khoản đã có; không chạy seed chỉ để lấy lại mật khẩu. Khi CLI cần tạo bản private lần đầu, nó chép các bước từ checklist công khai trong cùng thư mục; lần sau không ghi đè kết quả kiểm tra đã nhập.
+
+Kiểm tra thay đổi23/10:2/2 unit tests của `local-login-guide.test.ts` đạt (không ghi `.env`, không lộ mật khẩu chưa xác nhận, chống trùng/giữ ghi chú, kèm checklist); API lint, typecheck/build và kiểm tra cấu hình `.env` đạt. Đợt này không đổi nghiệp vụ/domain/HTTP/web hoặc chạy lại toàn bộ regression. Database chỉ SELECT/hash, không gửi OTP, đăng nhập hay lệnh MQTT.
 
 Các Manager tạo sẵn dùng email miền example.invalid không gửi thư được và phone khởi tạo không được đưa vào SMS allowlist. User đã cho phép trạng thái verified/Active khởi tạo trong profile này; metadata giữ verification_origin=AuthorizedGeneratedInitializationNotProviderProof. Đây không phải bằng chứng OTP thật. Muốn test email/SMS thực tế, dùng Manager chính đăng ký bằng địa chỉ/số thật, không gửi OTP/password trong chat.
 
@@ -57,7 +61,7 @@ node node_modules/typescript/bin/tsc -p apps/api/tsconfig.build.json
 node apps/api/dist/persistence/rich-data-cli.js
 ```
 
-Không thêm key bắt buộc: mật khẩu khởi tạo lấy REFERENCE_FARMER_PASSWORD hoặc AUTH_TEST_PASSWORD local. CLI tự backup trước và sau; archive trong backups/ đã ignore, không gửi AI hoặc commit. Giữ controller/migration lease suốt quá trình ghi, không Nest/App/Auth/MQTT/SMTP providers, không gửi lệnh hoặc OTP. NODE_ENV chỉ development/test; từ chối nếu số tạo sẵn trùng số operator/allowlist.
+Không thêm key bắt buộc: mật khẩu khởi tạo lấy REFERENCE_FARMER_PASSWORD hoặc AUTH_TEST_PASSWORD local. CLI tự backup trước và sau; archive trong backups/ đã ignore, không gửi AI hoặc commit. Giữ controller/migration lease suốt quá trình ghi, không Nest/App/Auth/MQTT/SMTP providers, không gửi lệnh hoặc OTP. NODE_ENV chỉ development/test; từ chối nếu số tạo sẵn trùng số operator/allowlist. File mật khẩu local không phải nguồn để thay đổi password DB. Không chạy công cụ tạo dữ liệu chỉ để lập checklist.
 
 Không có transaction chung PG/Mongo. Graph PG atomic; các bước nhật ký/thu hoạch commit riêng và được checkpoint trong entity_metadata. Khi Mongo commit xong mà checkpoint PG thất bại, chạy lại sẽ tìm bản gốc bằng actor/time hoặc Tree/date, kiểm xung đột và tiếp tục. Profile Complete chạy lại không ghi đè nội dung, password hay lịch sử. Nếu lỗi, giữ backup và tiến độ, không xóa collection/counter/seed_key để ép chạy. Không auto migration/restore/reset.
 

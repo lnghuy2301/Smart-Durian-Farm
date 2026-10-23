@@ -14,6 +14,7 @@
 - [Chuẩn hóa dữ liệu khởi tạo và kiểm tra từng vai trò](docs/OPERATIONAL_DATA_REFRESH.md): nội dung nghiệp vụ tự tạo, bỏ nhãn demo; giữ tài khoản và hardware thật.
 - [Bộ dữ liệu vận hành một tháng](docs/RICH_OPERATIONAL_DATASET.md): HTX/Farm/nhân sự đa dạng, lịch sử canh tác/thu hoạch, tài khoản tham khảo trong .env.
 - [Thông tin dễ đọc trên giao diện](docs/frontend/modules/READABLE_BUSINESS_INFORMATION.md): tên thay UUID trong phạm vi quyền, nhãn tiếng Việt, ngày giờ Việt Nam và hướng dẫn kiểm tra.
+- [Checklist kiểm tra từng module và vai trò](docs/MODULE_ACCEPTANCE_CHECKLIST.md): bản chia sẻ; bản có tài khoản tại `docs/LOCAL_MODULE_ACCEPTANCE.private.md` chỉ lưu local, không đưa lên Git.
 
 ## Chạy local
 

@@ -1,27 +1,40 @@
 import 'reflect-metadata';
 import { randomUUID } from 'node:crypto';
-import { appendFileSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { config as loadEnv, parse } from 'dotenv';
+import { appendFileSync, existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { config as loadEnv } from 'dotenv';
 import { DatabaseService } from '../database/database.service';
 import { BackupError, createDatabaseBackup } from './backup';
 import { RICH_MANAGERS, RICH_PEOPLE, RichDataError, richPhone, seedRichOperationalData } from './rich-operational-data';
 import { verifyPassword } from '../auth/password';
 
 const root = resolve(__dirname, '../../../..');
-export function appendRichLoginReferences(filename: string, password: string, confirmed = new Set(Array.from({ length: 11 }, (_, i) => i))) {
-  const before = readFileSync(filename), values = parse(before), nl = before.includes(Buffer.from('\r\n')) ? '\r\n' : '\n';
-  const lines = ['', '# Generated initial accounts; registration/OTP for your real Manager stays separate.'];
-  const assigned: Record<string, string> = { REFERENCE_ASSIGNED_FARMER_NAME: RICH_PEOPLE[5], REFERENCE_ASSIGNED_FARMER_PHONE: richPhone(5) };
-  if (confirmed.has(5)) assigned.REFERENCE_ASSIGNED_FARMER_PASSWORD = password;
-  for (const [key, value] of Object.entries(assigned)) if (!Object.hasOwn(values, key)) lines.push(`${key}=${JSON.stringify(value)}`);
+export function appendRichLoginReferences(filename: string, password: string, confirmed = new Set<number>()) {
+  // Credentials are a private operator document, not runtime configuration.
+  // In particular a rerun must never repopulate the cleaned .env file.
+  if (!filename.endsWith('.private.md')) throw new RichDataError('RICH_LOGIN_REFERENCES_REQUIRE_PRIVATE_MARKDOWN');
+  if (existsSync(filename) && lstatSync(filename).isSymbolicLink()) throw new RichDataError('RICH_LOGIN_REFERENCES_MUST_NOT_BE_LINK');
+  const before = existsSync(filename) ? readFileSync(filename, 'utf8') : '';
+  const nl = before.includes('\r\n') ? '\r\n' : '\n', lines: string[] = [];
   for (let i = 0; i < 11; i++) {
     const manager = i >= 8, n = manager ? i - 7 : i + 1, prefix = manager ? `REFERENCE_SEEDED_MANAGER_${n}` : `REFERENCE_EXTRA_FARMER_${n}`;
-    const fields: Record<string, string> = { NAME: manager ? RICH_MANAGERS[i - 8] : RICH_PEOPLE[i], PHONE: richPhone(i), PASSWORD: password };
-    if (manager) { fields.EMAIL = `quanly${n}@phuocan.example.invalid`; fields.STATUS = i === 10 ? 'Pending' : 'Active'; }
-    for (const [key, value] of Object.entries(fields)) if ((key !== 'PASSWORD' || confirmed.has(i)) && !Object.hasOwn(values, `${prefix}_${key}`)) lines.push(`${prefix}_${key}=${JSON.stringify(value)}`);
+    const marker = `<!-- login-reference:${prefix} -->`;
+    if (before.includes(marker)) continue;
+    const fields = { name: manager ? RICH_MANAGERS[i - 8] : RICH_PEOPLE[i], phone: richPhone(i),
+      password: confirmed.has(i) ? password : null, role: manager ? 'Manager' : 'Farmer',
+      ...(manager ? { email: `quanly${n}@phuocan.example.invalid`, status: i === 10 ? 'Pending' : 'Active' } : {}) };
+    lines.push('', marker, `### ${fields.name}`, '', '```json', JSON.stringify(fields, null, 2), '```');
   }
-  if (lines.length > 2) appendFileSync(filename, (before.length && before[before.length - 1] !== 10 ? nl : '') + lines.join(nl) + nl);
+  if (!lines.length) return;
+  if (!before) {
+    writeFileSync(filename, '# Tài khoản kiểm tra local — không chia sẻ\n\nĐọc MODULE_ACCEPTANCE_CHECKLIST.md để kiểm tra từng module. Mật khẩu null nghĩa là chưa xác nhận khớp database.\n', { flag: 'wx', mode: 0o600 });
+    const checklist = resolve(dirname(filename), 'MODULE_ACCEPTANCE_CHECKLIST.md');
+    if (existsSync(checklist)) {
+      const template = readFileSync(checklist, 'utf8'), start = template.indexOf('## 0.');
+      if (start >= 0) lines.push('', '---', '', template.slice(start));
+    }
+  }
+  appendFileSync(filename, lines.join(nl) + nl);
 }
 export async function richDataCommand(env: NodeJS.ProcessEnv) {
   if (!['development', 'test'].includes(env.NODE_ENV ?? '')) throw new RichDataError('RICH_LOCAL_ENVIRONMENT_REQUIRED');
@@ -63,7 +76,7 @@ export async function richDataCommand(env: NodeJS.ProcessEnv) {
       const row = (await database.postgres.query('SELECT password FROM public.users WHERE phone_number=$1', [richPhone(i)])).rows[0];
       if (row && await verifyPassword(password, row.password)) confirmed.add(i);
     }
-    appendRichLoginReferences(resolve(root, '.env'), password, confirmed);
+    appendRichLoginReferences(resolve(root, 'docs/LOCAL_MODULE_ACCEPTANCE.private.md'), password, confirmed);
     console.log(JSON.stringify({ local_login_references_ready: true, matching_initial_passwords: confirmed.size, provider_messages_sent: 0, mqtt_commands_sent: 0 }));
   } finally { await database.onApplicationShutdown(); }
 }

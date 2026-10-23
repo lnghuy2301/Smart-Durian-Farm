@@ -9,3 +9,5 @@ coverage/
 *.log
 test-results/
 backups/
+# Local acceptance guide contains login credentials; never publish it.
+/docs/LOCAL_MODULE_ACCEPTANCE.private.md
