@@ -395,7 +395,14 @@ try {
       await page.reload();
       await page.locator(".stat-card").first().waitFor();
       const keys = await page.evaluate(() => Object.keys(sessionStorage));
-      assert.deepEqual(keys, ["smart-durian.access-token"]);
+      assert.deepEqual(keys.sort(), [
+        "smart-durian.access-token",
+        "smart-durian.idle-deadline",
+      ]);
+      const idleDeadline = await page.evaluate(() =>
+        Number(sessionStorage.getItem("smart-durian.idle-deadline")),
+      );
+      assert(idleDeadline > Date.now());
     },
   );
   await check(

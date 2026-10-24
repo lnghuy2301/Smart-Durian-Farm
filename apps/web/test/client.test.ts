@@ -2,6 +2,37 @@ import { afterEach, expect, test, vi } from "vitest";
 import { ApiClient, ApiError, queryString } from "../src/api/client";
 
 afterEach(() => vi.unstubAllGlobals());
+test("late 401 from the previous JWT cannot close the same account after activity renewed its token", async () => {
+  let release!: (response: Response) => void;
+  const fetcher = vi
+    .fn()
+    .mockImplementationOnce(
+      () =>
+        new Promise<Response>((resolve) => {
+          release = resolve;
+        }),
+    )
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ ok: true }), { status: 200 }),
+    );
+  vi.stubGlobal("fetch", fetcher);
+  const expired = vi.fn(),
+    client = new ApiClient("/api", "old-token", expired);
+  const old = client.request("farms");
+  const rejected = expect(old).rejects.toMatchObject({ status: 401 });
+  client.replaceToken("renewed-token");
+  release(
+    new Response(JSON.stringify({ message: "Expired previous JWT" }), {
+      status: 401,
+    }),
+  );
+  await rejected;
+  expect(expired).not.toHaveBeenCalled();
+  await client.request("auth/me");
+  expect(fetcher.mock.calls[1][1].headers.Authorization).toBe(
+    "Bearer renewed-token",
+  );
+});
 test("disposing while JSON is still being read cannot return another session data", async () => {
   let release!: (body: unknown) => void;
   let started!: () => void;

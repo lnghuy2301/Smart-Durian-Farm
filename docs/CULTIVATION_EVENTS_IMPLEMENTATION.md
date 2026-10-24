@@ -1,5 +1,7 @@
 # CULTIVATION_EVENTS — API và hướng dẫn tái lập
 
+Cập nhật24/10: [API Other và liều snapshot](BACKEND_PDF_REQUIREMENTS.md), migration015 mở enum Mongo. Other chỉ activity_name bắt buộc và note tùy chọn; không tưới/vật tư, không công khai free text trên QR. Vật tư mới chuẩn hóa có số/cơ sở trong snapshot mới; bản cũ/Locked/hash giữ nguyên. Mọi quyền,15 phút/correction/context gốc bên dưới vẫn áp dụng.
+
 Tích hợp QR2026-10-10: [public traceability](QR_TRACEABILITY_IMPLEMENTATION.md) dùng shared lockedForTrace, lazy lock catch-up và toàn lineage Locked; công khai snapshot whitelist cùng nhãn target/latest/applicability. Correction A→B: cả QR A/B hiện toàn chuỗi, A ghi rõ hiện tại áp dụng B. Pending/note/reason/context/UUID/hash private không công khai. Không thay quyền nhập/sửa/correction, không thêm thời điểm performed_at hoặc auto log từ ACK. Full-chain verify vẫn cần JWT/quyền Zone.
 
 Ngày 2026-10-09; branch **feat/cultivation-events** từ main647e6ad đã merge PR#6. Module đã có source/API RAM, không MongoDB persistence. [Quy trình và quyết định nghiệp vụ](CULTIVATION_EVENTS_WORKFLOW_DESIGN.md); [Postman25 requests nhập JSON](postman/Cultivation-Events-Local-Test.postman_collection.json).

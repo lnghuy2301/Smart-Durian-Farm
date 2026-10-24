@@ -9,10 +9,11 @@ import { CreateStandardDto, StandardListDto, UpdateStandardDto } from '../standa
 import { PostgresUsersRepository } from './postgres-users.repository';
 import { safeInteger } from './mappers';
 import { inPostgresTransaction } from './transactions';
+import { materialDosage } from '../materials/material-dosage';
 
 type CatalogTable = 'agricultural_materials' | 'farming_standards';
 type CatalogRecord = AgriculturalMaterial | FarmingStandard;
-const MATERIAL_FIELDS = ['name', 'material_type', 'default_dosage', 'unit', 'quarantine_days', 'status'] as const;
+const MATERIAL_FIELDS = ['name', 'material_type', 'default_dosage', 'default_dosage_value', 'dosage_basis', 'unit', 'quarantine_days', 'status'] as const;
 const STANDARD_FIELDS = ['code', 'name', 'description', 'certifying_body', 'status'] as const;
 
 // Một instance và pool được caller sở hữu. Ba ports chỉ là views trên cùng
@@ -54,7 +55,8 @@ export class PostgresCatalogRepository {
   private async createMaterial(actor: string, input: CreateMaterialDto): Promise<AgriculturalMaterial> {
     return this.withActor(actor, true, async (client) => {
       const value = catalogInput(CreateMaterialDto, input);
-      return this.insert(client, 'agricultural_materials', actor, { ...value, status: value.status ?? 'Active' }, MATERIAL_FIELDS);
+      const dosage = materialDosage(value);
+      return this.insert(client, 'agricultural_materials', actor, { ...value, ...dosage, default_dosage: dosage.default_dosage!, status: value.status ?? 'Active' }, MATERIAL_FIELDS);
     });
   }
   private async createStandard(actor: string, input: CreateStandardDto): Promise<FarmingStandard> {
@@ -109,7 +111,8 @@ export class PostgresCatalogRepository {
     // Row lock trước khi merge: hai PATCH khác fields giữ được cả hai thay đổi.
     // PATCH cùng field áp dụng tuần tự theo lock; không thêm If-Match vào API cũ.
     const current = await this.read<T>(client, table, id, true);
-    const changes = Object.entries(input).filter(([, value]) => value !== undefined);
+    const normalized = table === 'agricultural_materials' ? { ...input, ...materialDosage(input as UpdateMaterialDto, current as AgriculturalMaterial) } : input;
+    const changes = Object.entries(normalized).filter(([, value]) => value !== undefined);
     if (!changes.length) { throw new BadRequestException('Cần ít nhất một field để cập nhật'); }
     if (changes.some(([key]) => !fields.includes(key))) { throw new BadRequestException('Thông tin không thuộc phạm vi được sửa'); }
     const result = await client.query<T>(`UPDATE public.${table} SET ${changes.map(([key], i) => `${key}=$${i + 2}`).join(',')}

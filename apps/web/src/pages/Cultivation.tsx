@@ -214,7 +214,11 @@ export function CultivationPage() {
                     ) : (
                       <Leaf size={22} />
                     )}
-                    <h2>{activityLabels[event.action_type]}</h2>
+                    <h2>
+                      {event.action_type === "Other"
+                        ? event.details.activity_name
+                        : activityLabels[event.action_type]}
+                    </h2>
                   </div>
                   <LockState event={event} onExpired={resource.reload} />
                   <p>{event.details.note || "Không có ghi chú"}</p>
@@ -306,7 +310,9 @@ export function JournalDetailPage() {
               <section className="panel workflow-summary">
                 <div className="panel-heading">
                   <h2>
-                    {activityLabels[event.action_type]}
+                    {event.action_type === "Other"
+                      ? event.details.activity_name
+                      : activityLabels[event.action_type]}
                     {event.is_correction ? " · Đính chính" : ""}
                   </h2>
                   <LockState event={event} onExpired={resource.reload} />
@@ -518,6 +524,9 @@ export function JournalEditor({
     String(event?.details.water_volume_l ?? ""),
   );
   const [note, setNote] = useState(event?.details.note ?? "");
+  const [activityName, setActivityName] = useState(
+    event?.details.activity_name ?? "",
+  );
   const [reason, setReason] = useState("");
   const [materials, setMaterials] = useState(
     event?.details.materials?.map((x) => ({
@@ -551,22 +560,24 @@ export function JournalEditor({
                     ...(water ? { water_volume_l: Number(water) } : {}),
                     note: note.trim(),
                   }
-                : {
-                    materials: materials.map((x) => ({
-                      material_id: x.id,
-                      quantity: Number(x.quantity),
-                    })),
-                    note: note.trim(),
-                  };
+                : activity === "Other"
+                  ? { activity_name: activityName.trim(), note: note.trim() }
+                  : {
+                      materials: materials.map((x) => ({
+                        material_id: x.id,
+                        quantity: Number(x.quantity),
+                      })),
+                      note: note.trim(),
+                    };
             if (
               activity !== "Watering" &&
+              activity !== "Other" &&
               new Set(materials.map((x) => x.id)).size !== materials.length
             )
               throw new Error("Mỗi vật tư chỉ được xuất hiện một lần.");
             const body = {
               target_type: targetType,
-              target_id:
-                event?.target_id ?? (targetType === "Zone" ? zoneId : treeId),
+              target_id: targetType === "Zone" ? zoneId : treeId,
               action_type: activity,
               details,
               ...(correction ? { correction_reason: reason.trim() } : {}),
@@ -683,6 +694,15 @@ export function JournalEditor({
                 />
               </Field>
             </div>
+          ) : activity === "Other" ? (
+            <Field label="Tên công việc khác">
+              <input
+                required
+                maxLength={200}
+                value={activityName}
+                onChange={(e) => setActivityName(e.target.value)}
+              />
+            </Field>
           ) : (
             <>
               <h3 className="workflow-subheading">Vật tư sử dụng</h3>

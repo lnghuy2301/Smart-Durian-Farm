@@ -25,7 +25,7 @@ function Phone({
     <Field
       label="Số điện thoại"
       hint={
-        fresh ? undefined : "Dùng đúng số đã đăng ký, kể cả tiền tố +84 hoặc 0."
+        fresh ? undefined : "Số đã đăng ký có thể nhập bằng dạng 0 hoặc +84."
       }
     >
       <input

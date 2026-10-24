@@ -39,8 +39,9 @@ export class PostgresUsersRepository extends UserAccounts {
   }
 
   async loadByPhone(phone: string): Promise<AccountSnapshot | null> {
-    // Đọc login exact, chỉ uniqueness dùng identity 0/84/+84 như contract cũ.
-    return this.run(async () => this.first((await this.pool.query<UserRow>(`${READ} WHERE u.phone_number=$1`, [phone])).rows));
+    // Dùng đúng expression của unique index; không thử đăng nhập lặp hoặc sửa phone đã lưu.
+    return this.run(async () => this.first((await this.pool.query<UserRow>(`${READ} WHERE
+      (CASE WHEN ltrim(u.phone_number,'+') ~ '^0[0-9]{9}$' THEN '84' || substr(ltrim(u.phone_number,'+'),2) ELSE ltrim(u.phone_number,'+') END)=$1`, [phoneIdentity(phone)])).rows));
   }
 
   // Dùng cùng client của transaction duyệt Manager–HTX; caller khóa users rồi
@@ -62,6 +63,32 @@ export class PostgresUsersRepository extends UserAccounts {
     // Không cần user fixture hoặc tài khoản đầu tiên trong DB để login số sai.
     this.dummyHash ??= hashPassword(randomBytes(32).toString('hex'));
     return this.dummyHash;
+  }
+
+  async assertProfileEmailAvailable(id: string, email: string): Promise<void> {
+    await this.run(async () => {
+      if ((await this.pool.query('SELECT id FROM public.users WHERE gmail=$1 AND id<>$2', [normalizeEmail(email), id])).rowCount) {
+        throw new ConflictException('Email đã có tài khoản');
+      }
+    });
+  }
+
+  async updateProfile(id: string, expectedTokenVersion: number, input: { user_name?: string; verifiedEmail?: string; expectedEmail?: string | null; expectedPhone?: string }): Promise<AccountSnapshot | null> {
+    return this.run(() => inPostgresTransaction(this.pool, async (client) => {
+      await client.query('SELECT id FROM public.users WHERE id=$1 FOR UPDATE', [id]);
+      await client.query("SELECT entity_key FROM technical.entity_metadata WHERE entity_type='users' AND entity_key=$1 FOR UPDATE", [id]);
+      const current = await this.loadOnClient(client, id);
+      if (!current || current.user.status !== 'Active' || current.tokenVersion !== expectedTokenVersion) return null;
+      if (input.verifiedEmail !== undefined && (input.expectedEmail !== current.user.gmail || input.expectedPhone !== current.user.phone_number)) return null;
+      // Explicit projection prevents profile writes from changing role, phone,
+      // ownership or verification without server proof. UNIQUE handles races.
+      await client.query(`UPDATE public.users SET user_name=COALESCE($2,user_name), gmail=COALESCE($3,gmail),
+        gmail_verify=CASE WHEN $3::text IS NULL THEN gmail_verify ELSE true END WHERE id=$1`,
+      [id, input.user_name ?? null, input.verifiedEmail === undefined ? null : normalizeEmail(input.verifiedEmail)]);
+      await client.query("UPDATE technical.entity_metadata SET version=version+1 WHERE entity_type='users' AND entity_key=$1", [id]);
+      await this.audit(client, id, 'ProfileUpdated', { changed_fields: [...(input.user_name !== undefined ? ['user_name'] : []), ...(input.verifiedEmail !== undefined ? ['gmail', 'gmail_verify'] : [])] });
+      return this.loadOnClient(client, id);
+    }));
   }
 
   async assertAvailable(phone: string, email: string | null = null): Promise<void> {

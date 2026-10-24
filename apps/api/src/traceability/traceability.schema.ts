@@ -16,7 +16,7 @@ export const traceSchema = object({
 });
 export const versionSchema = object({ history_key: { type: 'string', pattern: '^[a-f0-9]{64}$' },
   version: integer, latest_version: integer, is_correction: bool, is_latest: bool, applies_to_tree: bool, latest_applies_to_tree: bool,
-  target, latest_target: target, action_type: { type: 'string', enum: ['Watering', 'Spraying', 'Fertilizing'] },
+  target, latest_target: target, action_type: { type: 'string', enum: ['Watering', 'Spraying', 'Fertilizing', 'Other'] },
   entered_at: time, locked_at: time, details: { oneOf: [object({ standard_snapshot: standard,
     duration_minutes: { type: 'number' }, water_volume_l: { type: 'number', nullable: true } }),
     object({ standard_snapshot: standard, materials: { type: 'array', items: object({ name: text,

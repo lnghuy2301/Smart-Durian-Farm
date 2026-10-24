@@ -1,4 +1,4 @@
-export type Activity = "Watering" | "Spraying" | "Fertilizing";
+export type Activity = "Watering" | "Spraying" | "Fertilizing" | "Other";
 export interface Journal {
   _id: string;
   farmer_id: string;
@@ -17,6 +17,7 @@ export interface Journal {
   hash: string | null;
   details: {
     note: string | null;
+    activity_name?: string;
     duration_minutes?: number;
     water_volume_l?: number | null;
     standard_snapshot: { standard_id: string; code: string; name: string };
@@ -37,4 +38,5 @@ export const activityLabels: Record<Activity, string> = {
   Watering: "Tưới nước",
   Spraying: "Phun thuốc",
   Fertilizing: "Bón phân",
+  Other: "Công việc khác",
 };

@@ -11,6 +11,10 @@ export class EventMaterialDto {
 }
 
 export class EventDetailsDto {
+  @ApiPropertyOptional({ maxLength: 200, description: 'Tên công việc bắt buộc khi action_type=Other; không công khai trên QR' })
+  @ValidateIf((_o, v) => v !== undefined)
+  @Transform(({ value }: { value: unknown }) => typeof value === 'string' ? value.trim() : value)
+  @IsString() @MinLength(1) @MaxLength(200) activity_name?: string;
   @ApiPropertyOptional({ minimum: 0.001, maximum: 10080 })
   @ValidateIf((_o, v) => v !== undefined)
   @IsNumber({ maxDecimalPlaces: 3 }) @Min(0.001) @Max(10080) duration_minutes?: number;

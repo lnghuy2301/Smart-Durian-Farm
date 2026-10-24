@@ -61,7 +61,7 @@ test('PostgreSQL Users/Auth adapter, transactions and isolated HTTP restart', as
       assert.equal(original.user.is_owner, true);
       assert.match(original.user.created_at, /Z$/);
       assert.equal((await repository.loadByPhone(config.phoneNumber))!.user.id, original.user.id);
-      assert.equal(await repository.loadByPhone('+84900000000'), null, 'login still requires stored phone format');
+      assert.equal((await repository.loadByPhone('+84900000000'))!.user.id, original.user.id, '0/+84 resolve the same stored account');
       original.user.status = 'Locked';
       assert.equal((await repository.loadById(original.user.id))!.user.status, 'Active');
       assert.equal(await repository.loadById('malformed-uuid'), null);

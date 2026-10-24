@@ -1,7 +1,7 @@
 import { AgriculturalMaterial } from '../materials/materials.service';
 
 export const TARGET_TYPES = ['Zone', 'Tree'] as const;
-export const ACTION_TYPES = ['Watering', 'Spraying', 'Fertilizing'] as const;
+export const ACTION_TYPES = ['Watering', 'Spraying', 'Fertilizing', 'Other'] as const;
 export const EVENT_STATUSES = ['Pending', 'Locked'] as const;
 export const LOCK_DELAY_MS = 15 * 60 * 1000;
 export const EVENT_CAPACITY = 10000;
@@ -13,6 +13,8 @@ export interface MaterialSnapshot {
   material_type: AgriculturalMaterial['material_type'];
   unit: string;
   default_dosage: string;
+  default_dosage_value?: number;
+  dosage_basis?: string;
   quarantine_days: number;
   standard_linked: boolean;
 }
@@ -20,6 +22,7 @@ export interface MaterialSnapshot {
 export interface EventDetails {
   standard_snapshot: { standard_id: string; code: string; name: string };
   note: string | null;
+  activity_name?: string;
   duration_minutes?: number;
   water_volume_l?: number | null;
   materials?: MaterialSnapshot[];

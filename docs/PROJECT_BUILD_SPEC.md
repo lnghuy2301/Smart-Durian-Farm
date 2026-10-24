@@ -12,6 +12,8 @@ Workflow requests/version/audit/notifications dùng bảng kỹ thuật chung đ
 
 ## Tài khoản và HTX
 
+Cập nhật24/10 theo [PDF/backend](BACKEND_PDF_REQUIREMENTS.md): đăng nhập và OTP dùng chung phone identity0/84/+84, không sửa số lưu/provider target. Phiên web theo15 phút không hoạt động; refresh riêng chỉ nhận JWT còn hạn, polling không gia hạn. Tài khoản sửa tên, email mới xác minh trước ghi, đổi mật khẩu cần mật khẩu cũ+SMS OTP riêng và thu hồi JWT cũ. Manager vẫn bắt buộc email verified; profile không sửa role/phone/ownership hoặc gỡ verified.
+
 Ngoại lệ dữ liệu khởi tạo22/10 theo yêu cầu người dùng: [profile lịch sử1 tháng](RICH_OPERATIONAL_DATASET.md) được tạo Manager Active/Pending, HTX/membership/phân công sẵn với provenance GeneratedInitialization, không phải OTP/chữ ký thật. Ngoại lệ chỉ ở CLI development/test; đăng ký/duyệt/xác minh qua HTTP vẫn giữ các rule dưới đây. Trường REFERENCE_MANAGER_* trong .env dành cho tài khoản Manager chính tự đăng ký thật.
 
 - Farmer đăng ký Active ngay; email tùy chọn. Email thuộc tối đa một tài khoản.
@@ -51,6 +53,8 @@ Ngoại lệ dữ liệu khởi tạo22/10 theo yêu cầu người dùng: [prof
 [Workflow](TREE_HARVESTS_WORKFLOW_DESIGN.md), [API](TREE_HARVESTS_IMPLEMENTATION.md), [PG](POSTGRES_HARVESTS_IMPLEMENTATION.md). Giữ một bảng nghiệp vụ TREE_HARVESTS; đề xuất chờ duyệt trong bảng kỹ thuật chung.
 
 ## Canh tác và QR
+
+Cập nhật24/10: Other yêu cầu details.activity_name1–200 và note tùy chọn, không vật tư/thông tin tưới; khóa/correction/quyền gốc giữ nguyên. QR chỉ nhãn Other, không tên công việc/ghi chú tự do. Catalog thêm default_dosage_value số và dosage_basis cùng unit; nhãn default_dosage cũ giữ tương thích, lịch sử/hash không viết lại. Migration015 Mongo/016 PG là bổ sung, không sửa checksum cũ; ERD nguồn riêng cần đối chiếu các field mới.
 
 - Chủ nhập trực tiếp; Farmer khác cần Accepted còn hiệu lực. Đang phân công được đọc toàn bộ nhật ký Zone; hết phân công chỉ lịch sử tự tạo.
 - Target Zone hoặc cây cùng Zone; Watering thời lượng phút/lượng nước tùy chọn; Spraying/Fertilizing vật tư và lượng dùng, đơn vị snapshot. Chỉ vật tư Active; ngoài tiêu chuẩn được ghi kèm cảnh báo.

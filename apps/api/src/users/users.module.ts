@@ -11,12 +11,13 @@ import { UsersService } from './users.service';
 import { MockUserStore } from '../auth/mock-user.store';
 import { UserManagement } from './user-management';
 import { MemoryUserManagement } from './memory-user-management';
+import { AccountController, AccountService } from './account.controller';
 
 @Module({})
 export class UsersModule {
   static forDatabase(config: MockAuthConfig, authModule: DynamicModule, persistenceModule: DynamicModule): DynamicModule {
-    return { module: UsersModule, imports: [authModule, persistenceModule], controllers: [RegistrationController, UsersController],
-      providers: [UsersService, EmailVerificationService, AdminGuard,
+    return { module: UsersModule, imports: [authModule, persistenceModule], controllers: [RegistrationController, UsersController, AccountController],
+      providers: [UsersService, EmailVerificationService, AdminGuard, AccountService,
         { provide: EmailSender, useFactory: () => config.email ? new SmtpEmailSender(config.email) : new DisabledEmailSender() }],
       exports: [EmailSender] };
   }
@@ -24,10 +25,10 @@ export class UsersModule {
     return {
       module: UsersModule,
       imports: [authModule],
-      controllers: [RegistrationController, UsersController],
+      controllers: [RegistrationController, UsersController, AccountController],
       exports: [MockCooperativeStore, EmailSender, UserManagement],
       providers: [
-        UsersService, MockCooperativeStore, EmailVerificationService, AdminGuard,
+        UsersService, MockCooperativeStore, EmailVerificationService, AdminGuard, AccountService,
         { provide: UserManagement, inject: [MockUserStore, MockCooperativeStore],
           useFactory: (users: MockUserStore, cooperatives: MockCooperativeStore) => new MemoryUserManagement(users, cooperatives) },
         {

@@ -1,6 +1,7 @@
 import { useSession } from "../auth/session";
 import { Field, PageHeader } from "../components/ui";
 import { valueLabels } from "../components/presentation";
+import { AccountTools } from "../components/AccountTools";
 export function AccountPage() {
   const { user } = useSession();
   return (
@@ -36,6 +37,7 @@ export function AccountPage() {
           <input readOnly value={user.id} onFocus={(e) => e.target.select()} />
         </Field>
       </section>
+      <AccountTools />
     </>
   );
 }

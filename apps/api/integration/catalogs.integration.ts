@@ -70,7 +70,7 @@ test('PostgreSQL catalogs keep API rules, atomic audits, concurrency and fresh-i
     let m: AgriculturalMaterial, s: FarmingStandard;
     const metadata = async (table: string, key: string) => (await sql.query('SELECT version,data FROM technical.entity_metadata WHERE entity_type=$1 AND entity_key=$2', [table, key])).rows[0];
 
-    await t.test('seed catalogs are readable without cache, allow repeated names/codes and return only ERD fields', async () => {
+    await t.test('seed catalogs are readable without cache, allow repeated names/codes and return documented catalog fields', async () => {
       assert.equal((await catalogs.materials.list(seed.primary_farmer_id, new MaterialListDto())).total, 5);
       assert.equal((await catalogs.standards.list(manager, new StandardListDto())).total, 3);
       m = await catalogs.materials.create(adminId, material); s = await catalogs.standards.create(adminId, standard);
@@ -78,7 +78,7 @@ test('PostgreSQL catalogs keep API rules, atomic audits, concurrency and fresh-i
       const duplicate = await catalogs.materials.create(adminId, material);
       assert.notEqual(duplicate.id, m.id);
       assert.notEqual((await catalogs.standards.create(adminId, standard)).id, s.id);
-      assert.deepEqual(Object.keys(m).sort(), ['id', 'name', 'material_type', 'default_dosage', 'unit', 'quarantine_days', 'status'].sort());
+      assert.deepEqual(Object.keys(m).sort(), ['id', 'name', 'material_type', 'default_dosage', 'default_dosage_value', 'dosage_basis', 'unit', 'quarantine_days', 'status'].sort());
       m.name = 'Mutated response';
       assert.equal((await catalogs.materials.get(adminId, m.id)).name, material.name);
       m = await catalogs.materials.get(adminId, m.id);

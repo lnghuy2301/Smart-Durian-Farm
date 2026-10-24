@@ -10,13 +10,16 @@ const standard = object({ standard_id: uuid, code: { type: 'string' }, name: { t
 const material = object({ material_id: uuid, quantity: { type: 'number' }, name: { type: 'string' },
   material_type: { type: 'string', enum: ['Fertilizer', 'Pesticide', 'Biological'] }, unit: { type: 'string' },
   default_dosage: { type: 'string' }, quarantine_days: { type: 'integer' }, standard_linked: { type: 'boolean' } });
+material.properties!.default_dosage_value = { type: 'number', minimum: 0.001, maximum: 1000000 };
+material.properties!.dosage_basis = { type: 'string', minLength: 1, maxLength: 60 };
 const commonDetails = { standard_snapshot: standard, note: { type: 'string', nullable: true } as SchemaObject,
   warnings: { type: 'array', items: object({ code: { type: 'string', enum: ['MATERIAL_OUTSIDE_STANDARD'] }, material_id: uuid }) } as SchemaObject };
 
 export const eventSchema = object({ _id: id, farmer_id: uuid, target_id: uuid,
   target_type: { type: 'string', enum: [...TARGET_TYPES] }, action_type: { type: 'string', enum: [...ACTION_TYPES] },
   details: { oneOf: [object({ ...commonDetails, duration_minutes: { type: 'number' }, water_volume_l: { type: 'number', nullable: true } }),
-    object({ ...commonDetails, materials: { type: 'array', items: material } })] },
+    object({ ...commonDetails, materials: { type: 'array', items: material } }),
+    object({ ...commonDetails, activity_name: { type: 'string', minLength: 1, maxLength: 200 } })] },
   status: { type: 'string', enum: [...EVENT_STATUSES] }, is_correction: { type: 'boolean' },
   reference_event_id: { ...id, nullable: true }, root_event_id: { ...id, nullable: true },
   correction_reason: { type: 'string', nullable: true }, created_at: time, lock_at: time,

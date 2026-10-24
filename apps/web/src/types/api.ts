@@ -28,6 +28,8 @@ export interface Material {
   name: string;
   material_type: "Fertilizer" | "Pesticide" | "Biological";
   default_dosage: string;
+  default_dosage_value?: number | null;
+  dosage_basis?: string | null;
   unit: string;
   quarantine_days: number;
   status: CatalogStatus;

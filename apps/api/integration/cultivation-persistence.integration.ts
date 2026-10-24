@@ -47,7 +47,8 @@ test('Cultivation Mongo atomic context, deadlines, corrections and Zone chain', 
     await t.test('migration014 supports durable ledger without changing foundation schema; empty bootstrap is concurrent-safe', async () => {
       await Promise.all([r.store.lockDue(), make().store.lockDue()]);
       const rows = await f.pool.query('SELECT id FROM technical.schema_migrations ORDER BY id');
-      assert.equal(rows.rows.at(-1).id, '014_cultivation_ledger');
+      assert(rows.rows.some((row) => row.id === '014_cultivation_ledger'));
+      assert.equal(rows.rows.at(-1).id, '016_material_dosage');
       assert.equal(await f.mongo.db(f.name).collection('PERSISTENCE_STATE').countDocuments({ kind: 'CultivationLedger' }), 1);
     });
     await t.test('owner creates directly; BSON IDs/dates and private original context round-trip exactly', async () => {

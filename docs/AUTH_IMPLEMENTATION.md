@@ -1,5 +1,7 @@
 # Auth — đăng nhập và OTP ở chế độ test
 
+Cập nhật24/10: [contract mới theo PDF](BACKEND_PDF_REQUIREMENTS.md) thay phần phiên/phone cũ bên dưới. Login/reset dùng identity0/84/+84, giữ số gốc gửi OTP. POST auth/refresh gia hạn JWT còn hạn theo input thực của web, không theo polling. `/account` có sửa tên, xác minh email và đổi mật khẩu cũ+OTP có scope riêng; proof không sống qua restart. Source memory và PostgreSQL cùng UserAccounts authority, không đổi cấu hình tài khoản/provider.
+
 Runtime hiện hành dùng database chung cho Auth và nghiệp vụ trong development; các checkpoint RAM bên dưới mô tả đợt ban đầu. Xem [runtime](DATABASE_RUNTIME_IMPLEMENTATION.md), [account persistence](POSTGRES_USERS_AUTH_IMPLEMENTATION.md) và [tiến độ](BACKEND_PROGRESS_CURRENT.md).
 
 Tiếp nối2026-10-10: PG HTX edit workflow dùng riêng provider email→SMS, recheck token version/context trong transaction và xóa chứng cứ OTP sau restart/lỗi; **226 backend/51 DB** và checks đạt. [Guide](POSTGRES_COOPERATIVE_WORKFLOWS_IMPLEMENTATION.md). Không đổi Auth OTP/password reset/provider config, không gộp proof HTX với reset. AppModule vẫn shared memory; PG Auth/Users/HTX HTTP tests cô lập, chưa demo SMS/hardware thật.

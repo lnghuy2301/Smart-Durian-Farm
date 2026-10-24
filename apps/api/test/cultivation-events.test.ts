@@ -13,8 +13,31 @@ import { CultivationEventsStore } from '../src/cultivation-events/cultivation-ev
 import { CultivationEvent, EVENT_CAPACITY, LOCK_DELAY_MS } from '../src/cultivation-events/cultivation-events.types';
 import { CreateEventDto } from '../src/cultivation-events/cultivation-events.dto';
 import { canonicalJson, compareEvents, verifyEvents } from '../src/cultivation-events/cultivation-chain';
+import { projectCultivation } from '../src/traceability/cultivation-projection';
 
 const page = { limit: 20, offset: 0 };
+
+test('Other requires a private activity name, forbids materials and keeps locking/correction/QR privacy', async () => {
+  const f = await fixture();
+  try {
+    const token = await f.login(f.owner.phone_number);
+    const input = { ...f.input, action_type: 'Other', details: { activity_name: '  PRIVATE-Tỉa cành  ', note: 'PRIVATE-NOTE' } };
+    for (const details of [{}, { activity_name: '' }, { activity_name: 'X', materials: [] }, { activity_name: 'X', duration_minutes: 1 }]) {
+      assert.equal((await f.http('cultivation-events', 'POST', { ...input, details }, token)).status, 400);
+    }
+    const result = await f.http('cultivation-events', 'POST', input, token); assert.equal(result.status, 201);
+    const event = await result.json() as CultivationEvent;
+    assert.equal(event.details.activity_name, 'PRIVATE-Tỉa cành');
+    const locked = at(Date.parse(event.lock_at), () => f.events.get(f.owner.id, event._id));
+    assert.equal(locked.status, 'Locked');
+    const projection = projectCultivation([locked], f.tree.id, f.zone.id, f.zone.zone_name, () => f.tree.tree_code);
+    assert.equal(projection[0].action_type, 'Other');
+    assert(!JSON.stringify(projection).includes('PRIVATE-'));
+    assert.equal(f.events.verify(f.owner.id, f.zone.id).valid, true);
+    at(Date.parse(event.lock_at) + 1, () => f.events.correct(f.owner.id, event._id, { ...f.input, action_type: 'Other', details: { activity_name: 'Vệ sinh tán cây' }, correction_reason: 'Sửa tên công việc' }));
+    assert.equal(f.events.get(f.owner.id, event._id).hash, locked.hash);
+  } finally { await f.app.close(); }
+});
 function at<T>(now: number, fn: () => T): T {
   const original = Date.now;
   Date.now = () => now;

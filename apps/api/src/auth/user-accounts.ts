@@ -30,4 +30,6 @@ export abstract class UserAccounts {
   abstract loadByPhone(phone: string): Promise<AccountSnapshot | null>;
   abstract dummyPasswordHash(): Promise<string>;
   abstract replacePassword(id: string, expectedTokenVersion: number, passwordHash: string): Promise<boolean>;
+  abstract assertProfileEmailAvailable(id: string, email: string): Promise<void>;
+  abstract updateProfile(id: string, expectedTokenVersion: number, input: { user_name?: string; verifiedEmail?: string; expectedEmail?: string | null; expectedPhone?: string }): Promise<AccountSnapshot | null>;
 }

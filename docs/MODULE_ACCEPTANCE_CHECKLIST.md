@@ -1,5 +1,7 @@
 # Hướng dẫn kiểm tra từng vai trò và module
 
+**Bổ sung24/10:** đọc [backend theo PDF](BACKEND_PDF_REQUIREMENTS.md). Kiểm phiên còn hoạt động sau15 phút kể từ login, để yên15 phút thì logout;0/+84 cùng tài khoản; `/account` sửa tên/email/đổi mật khẩu cũ+SMS OTP; catalog17 vật tư có số/đơn vị/cơ sở; nhật ký Other có tên/ghi chú riêng tư, QR không công khai free text. Bản private cũ giữ nguyên tài khoản và kết quả bạn đã ghi, không bị tự động ghi đè; dùng phần bổ sung này khi nghiệm thu chức năng mới.
+
 Cập nhật 23/10/2026. Dùng với database hiện có, MQTT FINAL và giao diện đã Việt hóa. File này không chứa mật khẩu. **Bản local có thông tin đăng nhập và cùng checklist: `docs/LOCAL_MODULE_ACCEPTANCE.private.md`**, mở trực tiếp trong VS Code; file đó được Git bỏ qua.
 
 Mỗi ô bên dưới là một bước **chưa được bạn nghiệm thu trong lần kiểm tra này**. Đánh dấu sau khi quan sát kết quả, không đánh dấu chỉ vì đã có test tự động. Ghi thêm ngày, tài khoản, mã hồ sơ và kết quả thực tế vào cuối file local. Không gửi bản có mật khẩu cho AI khác hoặc đưa lên GitHub.

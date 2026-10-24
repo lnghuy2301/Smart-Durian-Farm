@@ -1,5 +1,7 @@
 # CULTIVATION_EVENTS — quy trình đã triển khai
 
+Cập nhật24/10: thêm hoạt động Other theo [chốt PDF](BACKEND_PDF_REQUIREMENTS.md): tên công việc1–200 và ghi chú tùy chọn, không vật tư/thông tin tưới; chỉ nội bộ được phép đọc thấy free text, QR chỉ nhãn Công việc khác. Quyền/target/15 phút/hash-chain/correction phía dưới giữ nguyên, không sửa lịch sử đã khóa.
+
 Ngày 2026-10-09. Nhánh **feat/cultivation-events**, base **origin/main @647e6ad** (PR#6 đã merge, tree tương đương768f3b8). Quyết định dưới đây đã được người dùng chốt; bản chuẩn bị ef00aa5 được thay bằng hướng dẫn runtime này. Đọc [API, setup và kiểm thử](CULTIVATION_EVENTS_IMPLEMENTATION.md). Không sửa ERD riêng của người dùng.
 
 ## Quyền ghi và đọc

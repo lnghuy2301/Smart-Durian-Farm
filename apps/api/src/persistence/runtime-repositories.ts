@@ -28,6 +28,7 @@ import { DatabaseCultivationRecords } from './database-cultivation-records';
 import { DatabaseTraceabilityRecords } from './database-traceability-records';
 import { MONGO_SCHEMA_V1 } from './mongo-schema';
 import { CULTIVATION_STATE_SCHEMA } from './cultivation-state-schema';
+import { CULTIVATION_OTHER_SCHEMA } from './cultivation-other-schema';
 import { canonicalJson } from '../cultivation-events/cultivation-chain';
 
 export const RUNTIME_REPOSITORIES = Symbol('RUNTIME_REPOSITORIES');
@@ -47,7 +48,7 @@ export async function runtimeRepositories(database: DatabaseService, config: Env
     const collections = await db.listCollections({ name: { $in: definitions.map((entry) => entry.name) } }, { nameOnly: false }).toArray();
     for (const definition of definitions) {
       const collection = collections.find((entry) => entry.name === definition.name), options = collection?.options;
-      const validator = definition.name === 'PERSISTENCE_STATE' ? CULTIVATION_STATE_SCHEMA : definition.validator;
+      const validator = definition.name === 'PERSISTENCE_STATE' ? CULTIVATION_STATE_SCHEMA : definition.name === 'CULTIVATION_EVENTS' ? CULTIVATION_OTHER_SCHEMA : definition.validator;
       if (!options || options.validationLevel !== 'strict' || options.validationAction !== 'error'
         || canonicalJson(options.validator) !== canonicalJson(validator)) throw new Error('Mongo schema mismatch');
       const indexes = await db.collection(definition.name).listIndexes().toArray();

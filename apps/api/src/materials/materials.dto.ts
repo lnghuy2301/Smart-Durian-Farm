@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsIn, IsInt, IsString, Max, MaxLength, Min, MinLength, ValidateIf } from 'class-validator';
+import { IsIn, IsInt, IsNumber, IsString, Max, MaxLength, Min, MinLength, ValidateIf } from 'class-validator';
 import { CatalogListDto, CATALOG_STATUSES, CatalogStatus } from '../catalog/catalog.dto';
 export { CatalogStatus } from '../catalog/catalog.dto';
 
@@ -19,10 +19,21 @@ export class CreateMaterialDto {
   @IsIn(MATERIAL_TYPES)
   material_type!: MaterialType;
 
-  @ApiProperty({ maxLength: 100 })
+  @ApiPropertyOptional({ maxLength: 100, deprecated: true, description: 'Mô tả cũ; client mới gửi default_dosage_value và dosage_basis' })
   @Transform(trimText)
+  @ValidateIf((_o, value) => value !== undefined)
   @IsString() @MinLength(1) @MaxLength(100)
-  default_dosage!: string;
+  default_dosage?: string;
+
+  @ApiPropertyOptional({ minimum: 0.001, maximum: 1000000, description: 'Số lượng liều, dùng cùng unit và dosage_basis' })
+  @ValidateIf((_o, value) => value !== undefined)
+  @IsNumber({ maxDecimalPlaces: 3 }) @Min(0.001) @Max(1000000)
+  default_dosage_value?: number;
+
+  @ApiPropertyOptional({ maxLength: 60, example: 'cây/lần' })
+  @Transform(trimText) @ValidateIf((_o, value) => value !== undefined)
+  @IsString() @MinLength(1) @MaxLength(60)
+  dosage_basis?: string;
 
   @ApiProperty({ maxLength: 10 })
   @Transform(trimText)

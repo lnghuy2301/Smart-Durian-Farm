@@ -1,5 +1,7 @@
 # Vật tư nông nghiệp — bàn giao module
 
+Cập nhật24/10: [liều số và danh mục17 vật tư](BACKEND_PDF_REQUIREMENTS.md), migration016 thêm default_dosage_value/dosage_basis, unit giữ nguyên. default_dosage giữ nhãn tương thích client cũ; không parse mù hoặc đổi snapshot nhật ký. CLI riêng backup/audit, thêm12 và chuẩn hóa5 dòng khởi tạo chưa chỉnh, chạy lại không tạo trùng. Đọc mục này trước mô tả ERD/DTO cũ phía dưới.
+
 Persistence checkpoint2026-10-10: **feat/postgres-catalogs** từ007834f đã bổ sung async MaterialRecords HTTP contract/shared memory wrapper và PostgreSQL repository/version/audit. **227 backend/65 DB**, checks đạt; không UNIQUE tên hoặc thay DTO/API/unit/liều chuỗi. [Source/tái lập/phạm vi database](POSTGRES_CATALOGS_IMPLEMENTATION.md). AppModule hiện vẫn RAM; PG HTTP được kiểm thử riêng, chưa nối các domain phụ thuộc. Giới hạn1000/restart trong phần dưới áp dụng RAM; PG giữ dữ liệu, không áp hạn RAM đó. Những mốc nhánh và “chưa tạo bảng” bên dưới ghi nhận đợt module ban đầu.
 
 Nhánh `feat/agricultural-materials` kế thừa `feat/users-registration-approval` chưa merge. Đã fetch: origin/main hiện ở 7594c9d, mới có Auth ban đầu; không bỏ code USERS/Twilio khi tạo nhánh. Không tự merge. ERD XML/JSON đã đọc và khớp field AGRICULTURAL_MATERIALS.

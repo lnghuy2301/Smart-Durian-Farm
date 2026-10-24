@@ -88,14 +88,26 @@ export const materialDefinition: Definition<Material> = {
   filters: [materialType, statusFilter],
   columns: [
     { label: "Loại vật tư", value: (x) => typeNames[x.material_type] },
-    { label: "Liều mặc định", value: (x) => `${x.default_dosage} ${x.unit}` },
+    {
+      label: "Liều mặc định",
+      value: (x) =>
+        x.default_dosage_value != null && x.dosage_basis
+          ? `${number(x.default_dosage_value)} ${x.unit}/${x.dosage_basis}`
+          : x.default_dosage,
+    },
     { label: "Cách ly", value: (x) => `${x.quarantine_days} ngày` },
     { label: "Trạng thái", value: (x) => <Badge status={x.status} /> },
   ],
   detail: [
     { label: "Tên vật tư", value: (x) => x.name },
     { label: "Loại vật tư", value: (x) => typeNames[x.material_type] },
-    { label: "Liều mặc định", value: (x) => x.default_dosage },
+    {
+      label: "Liều mặc định",
+      value: (x) =>
+        x.default_dosage_value != null && x.dosage_basis
+          ? `${number(x.default_dosage_value)} ${x.unit}/${x.dosage_basis}`
+          : x.default_dosage,
+    },
     { label: "Đơn vị", value: (x) => x.unit },
     { label: "Thời gian cách ly", value: (x) => `${x.quarantine_days} ngày` },
     { label: "Trạng thái", value: (x) => <Badge status={x.status} /> },

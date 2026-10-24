@@ -170,6 +170,13 @@ export class CultivationEventsService implements OnModuleInit, OnModuleDestroy {
     const standard = this.standards.get(zone.standard_id);
     const details: EventDetails = { standard_snapshot: { standard_id: standard.id, code: standard.code, name: standard.name },
       note: input.note ?? null, warnings: [] };
+    if (action === 'Other') {
+      if (!input.activity_name?.trim() || input.materials !== undefined || input.duration_minutes !== undefined || input.water_volume_l !== undefined) {
+        throw new BadRequestException('Công việc khác cần tên công việc, chỉ nhận ghi chú, không nhận vật tư/thông tin tưới');
+      }
+      return { ...details, activity_name: input.activity_name.trim() };
+    }
+    if (input.activity_name !== undefined) throw new BadRequestException('Tên công việc tự nhập chỉ dành cho hoạt động Khác');
     if (action === 'Watering') {
       if (input.duration_minutes === undefined || input.materials !== undefined) { throw new BadRequestException('Watering requires duration_minutes and does not accept materials'); }
       return { ...details, duration_minutes: input.duration_minutes, water_volume_l: input.water_volume_l ?? null };
@@ -186,7 +193,8 @@ export class CultivationEventsService implements OnModuleInit, OnModuleDestroy {
       const linked = this.standardMaterials.has(standard.id, material_id);
       if (!linked) { details.warnings.push({ code: 'MATERIAL_OUTSIDE_STANDARD', material_id }); }
       return { material_id, quantity, name: material.name, material_type: material.material_type, unit: material.unit,
-        default_dosage: material.default_dosage, quarantine_days: material.quarantine_days, standard_linked: linked };
+        default_dosage: material.default_dosage, quarantine_days: material.quarantine_days, standard_linked: linked,
+        ...(material.default_dosage_value != null && material.dosage_basis != null ? { default_dosage_value: material.default_dosage_value, dosage_basis: material.dosage_basis } : {}) };
     });
     return details;
   }

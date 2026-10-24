@@ -1,0 +1,376 @@
+{
+  "info": {
+    "name": "Smart Durian Farm — Backend PDF 24-10",
+    "description": "Nhập JSON trực tiếp. Thay host/port nếu khác. Mỗi request: tự thay placeholder PHONE/PASSWORD/JWT/UUID/OTP, không dùng scripts hoặc environment. JWT collection đặt thủ công ở Authorization. OTP chỉ gửi khi bạn chủ động gọi; không chạy cả collection hàng loạt. Đăng nhập/quên mật khẩu chấp nhận 0, 84 hoặc +84 cùng tài khoản; số lưu không đổi.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "DAN_JWT_VAO_DAY",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Đăng nhập và phiên",
+      "item": [
+        {
+          "name": "Đăng nhập bằng 0 hoặc +84",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": "http://localhost:3000/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone_number\": \"SO_DIEN_THOAI_DA_DANG_KY\",\n  \"password\": \"MAT_KHAU_CUA_BAN\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Xem tài khoản hiện tại",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:3000/api/auth/me"
+          },
+          "response": []
+        },
+        {
+          "name": "Gia hạn khi thao tác — JWT phải còn hạn",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://localhost:3000/api/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Hồ sơ và email",
+      "item": [
+        {
+          "name": "Xem hồ sơ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:3000/api/account/profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Sửa tên của mình",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://localhost:3000/api/account/profile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_name\": \"TEN_HIEN_THI_MOI\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Gửi OTP email mới — chưa đổi hồ sơ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://localhost:3000/api/account/email/request",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gmail\": \"THAY_BANG_EMAIL_THAT\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Xác minh email và lưu",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://localhost:3000/api/account/email/verify",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verification_id\": \"UUID_TU_RESPONSE\",\n  \"otp\": \"OTP_6_CHU_SO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Đổi mật khẩu có đăng nhập",
+      "item": [
+        {
+          "name": "Kiểm mật khẩu cũ và gửi SMS",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://localhost:3000/api/account/password/request",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"MAT_KHAU_HIEN_TAI\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Đổi bằng mật khẩu cũ + OTP riêng — đăng nhập lại sau thành công",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://localhost:3000/api/account/password/confirm",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"MAT_KHAU_HIEN_TAI\",\n  \"new_password\": \"MAT_KHAU_MOI\",\n  \"otp\": \"OTP_6_CHU_SO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Vật tư — Admin ghi, người dùng đọc",
+      "item": [
+        {
+          "name": "Danh mục có số, đơn vị, cơ sở liều",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:3000/api/materials?limit=20&offset=0"
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo vật tư liều số",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://localhost:3000/api/materials",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"TEN_VAT_TU\",\n  \"material_type\": \"Fertilizer\",\n  \"default_dosage_value\": 2.5,\n  \"unit\": \"kg\",\n  \"dosage_basis\": \"cây/lần\",\n  \"quarantine_days\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sửa số hoặc cơ sở liều",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://localhost:3000/api/materials/UUID_VAT_TU",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"default_dosage_value\": 3,\n  \"dosage_basis\": \"cây/lần\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Nhật ký Khác — chủ hoặc Farmer còn phân công",
+      "item": [
+        {
+          "name": "Tạo công việc khác — không vật tư/thông tin tưới",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://localhost:3000/api/cultivation-events",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_type\": \"Zone\",\n  \"target_id\": \"UUID_ZONE\",\n  \"action_type\": \"Other\",\n  \"details\": {\n    \"activity_name\": \"Tỉa cành\",\n    \"note\": \"Nội dung riêng tư, không lên QR\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Đọc bản ghi của mình/Zone được phép",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:3000/api/cultivation-events/OBJECT_ID_NHAT_KY"
+          },
+          "response": []
+        },
+        {
+          "name": "Sửa Pending trước 15 phút",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://localhost:3000/api/cultivation-events/OBJECT_ID_NHAT_KY",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"details\": {\n    \"activity_name\": \"Vệ sinh tán cây\",\n    \"note\": \"Nội dung điều chỉnh\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Đính chính Locked — giữ cùng Zone và quyền gốc",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://localhost:3000/api/cultivation-events/OBJECT_ID_NHAT_KY/corrections",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_type\": \"Zone\",\n  \"target_id\": \"UUID_ZONE_GOC\",\n  \"action_type\": \"Other\",\n  \"details\": {\n    \"activity_name\": \"Tên công việc đã chỉnh\",\n    \"note\": \"Nội dung riêng tư\"\n  },\n  \"correction_reason\": \"Lý do đính chính\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. QR công khai — không JWT",
+      "item": [
+        {
+          "name": "Lịch sử chỉ có nhãn Other, không tên công việc/ghi chú",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": "http://localhost:3000/api/traceability/trees/TREE_CODE_DAY_DU/cultivation?limit=20&offset=0"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

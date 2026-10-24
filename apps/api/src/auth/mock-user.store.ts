@@ -38,7 +38,7 @@ export class MockUserStore extends UserAccounts {
   versionOf(id: string): number { return this.versions.get(id) ?? 0; }
   revokeTokens(id: string): void { this.versions.set(id, this.versionOf(id) + 1); }
   findById(id: string): TestUser | undefined { return this.users.get(id); }
-  findByPhone(phone: string): TestUser | undefined { return [...this.users.values()].find((user) => user.phone_number === phone); }
+  findByPhone(phone: string): TestUser | undefined { return [...this.users.values()].find((user) => phoneIdentity(user.phone_number) === phoneIdentity(phone)); }
   findByEmail(email: string): TestUser | undefined { return [...this.users.values()].find((user) => user.gmail === normalizeEmail(email)); }
   pendingManagers(): TestUser[] { return [...this.users.values()].filter((user) => user.role === 'Manager' && user.status === 'Pending'); }
 
@@ -66,6 +66,23 @@ export class MockUserStore extends UserAccounts {
   async loadById(id: string): Promise<AccountSnapshot | null> { return this.snapshot(this.findById(id)); }
   async loadByPhone(phone: string): Promise<AccountSnapshot | null> { return this.snapshot(this.findByPhone(phone)); }
   async dummyPasswordHash(): Promise<string> { return this.user.password; }
+  async assertProfileEmailAvailable(id: string, email: string): Promise<void> {
+    const existing = this.findByEmail(email);
+    if (existing && existing.id !== id) throw new ConflictException('Email đã có tài khoản');
+  }
+  async updateProfile(id: string, expectedTokenVersion: number, input: { user_name?: string; verifiedEmail?: string; expectedEmail?: string | null; expectedPhone?: string }): Promise<AccountSnapshot | null> {
+    const user = this.findById(id);
+    if (!user || user.status !== 'Active' || this.versionOf(id) !== expectedTokenVersion) return null;
+    if (input.verifiedEmail !== undefined && (input.expectedEmail !== user.gmail || input.expectedPhone !== user.phone_number)) return null;
+    // No await between uniqueness check and write in the memory authority.
+    if (input.verifiedEmail !== undefined) {
+      const other = this.findByEmail(input.verifiedEmail);
+      if (other && other.id !== id) throw new ConflictException('Email đã có tài khoản');
+      user.gmail = normalizeEmail(input.verifiedEmail); user.gmail_verify = true;
+    }
+    if (input.user_name !== undefined) user.user_name = input.user_name;
+    return this.snapshot(user);
+  }
   async replacePassword(id: string, expectedTokenVersion: number, passwordHash: string): Promise<boolean> {
     const user = this.findById(id);
     // Adapter memory cũng thực hiện compare-and-write trong một khối đồng bộ.

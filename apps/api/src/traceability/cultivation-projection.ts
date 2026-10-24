@@ -21,7 +21,7 @@ export function projectCultivation(records: CultivationEvent[], tree: string, zo
     versions.forEach((event, index) => {
       const details: PublicVersion['details'] = { standard_snapshot: { code: event.details.standard_snapshot.code, name: event.details.standard_snapshot.name } };
       if (event.action_type === 'Watering') { details.duration_minutes = event.details.duration_minutes; details.water_volume_l = event.details.water_volume_l ?? null; }
-      else details.materials = (event.details.materials ?? []).map((material) => ({ name: material.name, quantity: material.quantity, unit: material.unit, standard_linked: material.standard_linked }));
+      else if (event.action_type !== 'Other') details.materials = (event.details.materials ?? []).map((material) => ({ name: material.name, quantity: material.quantity, unit: material.unit, standard_linked: material.standard_linked }));
       // Never spread event/details/materials: notes, actor IDs and reasons are private.
       items.push({ history_key: historyKey, version: index + 1, latest_version: versions.length, is_correction: event.is_correction,
         is_latest: event._id === latest._id, applies_to_tree: matches(event), latest_applies_to_tree: matches(latest),

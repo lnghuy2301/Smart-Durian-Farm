@@ -17,6 +17,7 @@
     "db:status": "npm run db:status --workspace @smart-durian/api",
     "db:migrate": "npm run db:migrate --workspace @smart-durian/api",
     "db:data:expand": "npm run db:data:expand --workspace @smart-durian/api",
+    "db:materials:expand": "npm run db:materials:expand --workspace @smart-durian/api",
     "db:data:preview": "npm run db:data:preview --workspace @smart-durian/api",
     "db:data:refresh": "npm run db:data:refresh --workspace @smart-durian/api",
     "db:seed": "npm run db:seed --workspace @smart-durian/api",

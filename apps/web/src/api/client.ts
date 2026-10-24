@@ -32,9 +32,14 @@ export class ApiClient {
   private active = true;
   constructor(
     private readonly baseUrl: string,
-    private readonly token?: string,
+    private token?: string,
     private readonly onUnauthorized?: () => void,
   ) {}
+
+  replaceToken(token: string) {
+    if (!this.active) throw new DOMException("Phiên đã đóng", "AbortError");
+    this.token = token;
+  }
 
   dispose() {
     // Hủy toàn bộ request khi đổi tài khoản/logout; response đến trễ không thuộc phiên mới.
@@ -57,6 +62,7 @@ export class ApiClient {
     if (options.signal?.aborted) abort();
     options.signal?.addEventListener("abort", abort, { once: true });
     this.requests.add(controller);
+    const tokenAtRequest = this.token;
     const timeout = setTimeout(
       () =>
         controller.abort(
@@ -76,7 +82,9 @@ export class ApiClient {
             ...(options.body !== undefined
               ? { "Content-Type": "application/json" }
               : {}),
-            ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+            ...(tokenAtRequest
+              ? { Authorization: `Bearer ${tokenAtRequest}` }
+              : {}),
           },
           body:
             options.body !== undefined
@@ -92,7 +100,12 @@ export class ApiClient {
       if (!this.active || controller.signal.aborted)
         throw new DOMException("Phiên hoặc request đã đóng", "AbortError");
       if (!response.ok) {
-        if (response.status === 401 && this.token && this.active)
+        if (
+          response.status === 401 &&
+          tokenAtRequest &&
+          tokenAtRequest === this.token &&
+          this.active
+        )
           this.onUnauthorized?.();
         const message =
           body && typeof body === "object" && "message" in body

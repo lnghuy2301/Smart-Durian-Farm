@@ -11,7 +11,12 @@ export const BACKUP_TABLES = [
   'public.devices', 'public.sensors', 'public.actuators', 'public.tree_harvests',
   'technical.entity_metadata', 'technical.workflow_requests', 'technical.audit_events', 'technical.notifications',
 ] as const;
-const migrations = () => MIGRATIONS.map((item) => ({ id: item.id, store: item.store, checksum: migrationChecksum(item.source) }));
+const migrations = (count = MIGRATIONS.length) => MIGRATIONS.slice(0, count).map((item) => ({ id: item.id, store: item.store, checksum: migrationChecksum(item.source) }));
+function knownMigrationPrefix(value: unknown): value is ReturnType<typeof migrations> {
+  // Backup v1 first shipped at migration014. Recognize only complete known
+  // prefixes with unchanged checksums, never unknown/gapped/newer schemas.
+  return Array.isArray(value) && value.length >= 14 && value.length <= MIGRATIONS.length && JSON.stringify(value) === JSON.stringify(migrations(value.length));
+}
 const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 function assert(value: unknown, code: string): asserts value { if (!value) throw new BackupError(code); }
 export class BackupError extends Error {}
@@ -32,7 +37,7 @@ export function verifyBackup(input: unknown): DatabaseBackup {
   assert(Object.keys(archive).sort().join(',') === 'created_at,data_sha256,format,migrations,mongo,postgres,sha256', 'INVALID_BACKUP_FIELDS');
   assert(archive.format === 'smart-durian-backup-v1' && typeof archive.created_at === 'string'
     && Number.isFinite(Date.parse(archive.created_at)), 'INVALID_BACKUP_VERSION');
-  assert(JSON.stringify(archive.migrations) === JSON.stringify(migrations()), 'BACKUP_SOURCE_REVISION_MISMATCH');
+  assert(knownMigrationPrefix(archive.migrations), 'BACKUP_SOURCE_REVISION_MISMATCH');
   assert(Array.isArray(archive.postgres) && JSON.stringify(archive.postgres.map((table) => table.name)) === JSON.stringify(BACKUP_TABLES), 'INVALID_BACKUP_TABLES');
   assert(Array.isArray(archive.mongo) && JSON.stringify(archive.mongo.map((collection) => collection.name)) === JSON.stringify(MONGO_SCHEMA_V1.map((collection) => collection.name)), 'INVALID_BACKUP_COLLECTIONS');
   for (const table of archive.postgres) {
@@ -53,6 +58,9 @@ export function verifyBackup(input: unknown): DatabaseBackup {
       assert(document && typeof document === 'object' && !Array.isArray(document) && Object.hasOwn(document, '_id'), 'INVALID_BACKUP_DOCUMENT');
     }
   }
+  const materialColumns = archive.postgres.find((table) => table.name === 'public.agricultural_materials')!.columns;
+  const hasStructuredDose = archive.migrations.some((migration) => migration.id === '016_material_dosage');
+  assert(['default_dosage_value', 'dosage_basis'].every((column) => materialColumns.includes(column) === hasStructuredDose), 'BACKUP_SCHEMA_REVISION_MISMATCH');
   const { sha256, ...payload } = archive;
   assert(sha256 === hash(payload), 'BACKUP_CHECKSUM_MISMATCH');
   assert(archive.data_sha256 === hash({ migrations: archive.migrations, postgres: archive.postgres, mongo: archive.mongo }), 'BACKUP_DATA_CHECKSUM_MISMATCH');
@@ -72,7 +80,7 @@ export async function createDatabaseBackup(pool: Pool, mongo: MongoClient, db: D
     }
     await client.query(`LOCK TABLE ${[...BACKUP_TABLES, 'technical.schema_migrations'].join(',')} IN SHARE MODE NOWAIT`);
     const ledger = await client.query('SELECT id,store,checksum FROM technical.schema_migrations ORDER BY id');
-    assert(JSON.stringify(ledger.rows) === JSON.stringify(migrations()), 'BACKUP_SOURCE_REVISION_MISMATCH');
+    assert(knownMigrationPrefix(ledger.rows), 'BACKUP_SOURCE_REVISION_MISMATCH');
     const tables = await client.query("SELECT schemaname||'.'||tablename AS name FROM pg_tables WHERE schemaname IN ('public','technical') ORDER BY name");
     assert(JSON.stringify(tables.rows.map((row) => row.name)) === JSON.stringify([...BACKUP_TABLES, 'technical.schema_migrations'].sort()), 'BACKUP_UNMANAGED_TABLES');
     const collections = (await db.listCollections({}, { nameOnly: true }).toArray()).map((item) => item.name).sort();
@@ -98,7 +106,7 @@ export async function createDatabaseBackup(pool: Pool, mongo: MongoClient, db: D
     // PG writes remain blocked until the Mongo snapshot has completed: both
     // captured stores coexist at a point during this bounded maintenance window.
     await client.query('COMMIT');
-    return verifyBackup(sealBackup({ format: 'smart-durian-backup-v1', created_at: new Date().toISOString(), migrations: migrations(), postgres, mongo: documents }));
+    return verifyBackup(sealBackup({ format: 'smart-durian-backup-v1', created_at: new Date().toISOString(), migrations: migrations(ledger.rows.length), postgres, mongo: documents }));
   } catch (error) { await client.query('ROLLBACK').catch(() => undefined); throw error; }
   finally { await session.endSession(); client.release(); }
 }
@@ -109,7 +117,9 @@ export async function restoreIntoEmptyDatabase(pool: Pool, mongo: MongoClient, d
   assert(/^sdf_restore_[0-9a-f]{32}$/.test(target) && db.databaseName === target, 'RESTORE_REQUIRES_NEW_MATCHING_DATABASES');
   const tables = await pool.query("SELECT 1 FROM pg_tables WHERE schemaname IN ('public','technical')");
   assert(tables.rowCount === 0 && (await db.listCollections({}, { nameOnly: true }).toArray()).length === 0, 'RESTORE_TARGET_NOT_EMPTY');
-  await runMigrations(pool, db);
+  // Restore the archived schema first, preserving column order and hash. An
+  // explicit later db:migrate upgrades it for the latest runtime.
+  await runMigrations(pool, db, MIGRATIONS.slice(0, archive.migrations.length));
   const client = await pool.connect();
   try {
     await client.query('BEGIN');

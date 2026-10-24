@@ -4,6 +4,8 @@
 
 ## Đọc trước
 
+- [Backend theo PDF24/10](docs/BACKEND_PDF_REQUIREMENTS.md): phiên theo hoạt động, phone0/+84, hồ sơ/OTP, liều số và công việc Khác; migrations015–016 đã áp dụng local,17 vật tư và Postman riêng.
+
 - [Mục lục tài liệu](docs/README.md): chọn hướng dẫn theo nghiệp vụ, database, hardware hoặc giao diện.
 - [Tiến độ và phần chưa nghiệm thu](docs/BACKEND_PROGRESS_CURRENT.md).
 - [Bàn giao session](docs/MODULE_HANDOFF.md), [quy tắc nghiệp vụ](docs/PROJECT_BUILD_SPEC.md), [kế hoạch tiếp theo](docs/IMPLEMENTATION_PLAN.md).
