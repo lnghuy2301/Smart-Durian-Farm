@@ -15,6 +15,8 @@ const explanations: Record<number, string> = {
   404: "Không tìm thấy dữ liệu trong phạm vi truy cập.",
   409: "Dữ liệu hoặc trạng thái đã thay đổi. Hãy tải lại và kiểm tra trước khi thao tác.",
   429: "Đã đạt giới hạn yêu cầu. Vui lòng chờ trước khi thử lại.",
+  502: "Kết nối tới API bị ngắt. Máy chủ có thể đang khởi động lại; vui lòng chờ rồi thử lại thao tác.",
+  504: "API chưa phản hồi kịp. Vui lòng kiểm tra máy chủ trước khi thử lại thao tác.",
   503: "Dịch vụ tạm thời chưa sẵn sàng. Vui lòng thử lại sau.",
 };
 

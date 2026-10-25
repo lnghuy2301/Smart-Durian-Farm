@@ -3,6 +3,7 @@
   "private": true,
   "workspaces": ["apps/api", "apps/web"],
   "scripts": {
+    "start:api": "npm run start --workspace @smart-durian/api",
     "dev:api": "npm run start:dev --workspace @smart-durian/api",
     "dev:web": "npm run dev --workspace @smart-durian/web",
     "build:web": "npm run build --workspace @smart-durian/web",

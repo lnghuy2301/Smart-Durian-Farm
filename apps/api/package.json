@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node dist/main.js",
-    "start:dev": "npm run build && concurrently -k \"tsc -p tsconfig.build.json --watch\" \"node --watch dist/main.js\"",
+    "start:dev": "npm run build && concurrently -k \"tsc -p tsconfig.build.json --watch\" \"node --watch --watch-preserve-output dist/main.js\"",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src test integration",

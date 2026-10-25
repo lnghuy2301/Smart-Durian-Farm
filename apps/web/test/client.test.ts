@@ -2,6 +2,25 @@ import { afterEach, expect, test, vi } from "vitest";
 import { ApiClient, ApiError, queryString } from "../src/api/client";
 
 afterEach(() => vi.unstubAllGlobals());
+test("an interrupted email request explains the API connection failure without resending or closing Admin", async () => {
+  const fetcher = vi.fn().mockResolvedValue(new Response("", { status: 502 }));
+  vi.stubGlobal("fetch", fetcher);
+  const unauthorized = vi.fn();
+  await expect(
+    new ApiClient("/api", undefined, unauthorized).request(
+      "auth/registration/email/request",
+      {
+        method: "POST",
+        body: { phone_number: "0900000098", gmail: "manager@example.org" },
+      },
+    ),
+  ).rejects.toMatchObject({
+    status: 502,
+    message: expect.stringContaining("Kết nối tới API bị ngắt"),
+  });
+  expect(fetcher).toHaveBeenCalledOnce();
+  expect(unauthorized).not.toHaveBeenCalled();
+});
 test("late 401 from the previous JWT cannot close the same account after activity renewed its token", async () => {
   let release!: (response: Response) => void;
   const fetcher = vi

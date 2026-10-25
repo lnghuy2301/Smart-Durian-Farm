@@ -59,3 +59,6 @@ Các guide `*_IMPLEMENTATION.md` ghi cả phạm vi và kết quả ở thời �
 - [SpeedSMS](SPEEDSMS_INTEGRATION.md) còn là provider tương thích được source/tests sử dụng. Demo hiện tại ưu tiên Twilio; không xóa adapter chỉ vì không dùng trong buổi demo.
 
 Không cần gửi `.env`, token, OTP, mật khẩu hoặc dump dữ liệu thật cho AI vẽ sơ đồ. Gửi mục lục này, checkpoint và đúng nhóm workflow/source liên quan.
+# Đăng ký Manager gặp lỗi kết nối
+
+[Chẩn đoán lỗi email/ECONNRESET, chạy API ổn định và kiểm tra danh sách chờ duyệt](MANAGER_REGISTRATION_TROUBLESHOOTING.md).
