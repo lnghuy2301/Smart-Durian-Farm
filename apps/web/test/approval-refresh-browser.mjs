@@ -198,6 +198,26 @@ try {
   console.log(
     "PASS approval commits once after refresh; Manager Active and attached to correct cooperative",
   );
+  for (const path of ["/", "/cooperatives"]) {
+    await page.goto(`${origin}${path}`);
+    const row = page.getByRole("row").filter({
+      has: page.getByRole("link", {
+        name: cooperative.cooperative_name,
+        exact: true,
+      }),
+    });
+    await row.getByText(manager.user_name, { exact: true }).waitFor();
+    assert(
+      (await row.getByRole("cell").nth(1).innerText()).includes(
+        cooperative.director,
+      ),
+    );
+    assert.equal(coops.get(cooperative.id).director, cooperative.director);
+    console.log(
+      `PASS ${path} shows assigned Manager name separately from cooperative representative`,
+    );
+  }
+  assert.deepEqual(errors, []);
 } finally {
   await browser?.close();
   await vite?.close();

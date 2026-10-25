@@ -1,5 +1,7 @@
 # Thông tin nghiệp vụ dễ đọc trên giao diện
 
+Cập nhật25/10 — `fix/show-assigned-cooperative-manager`: cột Người quản lý tại tổng quan Admin và danh sách HTX hiển thị tên theo manager_id thông qua RecordReference/nguồn `cooperatives` đã phân quyền, thay nhãn chung Đã có Manager. Người đại diện (`director`) độc lập với tài khoản Manager; duyệt/gắn Manager không tự ghi đè director. Dữ liệu liên kết đã lưu đúng không cần seed/duyệt lại. Không thêm directory công khai hoặc đổi API/schema; fallback khi không phân giải được tên theo quy ước dưới đây. Browser `approval-refresh-browser.mjs`5/5 (thêm kiểm tra hai bảng sau duyệt), web unit21/21, lint/typecheck/build đạt. Không ghi dữ liệu vận hành hoặc gửi OTP thật trong kiểm thử.
+
 Nhánh `feat/web-readable-business-information`, kế thừa `4091de9`. Đợt này thay cách trình bày dữ liệu; không sửa dữ liệu vận hành, schema, quyền duyệt hoặc MQTT.
 
 ## Quy ước hiển thị

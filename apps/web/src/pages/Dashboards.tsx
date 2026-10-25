@@ -1,3 +1,4 @@
+import { RecordReference } from "../components/ReadableValue";
 import { calendarDate } from "../components/presentation";
 import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
@@ -361,7 +362,7 @@ function AdminDashboard() {
                         <th>Tên hợp tác xã</th>
                         <th>Người đại diện</th>
                         <th>Địa chỉ</th>
-                        <th>Manager</th>
+                        <th>Người quản lý</th>
                         <th>Chi tiết</th>
                       </tr>
                     </thead>
@@ -384,9 +385,16 @@ function AdminDashboard() {
                               status={coop.manager_id ? "Active" : "Pending"}
                             />
                             <small>
-                              {coop.manager_id
-                                ? "Đã có Manager"
-                                : "Chưa có Manager"}
+                              {coop.manager_id ? (
+                                <RecordReference
+                                  kind="cooperatives"
+                                  id={coop.id}
+                                  field="manager_id"
+                                  value={coop.manager_id}
+                                />
+                              ) : (
+                                "Chưa có Manager"
+                              )}
                             </small>
                           </td>
                           <td>

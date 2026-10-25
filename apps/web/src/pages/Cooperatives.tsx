@@ -185,7 +185,7 @@ export function CooperativeList() {
                     <th>Tên hợp tác xã</th>
                     <th>Người đại diện</th>
                     <th>Địa chỉ</th>
-                    <th>Manager</th>
+                    <th>Người quản lý</th>
                     <th>Thao tác</th>
                   </tr>
                 </thead>
@@ -211,9 +211,16 @@ export function CooperativeList() {
                           status={coop.manager_id ? "Active" : "Pending"}
                         />
                         <small>
-                          {coop.manager_id
-                            ? "Đã có Manager"
-                            : "Chưa có Manager"}
+                          {coop.manager_id ? (
+                            <RecordReference
+                              kind="cooperatives"
+                              id={coop.id}
+                              field="manager_id"
+                              value={coop.manager_id}
+                            />
+                          ) : (
+                            "Chưa có Manager"
+                          )}
                         </small>
                       </td>
                       <td>
