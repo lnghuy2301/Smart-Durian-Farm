@@ -25,7 +25,9 @@ export function ProtectedLayout() {
   if (auth.loading)
     return <main className="data-state">Đang kiểm tra phiên…</main>;
   if (!auth.session) return <Navigate to="/login" replace />;
-  return <Shell key={auth.session.token} />;
+  // JWT thay đổi khi người dùng còn hoạt động; không remount trang/form vì
+  // gia hạn credentials. Đổi tài khoản vẫn dựng lại cây UI để bỏ state cũ.
+  return <Shell key={auth.session.user.id} />;
 }
 function Shell() {
   const { user } = useSession();
