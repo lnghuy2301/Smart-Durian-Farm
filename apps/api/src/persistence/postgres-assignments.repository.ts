@@ -31,6 +31,7 @@ import {
 } from './assignment-mappers';
 import { safeInteger } from './mappers';
 import { inPostgresTransaction } from './transactions';
+import { AssignmentCandidate, candidateSearch, CANDIDATE_LIMIT } from '../assignments/assignment-candidates';
 
 const SELECT_ASSIGNMENT = `SELECT a.id,a.user_id,a.zone_id,z.farm_id,a.start_date,a.end_date,m.version::text AS entity_version,m.data
   FROM public.users_zones a JOIN public.zones z ON z.id=a.zone_id
@@ -76,6 +77,34 @@ export class PostgresAssignmentsRepository extends AssignmentRecords {
         'id',
         (row: AssignmentRow) => assignmentResponse(mapAssignment(row), now),
       );
+    });
+  }
+  async candidates(actor: string, zoneId: string, query = '') {
+    zoneId = farmUuid(zoneId);
+    return this.readAs(actor, async (client, user) => {
+      const zone = (await this.zones.loadOnClient(client, zoneId)).zone;
+      const farm = (await this.farms.loadOnClient(client, zone.farm_id)).farm;
+      if (user.role !== 'Admin' && !(user.role === 'Farmer' && farm.owner_id === user.id)) {
+        throw new ForbiddenException('Chỉ chủ Farmer hoặc Admin được tìm người nhận phân công');
+      }
+      const owner = await this.users.loadOnClient(client, farm.owner_id);
+      if (owner?.user.role !== 'Farmer' || owner.user.status !== 'Active') {
+        throw new ForbiddenException('Chủ Farm phải là Farmer Active');
+      }
+      const search = candidateSearch(query);
+      // Scope is rechecked in the same SELECT that reads contacts. A concurrent
+      // ownership change cannot turn a preflight check into a user directory.
+      const previous = `EXISTS(SELECT 1 FROM public.users_zones a JOIN public.zones z ON z.id=a.zone_id WHERE a.user_id=u.id AND z.farm_id=$1)`;
+      const result = await client.query<AssignmentCandidate>(`SELECT u.id,u.user_name,u.phone_number,${previous} AS previously_assigned
+        FROM public.users u WHERE u.role='Farmer' AND u.status='Active'
+        AND EXISTS(SELECT 1 FROM public.farms f JOIN public.users owner ON owner.id=f.owner_id WHERE f.id=$1
+          AND owner.role='Farmer' AND owner.status='Active' AND ($3::text='Admin' OR f.owner_id=$4::uuid))
+        AND (CASE WHEN $2::text='' THEN ${previous} WHEN $5::text IS NOT NULL THEN
+          (strpos(CASE WHEN ltrim(u.phone_number,'+') ~ '^0[0-9]{9}$' THEN '84'||substr(ltrim(u.phone_number,'+'),2) ELSE ltrim(u.phone_number,'+') END,$5)>0
+            OR strpos(ltrim(u.phone_number,'+'),regexp_replace($2,'[^0-9]','','g'))>0)
+          ELSE strpos(translate(regexp_replace(normalize(lower(u.user_name),NFD),U&'[\\0300-\\036f]','','g'),'đ','d'),$2)>0 END)
+        ORDER BY normalize(lower(u.user_name),NFC) COLLATE "C",u.id LIMIT $6`, [zone.farm_id, search.name, user.role, user.id, search.phone, CANDIDATE_LIMIT + 1]);
+      return { items: result.rows.slice(0, CANDIDATE_LIMIT), has_more: result.rows.length > CANDIDATE_LIMIT };
     });
   }
   async get(actor: string, id: string) {

@@ -265,8 +265,19 @@ export async function checkWorkflows({
         await button(owner, "Mời phụ trách khu vực").click();
         await owner
           .getByRole("dialog")
-          .getByLabel("Mã tài khoản Farmer được mời")
-          .fill(worker.user.id);
+          .getByLabel("Tìm nông dân bằng tên hoặc số điện thoại")
+          .fill(worker.user.phone_number);
+        await owner
+          .getByRole("dialog")
+          .getByRole("button", { name: "Tìm nông dân", exact: true })
+          .click();
+        await owner
+          .getByRole("dialog")
+          .getByRole("button", {
+            name: `Chọn ${worker.user.user_name} · ${worker.user.phone_number}`,
+            exact: true,
+          })
+          .click();
         const invite = await save(
           owner,
           `zones/${zone.id}/assignment-requests`,

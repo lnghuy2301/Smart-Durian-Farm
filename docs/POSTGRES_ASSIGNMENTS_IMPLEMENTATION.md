@@ -1,5 +1,7 @@
 # PostgreSQL USERS_ZONES — lời mời, nhận việc và lịch sử
 
+Bổ sung26/10: [candidate search](ASSIGNMENT_FARMER_SEARCH.md) trong chính PostgresAssignmentsRepository, cùng pool/authority. Trả projection tên/phone tối đa20 sau kiểm chủ Farm/Admin và recheck scope trong SELECT, history Accepted theo Farm. Chuẩn hóa tên không dấu bằng normalize/regexp_replace/translate sẵn có, không migration hoặc extension. Không đổi transaction tạo/duyệt phân công.
+
 Bàn giao2026-10-16 trên **feat/postgres-assignments-persistence**, kế thừa Zone **cddede5**, Sensor46a03b7 và frontend024214b. [Bảng tiến độ hiện hành](BACKEND_PROGRESS_CURRENT.md). Nghiệp vụ từ [ASSIGNMENTS_IMPLEMENTATION.md](ASSIGNMENTS_IMPLEMENTATION.md) giữ nguyên; đợt này chuyển lưu trữ, không dựng lại module phân công.
 
 ## Source và giới hạn runtime

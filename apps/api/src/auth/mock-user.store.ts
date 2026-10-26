@@ -41,6 +41,10 @@ export class MockUserStore extends UserAccounts {
   findByPhone(phone: string): TestUser | undefined { return [...this.users.values()].find((user) => phoneIdentity(user.phone_number) === phoneIdentity(phone)); }
   findByEmail(email: string): TestUser | undefined { return [...this.users.values()].find((user) => user.gmail === normalizeEmail(email)); }
   pendingManagers(): TestUser[] { return [...this.users.values()].filter((user) => user.role === 'Manager' && user.status === 'Pending'); }
+  activeFarmerNames() {
+    return [...this.users.values()].filter((user) => user.role === 'Farmer' && user.status === 'Active')
+      .map(({ id, user_name, phone_number }) => ({ id, user_name, phone_number }));
+  }
 
   assertAvailable(phone: string, email?: string | null): void {
     if ([...this.users.values()].some((user) => phoneIdentity(user.phone_number) === phoneIdentity(phone))) {

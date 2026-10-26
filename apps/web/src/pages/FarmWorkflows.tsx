@@ -15,11 +15,11 @@ import {
   WorkflowLinks,
   useGet,
   useOwnedFarms,
-  uuidPattern,
 } from "../workflows/shared";
 import { queryString } from "../api/client";
 import type { AssignmentHistory, Farm, Page } from "../types/api";
 import { RecordReference } from "../components/ReadableValue";
+import { AssignmentInviteDialog } from "../workflows/AssignmentInviteDialog";
 export function MembershipPage() {
   const { id } = useParams();
   const { user } = useSession();
@@ -224,40 +224,15 @@ export function AssignmentsPage() {
         )}
       </section>
       {create && zoneId && (
-        <EditorDialog
-          title="Mời phụ trách khu vực"
-          fields={[
-            {
-              key: "user_id",
-              label: "Mã tài khoản Farmer được mời",
-              pattern: uuidPattern,
-            },
-            {
-              key: "start_date",
-              label: "Bắt đầu",
-              type: "datetime-local",
-              required: false,
-            },
-            {
-              key: "end_date",
-              label: "Kết thúc dự kiến",
-              type: "datetime-local",
-              required: false,
-              nullable: true,
-            },
-          ]}
-          path={`zones/${zoneId}/assignment-requests`}
+        <AssignmentInviteDialog
+          key={zoneId}
+          zoneId={zoneId}
           onClose={() => setCreate(false)}
           onSaved={() => {
             setCreate(false);
             resource.reload();
           }}
-        >
-          <p className="muted">
-            Để trống ngày bắt đầu để áp dụng ngay khi hoàn tất phê duyệt. Một
-            khu vực không có các phân công chồng lấn.
-          </p>
-        </EditorDialog>
+        />
       )}
       {end && (
         <ConfirmDialog

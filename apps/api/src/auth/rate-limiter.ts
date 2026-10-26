@@ -2,7 +2,7 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 
 type Action = 'login' | 'forgot' | 'register' | 'email-send' | 'email-verify'
   | 'cooperative-email-send' | 'cooperative-email-verify' | 'cooperative-sms-send' | 'cooperative-sms-verify'
-  | 'refresh' | 'password-current' | 'profile-email' | 'profile-email-verify';
+  | 'refresh' | 'password-current' | 'profile-email' | 'profile-email-verify' | 'assignment-candidates';
 
 export class WindowRateLimiter {
   private readonly buckets = new Map<string, { startedAt: number; count: number }>();

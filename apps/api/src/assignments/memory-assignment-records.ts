@@ -12,6 +12,7 @@ export class MemoryAssignmentRecords extends AssignmentRecords {
   async createRequest(actor: string, zone: string, input: CreateAssignmentRequestDto) {
     return this.service.createRequest(actor, zone, input);
   }
+  async candidates(actor: string, zone: string, query = '') { return this.service.candidates(actor, zone, query); }
   async list(actor: string, query: AssignmentListDto, mineOnly = false) {
     return this.service.list(actor, query, mineOnly);
   }

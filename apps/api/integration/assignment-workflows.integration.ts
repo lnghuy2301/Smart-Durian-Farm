@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
-import { HttpException, INestApplication, ValidationPipe } from '@nestjs/common';
+import { ForbiddenException, HttpException, INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { Pool } from 'pg';
 import { MongoClient } from 'mongodb';
@@ -202,6 +202,32 @@ test('PostgreSQL assignments retain invitations, signatures, temporal access and
           [type, id],
         )
       ).rows[0];
+
+    await t.test('candidate search uses scoped PostgreSQL contacts, Vietnamese folding, phone identity and accepted Farm history', async () => {
+      const f = await fixture();
+      await sql.query('UPDATE public.users SET user_name=$1 WHERE id=$2', ['Nguyễn Văn An QxRare', f.worker.id]);
+      assert.deepEqual(await assignments.candidates(f.owner.id, f.zone.id), { items: [], has_more: false });
+      for (const q of ['NGUYEN VAN AN QXRARE', 'Nguyễn Văn An QxRare', f.worker.phone, `+84${f.worker.phone.slice(1)}`]) {
+        const result = await assignments.candidates(f.owner.id, f.zone.id, q);
+        assert.equal(result.items.length, 1);
+        assert.equal(result.items[0].id, f.worker.id);
+        assert.deepEqual(Object.keys(result.items[0]).sort(), ['id', 'phone_number', 'previously_assigned', 'user_name']);
+      }
+      assert((await assignments.candidates(f.owner.id, f.zone.id, f.worker.phone.slice(-4))).items.some((item) => item.id === f.worker.id));
+      await assert.rejects(assignments.candidates(f.worker.id, f.zone.id, 'nguyen van an qxrare'), ForbiddenException);
+      assert.equal((await assignments.candidates(admin, f.zone.id, 'nguyen van an qxrare')).items[0].id, f.worker.id);
+      assert.deepEqual((await assignments.candidates(f.owner.id, f.zone.id, "%' OR 1=1")).items, []);
+      const accepted = await accept(f);
+      now = new Date(now.getTime() + 1000);
+      await assignments.end(f.owner.id, accepted.assignment_id!);
+      assert.equal((await assignments.candidates(f.owner.id, f.zone.id)).items[0].previously_assigned, true);
+      const other = await fixture();
+      assert.equal((await assignments.candidates(other.owner.id, other.zone.id)).items.length, 0);
+      await sql.query("UPDATE public.users SET status='Locked' WHERE id=$1", [f.worker.id]);
+      assert.equal((await assignments.candidates(f.owner.id, f.zone.id, 'nguyen van an qxrare')).items.length, 0);
+      await sql.query("UPDATE public.users SET status='Locked' WHERE id=$1", [f.owner.id]);
+      await assert.rejects(assignments.candidates(admin, f.zone.id, 'nguyen'), ForbiddenException);
+    });
 
     await t.test(
       'owner invitation grants no access until assignee accepts; snapshot and five business fields persist',

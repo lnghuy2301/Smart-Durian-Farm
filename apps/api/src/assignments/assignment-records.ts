@@ -2,6 +2,7 @@ import { FarmPage } from '../farms/farm-records';
 import { FarmRequestListDto } from '../farms/farms.dto';
 import { AssignmentListDto, CreateAssignmentRequestDto } from './assignments.dto';
 import { AssignmentHistory, AssignmentRequest } from './assignments.types';
+import { AssignmentCandidates } from './assignment-candidates';
 
 export interface AssignmentHistoryResponse extends AssignmentHistory {
   active: boolean;
@@ -15,6 +16,7 @@ export interface AssignmentEventContext {
   created_at: string;
 }
 export abstract class AssignmentRecords {
+  abstract candidates(actor: string, zone: string, query?: string): Promise<AssignmentCandidates>;
   abstract createRequest(
     actor: string,
     zone: string,

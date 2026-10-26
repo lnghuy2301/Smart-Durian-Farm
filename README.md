@@ -4,6 +4,8 @@
 
 ## Đọc trước
 
+- [Mời/phân công Farmer bằng tên hoặc điện thoại](docs/ASSIGNMENT_FARMER_SEARCH.md): tìm người, hiện tên+phone, chọn lịch sử cùng vườn; giữ bước chấp nhận phân công.
+
 - [Rà soát26/10 và công việc còn lại](docs/PROJECT_REVIEW_20261026.md): kiểm chứng hiện hành, quản trị danh mục mới và kế hoạch nghiệm thu/deploy.
 
 - [Backend theo PDF24/10](docs/BACKEND_PDF_REQUIREMENTS.md): phiên theo hoạt động, phone0/+84, hồ sơ/OTP, liều số và công việc Khác; migrations015–016 đã áp dụng local,17 vật tư và Postman riêng.

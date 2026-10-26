@@ -1,6 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsISO8601, IsUUID, Matches, ValidateIf } from 'class-validator';
+import { IsISO8601, IsString, IsUUID, Matches, MaxLength, ValidateIf } from 'class-validator';
 import { FarmPageDto } from '../farms/farms.dto';
+
+export class AssignmentCandidateQueryDto {
+  @ApiPropertyOptional({ description: 'Tên hoặc điện thoại; bỏ trống chỉ trả người từng được phân công trong Farm', maxLength: 100 })
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsString() @MaxLength(100)
+  q?: string;
+}
 
 export class CreateAssignmentRequestDto {
   @ApiProperty({ description: 'UUID Farmer Active nhận công việc' })
