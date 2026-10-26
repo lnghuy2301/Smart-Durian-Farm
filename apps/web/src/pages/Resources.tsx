@@ -1,3 +1,4 @@
+import { CatalogTools, StandardMaterialPanel } from "../workflows/CatalogTools";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import {
   ReadableValue,
@@ -132,17 +133,8 @@ export const standardDefinition: Definition<Standard> = {
     { label: "Đơn vị chứng nhận", value: (x) => x.certifying_body },
     { label: "Trạng thái", value: (x) => <Badge status={x.status} /> },
   ],
-  extra: (x) => (
-    <ResourceList
-      definition={{
-        ...materialDefinition,
-        path: `standards/${x.id}/materials`,
-        title: "Vật tư liên kết",
-        subtitle: "Vật tư thuộc tiêu chuẩn này.",
-      }}
-      nested
-      detailPath="materials"
-    />
+  extra: (standard) => (
+    <StandardMaterialPanel key={standard.id} standardId={standard.id} />
   ),
 };
 const coordinates = <T extends { longitude: number; latitude: number }>(x: T) =>
@@ -452,6 +444,13 @@ export function ResourceList<T extends { id: string }>({
       {!nested && def.path === "tree-harvests" && (
         <HarvestTools onSaved={resource.reload} />
       )}
+      {!nested && ["materials", "standards"].includes(def.path) && (
+        <CatalogTools
+          key={def.path}
+          path={def.path}
+          onSaved={resource.reload}
+        />
+      )}
       <section className="panel">
         <form
           className="toolbar"
@@ -651,6 +650,14 @@ function ResourceDetail<T extends { id: string }>({
             <>
               <section className="panel">
                 <h2 className="break-word">{def.name(data)}</h2>
+                {["materials", "standards"].includes(def.path) && (
+                  <CatalogTools
+                    key={`${def.path}/${id}`}
+                    path={def.path}
+                    item={data}
+                    onSaved={resource.reload}
+                  />
+                )}
                 {recordConfigs[def.path] && (
                   <RecordTools
                     key={`${def.path}/${id}`}

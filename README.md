@@ -4,6 +4,8 @@
 
 ## Đọc trước
 
+- [Rà soát26/10 và công việc còn lại](docs/PROJECT_REVIEW_20261026.md): kiểm chứng hiện hành, quản trị danh mục mới và kế hoạch nghiệm thu/deploy.
+
 - [Backend theo PDF24/10](docs/BACKEND_PDF_REQUIREMENTS.md): phiên theo hoạt động, phone0/+84, hồ sơ/OTP, liều số và công việc Khác; migrations015–016 đã áp dụng local,17 vật tư và Postman riêng.
 
 - [Mục lục tài liệu](docs/README.md): chọn hướng dẫn theo nghiệp vụ, database, hardware hoặc giao diện.

@@ -1,5 +1,7 @@
 # Hướng dẫn kiểm tra từng vai trò và module
 
+**Bổ sung26/10 — quản trị danh mục:** Admin mở Vật tư→Thêm vật tư, nhập tên/loại/liều số/đơn vị/cơ sở/cách ly; vào chi tiết→Sửa vật tư để đổi liều/status. Mở Tiêu chuẩn→Thêm/Sửa, kiểm mô tả để trống/xóa được; chi tiết tiêu chuẩn→Gắn vật tư→Bỏ liên kết có xác nhận, vật tư vẫn còn trong danh mục. Farmer/Manager đọc được nhưng không có nút ghi; gọi API ghi trực tiếp vẫn403. Liều văn bản cũ không bị tự suy đoán khi chỉ đổi tên. Xem [báo cáo/source/tái lập](PROJECT_REVIEW_20261026.md). Không sửa dữ liệu vận hành chỉ để thử; dùng tên kiểm thử dễ nhận biết và trạng thái Inactive sau nghiệm thu nếu người dùng chủ động tạo.
+
 **Bổ sung24/10:** đọc [backend theo PDF](BACKEND_PDF_REQUIREMENTS.md). Kiểm phiên còn hoạt động sau15 phút kể từ login, để yên15 phút thì logout;0/+84 cùng tài khoản; `/account` sửa tên/email/đổi mật khẩu cũ+SMS OTP; catalog17 vật tư có số/đơn vị/cơ sở; nhật ký Other có tên/ghi chú riêng tư, QR không công khai free text. Bản private cũ giữ nguyên tài khoản và kết quả bạn đã ghi, không bị tự động ghi đè; dùng phần bổ sung này khi nghiệm thu chức năng mới.
 
 Cập nhật 23/10/2026. Dùng với database hiện có, MQTT FINAL và giao diện đã Việt hóa. File này không chứa mật khẩu. **Bản local có thông tin đăng nhập và cùng checklist: `docs/LOCAL_MODULE_ACCEPTANCE.private.md`**, mở trực tiếp trong VS Code; file đó được Git bỏ qua.

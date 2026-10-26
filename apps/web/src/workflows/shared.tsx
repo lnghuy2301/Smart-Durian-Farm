@@ -17,6 +17,8 @@ export interface InputField {
   label: string;
   type?: "text" | "number" | "date" | "datetime-local" | "textarea";
   required?: boolean;
+  // Some APIs accept an empty string to clear optional text on PATCH.
+  includeEmpty?: boolean;
   min?: number;
   max?: number;
   step?: number;
@@ -215,6 +217,7 @@ export function serializeFields(
     if (
       (raw === "" || raw === undefined || raw === null) &&
       field.required === false &&
+      !field.includeEmpty &&
       !field.nullable
     )
       continue;

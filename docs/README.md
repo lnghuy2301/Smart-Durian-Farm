@@ -4,6 +4,8 @@ Cập nhật 21/10/2026. Đọc checkpoint hiện hành trước các báo cáo 
 
 ## Điểm bắt đầu
 
+[Rà soát26/10/2026](PROJECT_REVIEW_20261026.md): trạng thái source/kiểm thử, quản trị danh mục, việc còn cần nghiệm thu hoặc quyết định.
+
 Mới24/10: [Backend theo PDF](BACKEND_PDF_REQUIREMENTS.md), [Postman nhập tay](postman/Backend-PDF-Changes.postman_collection.json). Schema local016, danh mục17 vật tư; không cần seed lại để đăng nhập.
 
 | Cần làm | Tài liệu |

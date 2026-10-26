@@ -1,6 +1,6 @@
 # Ghi chú kỹ thuật hiện hành
 
-Cập nhật21/10/2026. [Quy tắc nghiệp vụ](PROJECT_BUILD_SPEC.md), [runtime và tái lập](DATABASE_RUNTIME_IMPLEMENTATION.md), [tiến độ](BACKEND_PROGRESS_CURRENT.md).
+Cập nhật26/10/2026. [Rà soát hiện hành](PROJECT_REVIEW_20261026.md), [quy tắc nghiệp vụ](PROJECT_BUILD_SPEC.md), [runtime và tái lập](DATABASE_RUNTIME_IMPLEMENTATION.md), [tiến độ](BACKEND_PROGRESS_CURRENT.md).
 
 ## Authority và cấu hình
 
@@ -15,7 +15,7 @@ Cập nhật21/10/2026. [Quy tắc nghiệp vụ](PROJECT_BUILD_SPEC.md), [runti
 ## Persistence và lỗi
 
 - PG:13 bảng nghiệp vụ; technical entity_metadata/workflow_requests/audit_events/notifications và migration ledger. Mongo:telemetry/tasks/cultivation cùng technical state.
-- Migration CLI kiểm checksum/store/order;001–014 là baseline đã apply. Không sửa migration cũ. Startup kiểm ledger, writable replica set, collections/validators/indexes trước receiver/worker; thiếu schema thì fail, không tự seed/fallback.
+- Migration CLI kiểm checksum/store/order; hiện có001–016, trong đó015/016 mở Other và liều số/cơ sở đã apply local24/10. Không sửa migration cũ. Startup kiểm ledger, writable replica set, collections/validators/indexes trước receiver/worker; thiếu schema thì fail, không tự seed/fallback.
 - SQL tham số hóa; khóa parent/users/requests/batch theo thứ tự của adapter; version và snapshot chống duyệt nội dung lỗi thời. Business record+request+version+audit trong transaction cùng store.
 - Không có transaction chung PG/Mongo. Giữ context/snapshot, recheck quyền và cơ chế khóa theo adapter; không gọi hai DB rồi tuyên bố atomic toàn hệ thống.
 - Seed nhận cấu hình local, không ghi đè UUID/identity/password/status/verified/context đã tồn tại, không gửi OTP/MQTT. Xung đột profile cần xử lý rõ, không reset dữ liệu.
