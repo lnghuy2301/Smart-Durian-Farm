@@ -1,6 +1,6 @@
 # Kế hoạch triển khai tiếp theo
 
-Ưu tiên hiện hành26/10: [rà soát và checklist còn lại](PROJECT_REVIEW_20261026.md). CRUD danh mục/tiêu chuẩn và bridge đã nối web Admin; không viết lại persistence. Đăng ký/duyệt Manager chính đã được người dùng xác nhận, nên bước3 dưới đây là kiểm tra dữ liệu/tài khoản hiện có, không đăng ký hoặc seed lại. Tiếp theo: nghiệm thu bốn vai trò→hardware xuyên suốt→chốt Auth/môi trường triển khai→review Git. AI tiếp tục để sau.
+Ưu tiên hiện hành26/10: [nền tảng AI](AI_BACKEND_IMPLEMENTATION.md) đã triển khai theo yêu cầu mới: YOLO11s-cls, Zone tùy chọn, Farmer có lịch sử riêng, Admin quản lý PDF RAG. Tiếp theo nhận best.pt/versions Colab, chọn API chatbot và corpus để đánh giá thật; tiếp tục nghiệm thu bốn vai trò/hardware, môi trường triển khai và review Git. Không seed lại dữ liệu hiện có. Các checkpoint offline bên dưới giữ làm lịch sử.
 
 Checkpoint offline21/10: [dữ liệu IoT mẫu](OFFLINE_DEMO_TELEMETRY.md) đã nạp cho hai Device mô phỏng; không cần bật hardware/MQTT để xem lịch sử. Bước tiếp theo là người dùng smoke API/web với DB đã có mẫu, hoàn tất Manager thật/Join HTX, sau đó nghiệm thu hardware. AI chỉ bắt đầu sau khi chốt model/provider/corpus và phạm vi; chưa tự chọn dịch vụ trả phí hoặc giả kết quả AI.
 
@@ -17,7 +17,7 @@ Cập nhật21/10/2026. API nghiệp vụ,13 PG adapters,3 Mongo adapters, share
 |5|Backup/restore đã có; diễn thử với tài khoản thật|CLI và8 tests backup đạt; actual snapshot/restore-check demo khớp, không restore đè. Xem DATABASE_BACKUP_RESTORE/DEMO_READINESS_20261021|
 |6|Review release và triển khai đích|Tests, docs, config, Auth/deploy/TLS/broker; chỉ push/merge theo yêu cầu rõ ràng|
 
-AI chẩn đoán/chatbot vẫn hoãn. Android chưa có, là phạm vi riêng. Không tự chọn nhà cung cấp hoặc thêm nghiệp vụ mới để tăng phần trăm hoàn thành.
+AI có nền tảng backend theo guide mới, còn weights/provider/corpus và nghiệm thu thật. Android chưa có, là phạm vi riêng. Không tự chọn nhà cung cấp hoặc thêm nghiệp vụ mới để tăng phần trăm hoàn thành.
 
 ## Checklist hardware
 

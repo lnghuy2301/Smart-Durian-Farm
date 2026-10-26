@@ -1,3 +1,7 @@
+# Cập nhật AI26/10/2026
+
+Đã triển khai nền tảng hai module AI: API chẩn đoán YOLO11s-cls và lịch sử riêng; hội thoại riêng, Admin nhập/quản lý PDF và truy hồi BM25 theo trang. Mongo migration017 và backup ảnh/PDF đi cùng dữ liệu. [Hướng dẫn đầy đủ](AI_BACKEND_IMPLEMENTATION.md). Chưa có weights của người dùng hoặc provider chatbot; chưa nghiệm thu suy luận/đáp án thật. Các checkpoint trước bên dưới là lịch sử, không phản ánh phần AI mới.
+
 # Backend — trạng thái và việc tiếp theo
 
 Checkpoint26/10 — [rà soát toàn dự án và phần còn lại](PROJECT_REVIEW_20261026.md), nhánh `feat/catalog-admin-completion`. API/persistence đã có đủ các domain đã chốt, kiểm lại258/258 backend và302/302 persistence. Web Admin nay tạo/sửa vật tư/tiêu chuẩn, liều số+đơn vị+cơ sở, gắn/bỏ bridge; không còn chỉ tra cứu các danh mục này. Không đổi backend/schema/dữ liệu. Local đối chiếu chỉ đọc15 Users/4 HTX/8 Farm/16 Zone/414 cây/17 vật tư,1.440 telemetry/130 Cultivation/0 task; MQTT vẫn false. Người dùng đã xác nhận đăng ký/duyệt Manager thật, SMS Farmer chính hoạt động; không dùng checkpoint cũ “chưa có Manager” làm trạng thái hiện hành. Còn nghiệm thu toàn workflow/hardware, Auth/deploy production và hai AI đã hoãn; các cải tiến giao diện riêng vẫn chưa commit chung.

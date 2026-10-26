@@ -60,8 +60,8 @@ test('offline backup and new-database restore preserve both stores without alter
       for (const value of [taskAuth.phoneNumber, taskAuth.password, taskAuth.admin.phoneNumber, owner, device.id]) assert(!text.includes(value));
       assert.equal((await createDatabaseBackup(f.pool, f.mongo, f.mongo.db(f.name))).data_sha256, archive.data_sha256);
     });
-    await t.test('snapshot contains all17 PG data tables and4 Mongo collections with microsecond/BSON fidelity', async () => {
-      assert.equal(archive.postgres.length, 17); assert.equal(archive.mongo.length, 4);
+    await t.test('snapshot contains all17 PG data tables and7 Mongo collections with microsecond/BSON fidelity', async () => {
+      assert.equal(archive.postgres.length, 17); assert.equal(archive.mongo.length, 7);
       assert(archive.postgres.find((table) => table.name === 'technical.notifications')!.rows.some((row) => row.includes('.123456')));
       const events = archive.mongo.find((collection) => collection.name === 'CULTIVATION_EVENTS')!;
       assert(events.documents.some((row) => row.includes(locked!.hash as string)));

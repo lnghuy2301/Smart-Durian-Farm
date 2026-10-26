@@ -1,0 +1,18 @@
+# Local model/data artifacts; source and placeholders remain reviewable.
+/models/disease/*
+!/models/disease/.gitkeep
+/data/rag/pdfs/*
+!/data/rag/pdfs/.gitkeep
+/data/rag/index/*
+!/data/rag/index/.gitkeep
+/storage/diagnostics/*
+!/storage/diagnostics/.gitkeep
+/storage/rag-documents/*
+!/storage/rag-documents/.gitkeep
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.env.*
+!.env.example

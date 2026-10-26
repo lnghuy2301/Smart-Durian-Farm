@@ -13,7 +13,7 @@ Nhánh `feat/catalog-admin-completion`, kế thừa `87aea89`; workspace giữ c
 | IoT | Metadata Device/Sensor/Actuator,6 streams MQTT FINAL; telemetry/latest/history; Reset/Start/Stop/ACK/recovery, phân quyền và persistence | ACK là receipt; không chứng minh relay/bơm/van đã hoạt động; cần nghiệm thu xuyên suốt bằng ESP32 thật |
 | Dữ liệu/vận hành |13 bảng PG nghiệp vụ, technical workflows/audit;3 collection Mongo nghiệp vụ; migrations001–016, seed không ghi đè, backup/restore-check | Không có transaction chung PG/Mongo; backup cần dừng API theo guide, không coi là snapshot live |
 | Web | Theo vai trò, workflow/đối chiếu, QR tải PNG, tài khoản, IoT/control và các cải tiến26/10 đã có trong workspace | Nhiều thay đổi giao diện còn chưa commit; không tự gom/push thay người dùng |
-| AI | Chẩn đoán bệnh và chatbot chưa có | Đã thống nhất hoãn, không tự chọn provider/model hoặc giả kết quả |
+| AI | Có nền tảng YOLO11s-cls, lịch sử riêng, RAG PDF/Admin và hội thoại, Mongo017 | Chờ best.pt, chọn provider API và đánh giá thật; xem AI_BACKEND_IMPLEMENTATION.md |
 
 ## Công việc đã thực hiện ngay trong đợt này
 
@@ -62,6 +62,6 @@ Xem logs ignored `apps/api/.integration-dist/review-20261026-*.txt`, `apps/web/t
 2. **ESP32 xuyên suốt web→API→broker→hardware→ACK/telemetry→database.** Protocol đã chốt/hardware-tested; phần cần nghiệm thu là bản tích hợp server hiện hành:6 streams, thứ tự Reset/van/bơm, thiếu/trễ/sai ACK, disconnect, Stop preemption, restart và kiểm quan sát vật lý. Agent không tự bật tải thật. Ghi Pass/Fail/NotRun, revision, expected/actual; che credentials.
 3. **Chốt nơi triển khai và Auth production.** Cần domain/host, TLS/reverse proxy, broker/quyền truy cập, cấu hình SMTP/SMS, vận hành/backup và mô hình Auth production. Hiện không tự đổi AUTH_MODE hoặc triển khai publicly bằng cấu hình test. Chưa có quyết định môi trường thì không thể đánh dấu mục này xong.
 4. **Chốt release Git và nghiệm thu giao diện.** Review các thay đổi riêng chưa commit, commit theo nhánh/module, sau đó mới push/PR khi được yêu cầu. Có thể tối ưu bundle và ảnh nặng sau khi chốt giao diện. Không xóa file chưa commit chỉ vì chưa được track.
-5. **Hai module AI** chỉ bắt đầu khi người dùng muốn và chốt model/provider, dữ liệu bệnh/corpus, phạm vi tư vấn và cách đánh giá. Android là phạm vi riêng, không tự thêm vào backlog hoàn thành web/backend.
+5. **AI** đã được yêu cầu triển khai nền tảng YOLO11s-cls và RAG; cần best.pt, corpus tin cậy, chốt API chatbot rồi đánh giá accuracy/citations trước nghiệm thu thật. Android là phạm vi riêng.
 
 Không còn một module nghiệp vụ SQL/Mongo đã chốt nào cần viết lại từ đầu. Danh sách trên là nghiệm thu, release/deploy và phần mở rộng; không dùng một tỷ lệ % thiếu cơ sở để thay cho các điều kiện đạt.

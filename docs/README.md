@@ -4,6 +4,8 @@ Cập nhật 21/10/2026. Đọc checkpoint hiện hành trước các báo cáo 
 
 ## Điểm bắt đầu
 
+[Backend AI26/10](AI_BACKEND_IMPLEMENTATION.md): YOLO11s-cls, lịch sử Farmer riêng, Zone tùy chọn có kiểm tra quyền, Admin quản lý PDF RAG; Mongo migration017. [Python/model](../ai/README.md), [Postman nhập tay](postman/AI-Backend.postman_collection.json). Chưa có best.pt hoặc provider chatbot; không trả kết quả giả.
+
 [Mời Farmer bằng tên/điện thoại26/10](ASSIGNMENT_FARMER_SEARCH.md), kết quả hiện tên+phone, Postman và quyền tra cứu theo Zone.
 
 [Rà soát26/10/2026](PROJECT_REVIEW_20261026.md): trạng thái source/kiểm thử, quản trị danh mục, việc còn cần nghiệm thu hoặc quyết định.

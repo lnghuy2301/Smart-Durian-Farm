@@ -5,6 +5,8 @@ import { dirname, resolve } from 'node:path';
 import { config as loadEnv } from 'dotenv';
 import { Pool } from 'pg';
 import { DatabaseService } from '../database/database.service';
+import { createAiAssetBackup, restoreAiAssetBackup, verifyAiAssetBackup } from './ai-assets-backup';
+import { readAiConfig } from '../ai/ai.config';
 import { BackupError, createDatabaseBackup, DatabaseBackup, restoreIntoEmptyDatabase, verifyBackup } from './backup';
 import { demoReadiness } from './demo-readiness';
 
@@ -31,8 +33,9 @@ function summary(archive: DatabaseBackup) {
 }
 export async function backupCommand(command: string, file: string, env: NodeJS.ProcessEnv): Promise<void> {
   if (!['create', 'verify', 'restore-check', 'restore-new', 'demo-check'].includes(command)) throw new BackupError('USE_CREATE_VERIFY_RESTORE_CHECK_RESTORE_NEW_OR_DEMO_CHECK');
-  if (command === 'verify') { console.log(JSON.stringify({ verified: true, ...summary(readArchive(file)) })); return; }
+  if (command === 'verify') { const archive = readArchive(file); console.log(JSON.stringify({ verified: true, ...summary(archive), ai_assets: verifyAiAssetBackup(archive, file) })); return; }
   const archive = command === 'create' || command === 'demo-check' ? undefined : readArchive(file);
+  if (archive) verifyAiAssetBackup(archive, file);
   // Verification can restore only into the known disposable Compose fixture.
   // Real recovery creates a NEW random database, never replaces DATABASE_URL.
   const config = command === 'restore-check' ? {
@@ -55,7 +58,8 @@ export async function backupCommand(command: string, file: string, env: NodeJS.P
       const data = JSON.stringify(snapshot);
       if (Buffer.byteLength(data) > maxBytes) throw new BackupError('BACKUP_EXCEEDS_PROTOTYPE_LIMIT');
       writeFileSync(path, data, { flag: 'wx', mode: 0o600 });
-      console.log(JSON.stringify({ created: true, file: path, ...summary(snapshot) }));
+      const assets = createAiAssetBackup(snapshot, path, readAiConfig(env).root);
+      console.log(JSON.stringify({ created: true, file: path, ...summary(snapshot), ai_assets: assets }));
       return;
     }
     const name = `sdf_restore_${randomUUID().replaceAll('-', '')}`;
@@ -71,6 +75,7 @@ export async function backupCommand(command: string, file: string, env: NodeJS.P
       mongoOwned = (await db.listCollections({}, { nameOnly: true }).toArray()).length === 0;
       if (!mongoOwned) throw new BackupError('RESTORE_TARGET_NOT_EMPTY');
       await restoreIntoEmptyDatabase(target, database.mongo, db, archive);
+      if (command === 'restore-new') restoreAiAssetBackup(archive!, file, readAiConfig(env).root);
       success = true;
       console.log(JSON.stringify({ restored: true, database: name, temporary: command === 'restore-check', ...summary(archive!) }));
     } finally {

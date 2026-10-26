@@ -52,7 +52,7 @@ Development mặc định lưu database; test mặc định memory. `BUSINESS_ST
 
 Auth/Users/duyệt Manager, HTX, vật tư/tiêu chuẩn/liên kết, Farm/Zone/phân công, cây/thu hoạch, Device/Sensor/Actuator, MQTT/telemetry/điều khiển, nhật ký canh tác/hash-chain và QR public. Database runtime dùng chung pool/client/repositories cho HTTP, Auth, MQTT, workers và QR.
 
-Hai module AI và ứng dụng Android chưa triển khai. MQTT FINAL hardware-tested đã tích hợp, có backup/restore rehearsal đạt và audit demo. Còn bước kết nối runtime theo cấu hình MQTT và hoàn tất Manager/SMS/email thật; xem checkpoint demo. ACK xác nhận nhận command, không chứng minh trạng thái vật lý bơm/van.
+Backend AI đã có nền tảng chẩn đoán YOLO11s-cls, lịch sử riêng và RAG PDF: xem [hướng dẫn AI](docs/AI_BACKEND_IMPLEMENTATION.md), [cài Python/model](ai/README.md). Chờ người dùng cung cấp best.pt và chốt nhà cung cấp API chatbot trước khi nghiệm thu AI thật. Android chưa triển khai. MQTT FINAL hardware-tested đã tích hợp; ACK xác nhận nhận command, không chứng minh trạng thái vật lý bơm/van.
 
 ## Kiểm tra
 

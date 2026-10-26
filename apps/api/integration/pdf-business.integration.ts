@@ -16,7 +16,8 @@ import { MongoCultivationStore } from '../src/persistence/mongo-cultivation.stor
 import { LOCK_DELAY_MS } from '../src/cultivation-events/cultivation-events.types';
 import { projectCultivation } from '../src/traceability/cultivation-projection';
 import { createDatabaseBackup, restoreIntoEmptyDatabase, sealBackup, verifyBackup } from '../src/persistence/backup';
-import { runMigrations } from '../src/persistence/migrations';
+import { MIGRATIONS, runMigrations } from '../src/persistence/migrations';
+import { MONGO_SCHEMA_V1 } from '../src/persistence/mongo-schema';
 import { expandMaterialCatalog } from '../src/persistence/material-catalog-expansion';
 import { taskPersistenceFixture, taskAuth, taskPgBase } from './helpers/task-persistence-fixture';
 
@@ -45,6 +46,7 @@ test('PDF business changes persist profiles, normalized doses, private Other and
     await t.test('backup from revision014 restores its archived schema then upgrades without changing old values', async () => {
       const legacy = structuredClone(baseline);
       legacy.migrations = legacy.migrations.slice(0, 14);
+      legacy.mongo = legacy.mongo.filter((collection) => MONGO_SCHEMA_V1.some((definition) => definition.name === collection.name));
       const material = legacy.postgres.find((table) => table.name === 'public.agricultural_materials')!;
       const retained = material.columns.filter((column) => !['default_dosage_value', 'dosage_basis'].includes(column));
       material.rows = material.rows.map((row) => { const parsed = JSON.parse(row); return JSON.stringify(Object.fromEntries(retained.map((key) => [key, parsed[key]]))); }).sort();
@@ -57,7 +59,7 @@ test('PDF business changes persist profiles, normalized doses, private Other and
         target = new Pool({ connectionString: `${taskPgBase}/${name}` });
         await restoreIntoEmptyDatabase(target, f.mongo, f.mongo.db(name), archive);
         assert.equal((await createDatabaseBackup(target, f.mongo, f.mongo.db(name))).data_sha256, archive.data_sha256);
-        assert.deepEqual(await runMigrations(target, f.mongo.db(name)), ['015_cultivation_other', '016_material_dosage']);
+        assert.deepEqual(await runMigrations(target, f.mongo.db(name)), MIGRATIONS.slice(14).map((definition) => definition.id));
         assert.equal((await target.query('SELECT count(*)::int AS count FROM public.agricultural_materials WHERE default_dosage_value IS NOT NULL')).rows[0].count, 0);
       } finally { await target?.end(); await f.mongo.db(name).dropDatabase(); await f.pool.query(`DROP DATABASE "${name}"`); }
     });

@@ -1,6 +1,6 @@
 # Smart Durian Farm — đặc tả hiện hành
 
-Cập nhật21/10/2026, đối chiếu source nền `1f6c1fd` và các workflow đã duyệt. Đây là phạm vi đã triển khai; [tiến độ](BACKEND_PROGRESS_CURRENT.md) phân biệt kiểm thử tự động với nghiệm thu thực. Các ý tưởng Android/AI trong bản đặc tả ban đầu chưa phải tính năng hiện có.
+Cập nhật AI26/10/2026: [AI backend](AI_BACKEND_IMPLEMENTATION.md) có chẩn đoán YOLO11s-cls/lịch sử riêng, Zone tùy chọn có kiểm tra quyền, RAG PDF do Admin quản lý và hội thoại Farmer. Chờ best.pt và chọn API chatbot; chưa khẳng định accuracy hoặc trả lời thật. Phần nghiệp vụ bên dưới đối chiếu nền `1f6c1fd` và workflow đã duyệt; [tiến độ](BACKEND_PROGRESS_CURRENT.md) phân biệt kiểm thử tự động với nghiệm thu thực. Android chưa triển khai.
 
 ## Kiến trúc và dữ liệu
 

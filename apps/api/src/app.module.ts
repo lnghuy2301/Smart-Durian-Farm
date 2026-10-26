@@ -26,6 +26,8 @@ import { TraceabilityModule } from './traceability/traceability.module';
 import { readTraceabilityConfig } from './traceability/traceability.config';
 import { DatabaseRuntimeModule } from './persistence/database-runtime.module';
 import { DisplayModule } from './display/display.controller';
+import { AiModule } from './ai/ai.module';
+import { readAiConfig } from './ai/ai.config';
 
 @Module({})
 export class AppModule {
@@ -56,6 +58,7 @@ export class AppModule {
         materialsModule, standardsModule, standardMaterialsModule]);
       const cooperativesModule = CooperativesModule.forMock(config.auth, authModule, usersModule, farmsModule);
       imports.push(
+        AiModule.register(config.ai ?? readAiConfig({}), [authModule, zonesModule]),
         usersModule,
         materialsModule,
         standardsModule,

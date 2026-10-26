@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { BSON, Db, MongoClient } from 'mongodb';
 import { Pool } from 'pg';
 import { MIGRATIONS, migrationChecksum, runMigrations } from './migrations';
-import { MONGO_SCHEMA_V1 } from './mongo-schema';
+import { mongoDefinitionsForRevision } from './ai-schema';
 
 // Fixed allowlist/dependency order. Archive input never supplies SQL identifiers.
 export const BACKUP_TABLES = [
@@ -39,7 +39,7 @@ export function verifyBackup(input: unknown): DatabaseBackup {
     && Number.isFinite(Date.parse(archive.created_at)), 'INVALID_BACKUP_VERSION');
   assert(knownMigrationPrefix(archive.migrations), 'BACKUP_SOURCE_REVISION_MISMATCH');
   assert(Array.isArray(archive.postgres) && JSON.stringify(archive.postgres.map((table) => table.name)) === JSON.stringify(BACKUP_TABLES), 'INVALID_BACKUP_TABLES');
-  assert(Array.isArray(archive.mongo) && JSON.stringify(archive.mongo.map((collection) => collection.name)) === JSON.stringify(MONGO_SCHEMA_V1.map((collection) => collection.name)), 'INVALID_BACKUP_COLLECTIONS');
+  assert(Array.isArray(archive.mongo) && JSON.stringify(archive.mongo.map((collection) => collection.name)) === JSON.stringify(mongoDefinitionsForRevision(archive.migrations.length).map((collection) => collection.name)), 'INVALID_BACKUP_COLLECTIONS');
   for (const table of archive.postgres) {
     assert(Array.isArray(table.columns) && table.columns.length > 0 && new Set(table.columns).size === table.columns.length
       && table.columns.every((column) => typeof column === 'string' && /^[a-z_]+$/.test(column)) && Array.isArray(table.rows), 'INVALID_BACKUP_COLUMNS');
@@ -81,10 +81,11 @@ export async function createDatabaseBackup(pool: Pool, mongo: MongoClient, db: D
     await client.query(`LOCK TABLE ${[...BACKUP_TABLES, 'technical.schema_migrations'].join(',')} IN SHARE MODE NOWAIT`);
     const ledger = await client.query('SELECT id,store,checksum FROM technical.schema_migrations ORDER BY id');
     assert(knownMigrationPrefix(ledger.rows), 'BACKUP_SOURCE_REVISION_MISMATCH');
+    const definitions = mongoDefinitionsForRevision(ledger.rows.length);
     const tables = await client.query("SELECT schemaname||'.'||tablename AS name FROM pg_tables WHERE schemaname IN ('public','technical') ORDER BY name");
     assert(JSON.stringify(tables.rows.map((row) => row.name)) === JSON.stringify([...BACKUP_TABLES, 'technical.schema_migrations'].sort()), 'BACKUP_UNMANAGED_TABLES');
     const collections = (await db.listCollections({}, { nameOnly: true }).toArray()).map((item) => item.name).sort();
-    assert(JSON.stringify(collections) === JSON.stringify(MONGO_SCHEMA_V1.map((item) => item.name).sort()), 'BACKUP_UNMANAGED_COLLECTIONS');
+    assert(JSON.stringify(collections) === JSON.stringify(definitions.map((item) => item.name).sort()), 'BACKUP_UNMANAGED_COLLECTIONS');
     const postgres: TableBackup[] = [];
     for (const name of BACKUP_TABLES) {
       const [schema, table] = name.split('.');
@@ -96,7 +97,7 @@ export async function createDatabaseBackup(pool: Pool, mongo: MongoClient, db: D
     }
     const documents = await session.withTransaction(async () => {
       const result: CollectionBackup[] = [];
-      for (const collection of MONGO_SCHEMA_V1) {
+      for (const collection of definitions) {
         const rows = await db.collection(collection.name).find({}, { session, promoteValues: false, batchSize: 100 }).toArray();
         result.push({ name: collection.name, documents: rows.map((row) => BSON.EJSON.stringify(row, { relaxed: false })).sort() });
       }

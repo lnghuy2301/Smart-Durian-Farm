@@ -30,6 +30,8 @@ import { DatabaseMqttService } from './database-mqtt.service';
 import { PersistenceRuntimeModule } from './persistence-runtime.module';
 import { RUNTIME_REPOSITORIES, RuntimeRepositories } from './runtime-repositories';
 import { DisplayController } from '../display/display.controller';
+import { AiModule } from '../ai/ai.module';
+import { readAiConfig } from '../ai/ai.config';
 
 @Module({})
 export class DatabaseRuntimeModule {
@@ -42,7 +44,8 @@ export class DatabaseRuntimeModule {
       users = UsersModule.forDatabase(config.auth, auth, persistence),
       cooperatives = CooperativesModule.forRecords(config.auth, auth, users,
         { provide: CooperativeRecords, inject: [RUNTIME_REPOSITORIES], useFactory: (r: RuntimeRepositories) => r.cooperativeRecords }, [persistence]);
-    return { module: DatabaseRuntimeModule, imports: [database, transport, persistence, auth, users, cooperatives],
+    const ai = AiModule.register(config.ai ?? readAiConfig({}), [auth, persistence, database], true);
+    return { module: DatabaseRuntimeModule, imports: [database, transport, persistence, auth, users, cooperatives, ai],
       controllers: [HealthController, MaterialsController, StandardsController, StandardMaterialsController,
         FarmsController, FarmRequestsController, FarmAccessController, ZonesController, ZoneRequestsController, AssignmentsController, AssignmentRequestsController,
         TreesController, TreeRequestsController, TreeHarvestsController, HarvestRequestsController, HarvestBackdateController,

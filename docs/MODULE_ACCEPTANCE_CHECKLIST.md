@@ -230,6 +230,17 @@ Ca mất mạng/ACK là nghiệm thu có chủ đích với người vận hành
 | Hardware/control/ACK | | | | Chưa chạy | |
 | QR/restart/backup | | | | Chưa chạy | |
 
-Nếu gặp lỗi: ghi bước tái lập, vai trò, ID hồ sơ, thông báo và ảnh đã che thông tin nhạy cảm. Không ghi JWT/OTP/mật khẩu vào báo cáo chia sẻ. Hai module AI đang hoãn; không nằm trong checklist đã triển khai.
+Nếu gặp lỗi: ghi bước tái lập, vai trò, ID hồ sơ, thông báo và ảnh đã che thông tin nhạy cảm. Không ghi JWT/OTP/mật khẩu vào báo cáo chia sẻ.
+
+## AI — nền tảng mới26/10
+
+Đọc [AI_BACKEND_IMPLEMENTATION](AI_BACKEND_IMPLEMENTATION.md), dùng Postman AI-Backend nhập tay. Chưa có UI AI.
+
+- [ ] Farmer gửi ảnh không Zone; có Zone thì chỉ nhận Zone có quyền, Manager/Admin không chẩn đoán.
+- [ ] Chưa có best.pt: nhận lỗi chưa sẵn sàng, không tạo lịch sử giả. Có model thì đánh giá ảnh đã biết nhãn và top3.
+- [ ] Farmer khác không đọc được chẩn đoán, ảnh hoặc hội thoại; lịch sử riêng vẫn xem được sau hết phân công.
+- [ ] Admin nhập PDF văn bản, kiểm tra tìm kiếm đúng trang/đoạn; Farmer không quản lý corpus.
+- [ ] Provider disabled: gửi chat báo chưa cấu hình, không ghi cặp tin nhắn. Chỉ nghiệm thu chat thật sau chốt API/corpus.
+- [ ] Backup/restore cả JSON và thư mục .assets đi kèm; restart vẫn giữ lịch sử và ảnh/PDF.
 
 Tài liệu chi tiết: [quy tắc hiện hành](PROJECT_BUILD_SPEC.md), [bàn giao](MODULE_HANDOFF.md), [runtime](DATABASE_RUNTIME_IMPLEMENTATION.md), [hiển thị tiếng Việt](frontend/modules/READABLE_BUSINESS_INFORMATION.md), [dữ liệu một tháng](RICH_OPERATIONAL_DATASET.md).

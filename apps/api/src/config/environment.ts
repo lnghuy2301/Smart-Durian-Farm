@@ -5,6 +5,7 @@ import { SmtpConfig } from '../users/email/email.sender';
 import { MqttConfig, readMqttConfig } from '../mqtt/mqtt.config';
 import { ActuatorTasksConfig, readActuatorTasksConfig } from '../actuator-tasks/actuator-tasks.config';
 import { TraceabilityConfig, readTraceabilityConfig } from '../traceability/traceability.config';
+import { AiConfig, readAiConfig } from '../ai/ai.config';
 
 export interface MockAuthConfig {
   mode: 'mock';
@@ -18,6 +19,7 @@ export interface MockAuthConfig {
 }
 
 export interface Environment {
+  ai?: AiConfig;
   storage?: 'memory' | 'database';
   port: number;
   corsOrigins: string[];
@@ -154,6 +156,6 @@ export function readEnvironment(env: NodeJS.ProcessEnv): Environment {
   }
   const mqtt = readMqttConfig(env);
   if (mqtt.enabled && !auth) { throw new Error('MQTT_ENABLED requires the current application metadata modules (AUTH_MODE=mock)'); }
-  return { storage: storage as 'memory' | 'database', port, corsOrigins, database: { postgresUrl, mongoUri, timeoutMs }, auth, mqtt,
+  return { ai: readAiConfig(env), storage: storage as 'memory' | 'database', port, corsOrigins, database: { postgresUrl, mongoUri, timeoutMs }, auth, mqtt,
     actuatorTasks: readActuatorTasksConfig(env), traceability: readTraceabilityConfig(env) };
 }

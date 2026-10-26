@@ -40,7 +40,7 @@ test('persistence foundation on isolated PostgreSQL17/Mongo8', async (t) => {
       assert.equal((await sql.query("SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'")).rows[0].count, '13');
       assert.equal((await sql.query("SELECT count(*) FROM information_schema.tables WHERE table_schema='technical' AND table_type='BASE TABLE'")).rows[0].count, '5');
       const collections = (await db.listCollections().toArray()).map((collection) => collection.name).sort();
-      assert.deepEqual(collections, ['ACTUATOR_TASKS', 'CULTIVATION_EVENTS', 'IOT_TELEMETRIES', 'PERSISTENCE_STATE']);
+      assert.deepEqual(collections, ['ACTUATOR_TASKS', 'AI_DISEASE_DIAGNOSTICS', 'AI_RAG_DOCUMENTS', 'CHATBOT_CONVERSATIONS', 'CULTIVATION_EVENTS', 'IOT_TELEMETRIES', 'PERSISTENCE_STATE']);
     });
     await t.test('checksum changes and unknown applied migrations fail before new writes', async () => {
       const altered = MIGRATIONS.map((migration, index) => index ? migration : { ...migration, source: `${migration.source}\n-- changed` });
