@@ -1,4 +1,6 @@
 import io
+import hashlib
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -17,6 +19,25 @@ def test_vietnamese_font_names_decode_exactly_and_corrupt_encoding_is_rejected()
     assert readable_text("HƯ/uni1EDANG D/uni1EAAN") == "HƯỚNG DẪN"
     with pytest.raises(ValueError):
         readable_text("Broken VietGAP: \u0019\u0011")
+
+
+def test_prepared_pdf_preserves_original_and_maps_source_pages(tmp_path):
+    from tools.prepare_corpus import prepare
+    inbox = tmp_path / "data/rag/pdfs"
+    inbox.mkdir(parents=True)
+    data = pdf()
+    (inbox / "guide.pdf").write_bytes(data)
+    plan = {"sources": [{"filename": "guide.pdf", "sha256": hashlib.sha256(data).hexdigest(),
+                          "title": "Fixture draft", "is_draft": True, "ranges": [[1, 1]]}]}
+    assert len(prepare(tmp_path, plan)) == 1
+    manifest = json.loads((tmp_path / "data/rag/prepared/manifest.json").read_text(encoding="utf-8"))
+    assert manifest["entries"][0]["source"]["page_map"] == [1]
+    assert manifest["entries"][0]["source"]["is_draft"] is True
+    assert (inbox / "guide.pdf").read_bytes() == data
+    assert len(prepare(tmp_path, plan)) == 1
+    (inbox / "guide.pdf").write_bytes(data + b"changed")
+    with pytest.raises(ValueError, match="source_checksum_changed"):
+        prepare(tmp_path, plan)
 
 
 def picture():

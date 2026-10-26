@@ -16,6 +16,7 @@ export class ImportPdfInput {
   @Transform(trim) @IsString() @MinLength(1) @MaxLength(255) filename!: string;
   @Transform(trim) @ValidateIf((_o, value) => value !== undefined) @IsString() @MinLength(1) @MaxLength(120) title?: string;
 }
+export class PreparedPdfInput { @Transform(trim) @IsString() @MinLength(1) @MaxLength(255) filename!: string; }
 export class PdfTitleInput { @Transform(trim) @ValidateIf((_o, value) => value !== undefined) @IsString() @MinLength(1) @MaxLength(120) title?: string; }
 export class DocumentStatusInput { @IsIn(['Active', 'Inactive']) status!: 'Active' | 'Inactive'; }
 export interface AiUpload { buffer: Buffer; originalname: string; mimetype: string; size: number }

@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { createHash } from 'node:crypto';
 import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { createServer } from 'node:http';
@@ -39,6 +40,29 @@ test('AI HTTP adapter requests model readiness with authenticated GET and images
     assert.deepEqual(calls, [{ method: 'GET', url: '/v1/model', bytes: 0 }, { method: 'POST', url: '/v1/classify', bytes: 19 }]);
   } finally { await new Promise<void>((resolve) => server.close(() => resolve())); }
 });
+
+test('Prepared corpus binds original bytes, maps citations to source pages and marks drafts', async () => {
+  const f = await fixture();
+  try {
+    const root = join(f.root, 'data/rag'), original = Buffer.from('%PDF-original fixture'), derivative = Buffer.from('%PDF-derived fixture');
+    await mkdir(join(root, 'pdfs'), { recursive: true }); await mkdir(join(root, 'prepared'), { recursive: true });
+    await writeFile(join(root, 'pdfs/original.pdf'), original); await writeFile(join(root, 'prepared/selected.pdf'), derivative);
+    const hash = (v: Buffer) => createHash('sha256').update(v).digest('hex');
+    const manifest = { format: 'smart-durian-prepared-v1', entries: [{ filename: 'selected.pdf', title: '[Dự thảo] Sầu riêng', sha256: hash(derivative),
+      source: { filename: 'original.pdf', sha256: hash(original), page_map: [265, 266], is_draft: true } }] };
+    await writeFile(join(root, 'prepared/manifest.json'), JSON.stringify(manifest));
+    assert.equal((await f.http('ai/rag/prepared', 'GET', undefined, f.tokens.owner)).status, 403);
+    assert.equal((await f.http('ai/rag/documents/import-prepared', 'POST', { filename: '../selected.pdf' }, f.tokens.admin)).status, 400);
+    assert.equal((await f.http('ai/rag/documents/import-prepared', 'POST', { filename: 'selected.pdf', source: {} }, f.tokens.admin)).status, 400);
+    const imported = await f.http('ai/rag/documents/import-prepared', 'POST', { filename: 'selected.pdf' }, f.tokens.admin);
+    assert.equal(imported.status, 201);
+    const found = await f.http('ai/rag/search', 'POST', { message: 'thoat nuoc' }, f.tokens.admin);
+    const contexts = (await found.json() as { contexts: Citation[] }).contexts;
+    assert.equal(contexts[0].source?.page, 266); assert.equal(contexts[0].source?.is_draft, true);
+    await writeFile(join(root, 'pdfs/original.pdf'), '%PDF-changed');
+    assert.equal((await f.http('ai/rag/documents/import-prepared', 'POST', { filename: 'selected.pdf' }, f.tokens.admin)).status, 409);
+  } finally { await f.close(); }
+});
 async function fixture() {
   const root = await mkdtemp(join(tmpdir(), 'sdf-ai-'));
   const config = readEnvironment({ NODE_ENV: 'test', AUTH_MODE: 'mock', DATABASE_URL: 'postgresql://test:test@127.0.0.1:1/test', MONGODB_URI: 'mongodb://127.0.0.1:1/test',
@@ -72,9 +96,12 @@ test('AI diagnoses are private Farmer records, allow standalone images and enfor
     assert.equal((await f.upload(f.tokens.admin)).status, 403);
     assert.equal((await f.upload(f.tokens.manager)).status, 403);
     assert.equal((await f.upload(f.tokens.owner, undefined, Buffer.from('<svg/>'))).status, 400);
+    f.worker.classify = async () => ({ ...prediction, predictions: [{ class_id: 0, label: 'anthracnose_disease', confidence: 0.9 }] });
     const created = await f.upload(f.tokens.owner); assert.equal(created.status, 201);
-    const row = await created.json() as { id: string; zone_id: null; user_feedback: null; image_url: string; image_file?: string; ai_predictions: unknown[] };
+    const row = await created.json() as { id: string; zone_id: null; user_feedback: null; image_url: string; image_file?: string; ai_predictions: { label: string; label_vi: string; confidence: number }[]; interpretation: { kind: string } };
     assert.equal(row.zone_id, null); assert.equal(row.user_feedback, null); assert.equal(row.image_file, undefined);
+    assert.equal(row.ai_predictions[0].label, 'anthracnose_disease'); assert.equal(row.ai_predictions[0].label_vi, 'Bệnh thán thư');
+    assert.equal(row.ai_predictions[0].confidence, 0.9); assert.equal(row.interpretation.kind, 'classification_suggestions');
     assert.equal((await f.http(`ai/diagnoses/${row.id}`, 'GET', undefined, f.tokens.other)).status, 404);
     assert.equal((await f.http(`ai/diagnoses/${row.id}/image`, 'GET', undefined, f.tokens.other)).status, 404);
     const image = await f.http(`ai/diagnoses/${row.id}/image`, 'GET', undefined, f.tokens.owner); assert.equal(image.status, 200); assert.deepEqual(Buffer.from(await image.arrayBuffer()), png);

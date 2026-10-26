@@ -234,6 +234,12 @@ Nếu gặp lỗi: ghi bước tái lập, vai trò, ID hồ sơ, thông báo v�
 
 ## AI — nền tảng mới26/10
 
+Checkpoint mới: [AI_RAG_CORPUS_IMPLEMENTATION](AI_RAG_CORPUS_IMPLEMENTATION.md), model thật và15 PDF đã nhập.
+
+- [ ] Admin xem prepared/documents và tìm “thán thư”, kiểm tra filename gốc/trang gốc và nhãn dự thảo trong source.
+- [ ] Hai quy trình tổng hợp chỉ dùng trang265–272 và2–9 của phần sầu riêng; TCVN lỗi font không nằm trong danh sách Active.
+- [ ] Kết quả ảnh có label_vi, giữ nhãn/điểm gốc, hiển thị top3 gợi ý; không khẳng định khỏe mạnh hoặc tự đưa thuốc.
+
 Đọc [AI_BACKEND_IMPLEMENTATION](AI_BACKEND_IMPLEMENTATION.md), dùng Postman AI-Backend nhập tay. Chưa có UI AI.
 
 - [ ] Farmer gửi ảnh không Zone; có Zone thì chỉ nhận Zone có quyền, Manager/Admin không chẩn đoán.

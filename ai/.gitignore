@@ -5,6 +5,8 @@
 !/data/rag/pdfs/.gitkeep
 /data/rag/index/*
 !/data/rag/index/.gitkeep
+/data/rag/prepared/*
+!/data/rag/prepared/.gitkeep
 /storage/diagnostics/*
 !/storage/diagnostics/.gitkeep
 /storage/rag-documents/*

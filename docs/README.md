@@ -4,6 +4,8 @@ Cập nhật 21/10/2026. Đọc checkpoint hiện hành trước các báo cáo 
 
 ## Điểm bắt đầu
 
+[AI ảnh/corpus đã nhập](AI_RAG_CORPUS_IMPLEMENTATION.md):15 PDF/9 nguồn,396 trang/1.220 chunks; nguồn/trang gốc và nhãn dự thảo, migration018, nhãn Việt/top3. Có hướng dẫn chuẩn bị/import/check/backup, chat API vẫn disabled.
+
 [Tích hợp weights/PDF thật26/10](AI_MODEL_AND_CORPUS_INTEGRATION.md): best.pt đã chạyCPU; corpus còn cần chốt phạm vi/dự thảo/tài liệu lỗi font trước khi kích hoạt. Có API model readiness và lock môi trường.
 
 [Backend AI26/10](AI_BACKEND_IMPLEMENTATION.md): YOLO11s-cls, lịch sử Farmer riêng, Zone tùy chọn có kiểm tra quyền, Admin quản lý PDF RAG; Mongo migration017. [Python/model](../ai/README.md), [Postman nhập tay](postman/AI-Backend.postman_collection.json). Chưa có best.pt hoặc provider chatbot; không trả kết quả giả.

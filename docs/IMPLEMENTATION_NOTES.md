@@ -1,5 +1,7 @@
 # Ghi chú kỹ thuật hiện hành
 
+AI26/10: [corpus/model thực](AI_RAG_CORPUS_IMPLEMENTATION.md), migration018. Không sửa001–017. Source page_map là số trang PDF gốc1-based, API hiển thị citation.source.page; `is_draft` không đồng nghĩa hiệu lực pháp lý. CLI corpus giữ maintenance locks, dùng chung AiService/repositories, kiểm checksum nguồn và snapshot, chạy lại bỏ qua bản đã có. .env không đổi; weights/PDF/manifest sinh ra/private backups không commit. Chat API giữ disabled, UI AI chưa làm.
+
 Cập nhật26/10/2026. [Rà soát hiện hành](PROJECT_REVIEW_20261026.md), [quy tắc nghiệp vụ](PROJECT_BUILD_SPEC.md), [runtime và tái lập](DATABASE_RUNTIME_IMPLEMENTATION.md), [tiến độ](BACKEND_PROGRESS_CURRENT.md).
 
 ## Authority và cấu hình

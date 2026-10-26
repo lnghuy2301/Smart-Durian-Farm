@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { BSON, Db, MongoClient } from 'mongodb';
 import { Pool } from 'pg';
 import { MIGRATIONS, migrationChecksum, runMigrations } from './migrations';
-import { mongoDefinitionsForRevision } from './ai-schema';
+import { mongoDefinitionsForRevision } from './mongo-revisions';
 
 // Fixed allowlist/dependency order. Archive input never supplies SQL identifiers.
 export const BACKUP_TABLES = [

@@ -1,5 +1,7 @@
 # AI backend và CSDL — bàn giao26/10/2026
 
+Hiện hành: [AI_RAG_CORPUS_IMPLEMENTATION](AI_RAG_CORPUS_IMPLEMENTATION.md) — corpus đã nhập15 PDF, model thật, nhãn Việt/top3 và source provenance018. Các validator/backup017 ở dưới là nền tảng, không thay validator018 trong runtime mới.
+
 Cập nhật sau khi nhận file: [AI_MODEL_AND_CORPUS_INTEGRATION](AI_MODEL_AND_CORPUS_INTEGRATION.md). best.pt đã chạy CPU, GET `/api/ai/model` kiểm tra readiness/classes thực;10 PDF đã kiểm tra nhưng chưa nhập khi phạm vi nguồn còn chờ thống nhất. Các giới hạn nghiệp vụ dưới đây giữ nguyên.
 
 `feat/ai-foundation` từ `0965c05`. User chốt YOLO11s-cls; chat dùng API chưa chọn vendor; Farmer dùng và xem lịch sử riêng; Admin quản lý RAG; chẩn đoán độc lập được zone_id=null, chọn Zone phải có quyền. Không chỉnh nguồn ERD/MQTT/UI riêng hoặc seed kết quả AI.

@@ -1,5 +1,7 @@
 # AI — YOLO11s-cls và chatbot RAG
 
+Checkpoint mới nhất: [AI ảnh/corpus đã nhập](../docs/AI_RAG_CORPUS_IMPLEMENTATION.md). Model thật chạyCPU;15 PDF/9 nguồn/396 trang/1.220 chunks đã nhập. Dự thảo có nhãn, trích dẫn giữ trang gốc, file gốc không sửa; migration018. Chat API tiếp tục disabled theo lựa chọn người dùng. Guide bên dưới giữ lịch sử chuẩn bị nền tảng.
+
 Cập nhật26/10: đã có best.pt và10 PDF; model thật đã nạp/suy luận CPU. [Checkpoint tích hợp](../docs/AI_MODEL_AND_CORPUS_INTEGRATION.md) ghi versions, nhãn, API readiness và các PDF cần chốt trước nhập. Không dùng mô tả “chưa có model” bên dưới để kết luận trạng thái mới. Lock CPU đầy đủ: requirements-inference.lock.txt; kiểm tra bằng `.venv/Scripts/python.exe tools/check_model.py` từ thư mục ai.
 
 Ngày26/10/2026, `feat/ai-foundation` từ `0965c05`. [API/CSDL/kiểm thử](../docs/AI_BACKEND_IMPLEMENTATION.md). NestJS giữ auth/quyền và dữ liệu; Python xử lý ảnh/PDF ở loopback bằng token nội bộ. Chat API chưa chọn vendor nên chưa sinh câu trả lời thật.

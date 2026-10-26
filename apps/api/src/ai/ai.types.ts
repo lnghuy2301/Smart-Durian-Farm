@@ -3,9 +3,11 @@ export interface Prediction { class_id: number; label: string; confidence: numbe
 export interface Diagnosis { _id: ObjectId; farmer_id: string; zone_id: string | null; image_url: string; image_file: string; mime: string;
   ai_predictions: Prediction[]; image_sha256: string; model_sha256: string; user_feedback: boolean | null; created_at: Date }
 export interface Chunk { id: string; page: number; text: string }
+export interface RagSource { filename: string; sha256: string; page_map: number[]; is_draft: boolean }
 export interface RagDocument { _id: ObjectId; filename: string; title: string; sha256: string; page_count: number; chunks: Chunk[];
-  status: 'Active' | 'Inactive'; created_by: string; created_at: Date; updated_at: Date }
-export interface Citation { document_id: string; filename: string; sha256: string; page: number; chunk_id: string; excerpt: string }
+  status: 'Active' | 'Inactive'; created_by: string; created_at: Date; updated_at: Date; source?: RagSource }
+export interface Citation { document_id: string; filename: string; sha256: string; page: number; chunk_id: string; excerpt: string;
+  source?: { filename: string; sha256: string; page: number; is_draft: boolean } }
 export interface ChatMessage { role: 'user' | 'assistant'; content: string; citations: Citation[]; created_at: Date }
 export interface Conversation { _id: ObjectId; farmer_id: string; session_title: string; messages: ChatMessage[]; version: number; created_at: Date; updated_at: Date }
 export interface Classification { task: 'classify'; model_sha256: string; predictions: Prediction[] }

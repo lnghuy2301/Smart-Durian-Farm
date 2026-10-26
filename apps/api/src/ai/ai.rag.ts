@@ -37,6 +37,7 @@ export function retrieve(documents: RagDocument[], question: string): Citation[]
       const tf = row.counts.get(term) ?? 0;
       if (tf) score += Math.log(1 + (chunks.length - df[n] + 0.5) / (df[n] + 0.5)) * tf * 2.2 / (tf + 1.2 * (0.25 + 0.75 * row.length / (average || 1)));
     });
-    return { score, citation: { document_id: doc._id.toHexString(), filename: doc.filename, sha256: doc.sha256, page: chunk.page, chunk_id: chunk.id, excerpt: chunk.text } };
+    return { score, citation: { document_id: doc._id.toHexString(), filename: doc.filename, sha256: doc.sha256, page: chunk.page, chunk_id: chunk.id, excerpt: chunk.text,
+      ...(doc.source ? { source: { filename: doc.source.filename, sha256: doc.source.sha256, page: doc.source.page_map[chunk.page - 1], is_draft: doc.source.is_draft } } : {}) } };
   }).filter((item) => item.score > 0).sort((a, b) => b.score - a.score || a.citation.chunk_id.localeCompare(b.citation.chunk_id)).slice(0, 5).map((item) => item.citation);
 }

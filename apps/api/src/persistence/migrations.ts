@@ -18,6 +18,7 @@ import { applyCultivationStateSchema, CULTIVATION_STATE_SCHEMA } from './cultiva
 import { applyCultivationOtherSchema, CULTIVATION_OTHER_SCHEMA } from './cultivation-other-schema';
 import { MATERIAL_DOSAGE_SCHEMA } from './material-dosage-schema';
 import { AI_MONGO_SCHEMA, applyAiSchema } from './ai-schema';
+import { AI_SOURCE_SCHEMA } from './ai-source-schema';
 
 export interface MigrationDefinition {
   id: string;
@@ -60,6 +61,8 @@ export const MIGRATIONS: MigrationDefinition[] = [
     apply: async (client) => { await client.query(MATERIAL_DOSAGE_SCHEMA); } },
   { id: '017_ai_foundation', store: 'mongo', source: JSON.stringify(AI_MONGO_SCHEMA),
     apply: async (_client, db) => { await applyAiSchema(db); } },
+  { id: '018_ai_source_provenance', store: 'mongo', source: JSON.stringify(AI_SOURCE_SCHEMA),
+    apply: async (_client, db) => { await applyAiSchema(db, AI_SOURCE_SCHEMA); } },
 ];
 export function migrationChecksum(source: string): string { return createHash('sha256').update(source).digest('hex'); }
 

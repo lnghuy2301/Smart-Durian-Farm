@@ -27,7 +27,7 @@ import { DatabaseActuatorTaskRecords } from './database-actuator-task-records';
 import { DatabaseCultivationRecords } from './database-cultivation-records';
 import { DatabaseTraceabilityRecords } from './database-traceability-records';
 import { MONGO_SCHEMA_V1 } from './mongo-schema';
-import { AI_MONGO_SCHEMA } from './ai-schema';
+import { AI_SOURCE_SCHEMA } from './ai-source-schema';
 import { CULTIVATION_STATE_SCHEMA } from './cultivation-state-schema';
 import { CULTIVATION_OTHER_SCHEMA } from './cultivation-other-schema';
 import { canonicalJson } from '../cultivation-events/cultivation-chain';
@@ -45,7 +45,7 @@ export async function runtimeRepositories(database: DatabaseService, config: Env
     // A PG ledger alone cannot prove MONGODB_URI points at the migrated DB.
     // Refuse missing/altered collections BEFORE adapters could create a journal
     // implicitly in the wrong database without validators/indexes.
-    const db = database.mongo.db(), definitions = [...MONGO_SCHEMA_V1, ...AI_MONGO_SCHEMA];
+    const db = database.mongo.db(), definitions = [...MONGO_SCHEMA_V1, ...AI_SOURCE_SCHEMA];
     const collections = await db.listCollections({ name: { $in: definitions.map((entry) => entry.name) } }, { nameOnly: false }).toArray();
     for (const definition of definitions) {
       const collection = collections.find((entry) => entry.name === definition.name), options = collection?.options;

@@ -1,5 +1,7 @@
 # Kế hoạch triển khai tiếp theo
 
+Cập nhật mới nhất26/10: [AI ảnh và corpus thực](AI_RAG_CORPUS_IMPLEMENTATION.md) đã có model chạyCPU,15 PDF/1.220 chunks và provenance018. Không nhập lại hoặc seed lại. AI tiếp theo là chọn API chatbot, đánh giá ảnh có nhãn và giao diện AI; các dòng chờ nhận weights/corpus bên dưới là lịch sử trước lần nhập này.
+
 Ưu tiên hiện hành26/10: [nền tảng AI](AI_BACKEND_IMPLEMENTATION.md) đã triển khai theo yêu cầu mới: YOLO11s-cls, Zone tùy chọn, Farmer có lịch sử riêng, Admin quản lý PDF RAG. Tiếp theo nhận best.pt/versions Colab, chọn API chatbot và corpus để đánh giá thật; tiếp tục nghiệm thu bốn vai trò/hardware, môi trường triển khai và review Git. Không seed lại dữ liệu hiện có. Các checkpoint offline bên dưới giữ làm lịch sử.
 
 Checkpoint offline21/10: [dữ liệu IoT mẫu](OFFLINE_DEMO_TELEMETRY.md) đã nạp cho hai Device mô phỏng; không cần bật hardware/MQTT để xem lịch sử. Bước tiếp theo là người dùng smoke API/web với DB đã có mẫu, hoàn tất Manager thật/Join HTX, sau đó nghiệm thu hardware. AI chỉ bắt đầu sau khi chốt model/provider/corpus và phạm vi; chưa tự chọn dịch vụ trả phí hoặc giả kết quả AI.

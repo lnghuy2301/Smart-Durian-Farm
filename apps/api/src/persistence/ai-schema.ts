@@ -25,13 +25,12 @@ export const AI_MONGO_SCHEMA: typeof MONGO_SCHEMA_V1 = [
     chunks: { bsonType: 'array', minItems: 1, maxItems: 700, items: object({ id: hash, page: { ...integer, minimum: 1, maximum: 100 }, text: { ...text(800), minLength: 1 } }) } }) },
     indexes: [{ key: { sha256: 1 }, name: 'rag_document_hash', unique: true }, { key: { status: 1, created_at: -1 }, name: 'rag_document_status' }] },
 ];
-export const mongoDefinitionsForRevision = (revision: number) => revision >= 17 ? [...MONGO_SCHEMA_V1, ...AI_MONGO_SCHEMA] : MONGO_SCHEMA_V1;
-export async function applyAiSchema(db: Db) {
-  for (const definition of AI_MONGO_SCHEMA) {
+export async function applyAiSchema(db: Db, definitions = AI_MONGO_SCHEMA) {
+  for (const definition of definitions) {
     const exists = await db.listCollections({ name: definition.name }, { nameOnly: true }).hasNext();
     if (exists && await db.collection(definition.name).findOne({ $nor: [definition.validator] }, { projection: { _id: 1 } })) throw new Error('AI schema contains incompatible existing data');
   }
-  for (const definition of AI_MONGO_SCHEMA) {
+  for (const definition of definitions) {
     const exists = await db.listCollections({ name: definition.name }, { nameOnly: true }).hasNext();
     if (!exists) await db.createCollection(definition.name, { validator: definition.validator, validationLevel: 'strict', validationAction: 'error' });
     else await db.command({ collMod: definition.name, validator: definition.validator, validationLevel: 'strict', validationAction: 'error' });

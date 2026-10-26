@@ -6,7 +6,7 @@ import { AuthGuard, AuthRequest } from '../auth/auth.guard';
 import { WindowRateLimiter } from '../auth/rate-limiter';
 import { AdminGuard } from '../users/admin.guard';
 import { AiService } from './ai.service';
-import { AiPageDto, AiUpload, ChatInput, ConversationInput, DiagnosisInput, DocumentStatusInput, FeedbackInput, ImportPdfInput, PdfTitleInput } from './ai.dto';
+import { AiPageDto, AiUpload, ChatInput, ConversationInput, DiagnosisInput, DocumentStatusInput, FeedbackInput, ImportPdfInput, PdfTitleInput, PreparedPdfInput } from './ai.dto';
 
 @Catch()
 export class AiExceptionFilter implements ExceptionFilter {
@@ -51,6 +51,8 @@ export class AiRagController {
   constructor(@Inject(AiService) private readonly service: AiService) {}
   @Get('inbox') @Header('Cache-Control', 'no-store') inbox(@Req() req: AuthRequest) { return this.service.inbox(req.user!.id); }
   @Get('documents') @Header('Cache-Control', 'no-store') documents(@Req() req: AuthRequest) { return this.service.documents(req.user!.id); }
+  @Get('prepared') @Header('Cache-Control', 'no-store') prepared(@Req() req: AuthRequest) { return this.service.prepared(req.user!.id); }
+  @Post('documents/import-prepared') importPrepared(@Req() req: AuthRequest, @Body() input: PreparedPdfInput) { this.limiter.take('ai-rag', 5, req.user!.id); return this.service.importPrepared(req.user!.id, input.filename); }
   @Post('documents/import') import(@Req() req: AuthRequest, @Body() input: ImportPdfInput) { this.limiter.take('ai-rag', 5, req.user!.id); return this.service.importFile(req.user!.id, input.filename, input.title); }
   @Post('documents/upload') @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('pdf', { limits: { fileSize: 10 * 1024 * 1024, files: 1, fields: 1, parts: 2 } }))

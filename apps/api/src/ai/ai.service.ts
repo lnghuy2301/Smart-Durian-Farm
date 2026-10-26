@@ -9,15 +9,18 @@ import { AiConfig, AI_CONFIG } from './ai.config';
 import { AiStore } from './ai.store';
 import { AiWorker, ChatProvider } from './ai.worker';
 import { AiPageDto, AiUpload } from './ai.dto';
-import { Citation, Diagnosis, RagDocument } from './ai.types';
+import { Citation, Diagnosis, RagDocument, RagSource } from './ai.types';
+import { interpretation, labelVi } from './ai.labels';
+import { loadPrepared, preparedEntries } from './ai.prepared';
 import { makeChunks, retrieve } from './ai.rag';
 
 const objectId = (value: string) => { if (!/^[a-f\d]{24}$/i.test(value)) throw new BadRequestException('Mã AI không hợp lệ'); return new ObjectId(value); };
 const sha = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
 const diagnosisView = (value: Diagnosis) => ({ id: value._id.toHexString(), farmer_id: value.farmer_id, zone_id: value.zone_id,
-  image_url: value.image_url, ai_predictions: value.ai_predictions, image_sha256: value.image_sha256, model_sha256: value.model_sha256, user_feedback: value.user_feedback, created_at: value.created_at });
+  image_url: value.image_url, ai_predictions: value.ai_predictions.map((p) => ({ ...p, label_vi: labelVi(p.label) })), interpretation,
+  image_sha256: value.image_sha256, model_sha256: value.model_sha256, user_feedback: value.user_feedback, created_at: value.created_at });
 const documentView = (value: RagDocument) => ({ id: value._id.toHexString(), filename: value.filename, title: value.title, sha256: value.sha256,
-  page_count: value.page_count, chunk_count: value.chunks.length, status: value.status, created_at: value.created_at, updated_at: value.updated_at });
+  page_count: value.page_count, chunk_count: value.chunks.length, status: value.status, source: value.source, created_at: value.created_at, updated_at: value.updated_at });
 @Injectable()
 export class AiService {
   private pending = 0;
@@ -54,7 +57,8 @@ export class AiService {
         || !Array.isArray(result.classes) || !result.classes.length || result.classes.length > 1000
         || result.classes.some((c) => !Number.isSafeInteger(c.class_id) || c.class_id < 0 || typeof c.label !== 'string' || !c.label.trim() || c.label.length > 200)) throw new ServiceUnavailableException('Metadata model không hợp lệ');
       await this.recheck(user);
-      return { task: result.task, model_sha256: result.model_sha256, classes: result.classes.map(({ class_id, label }) => ({ class_id, label })) };
+      return { task: result.task, model_sha256: result.model_sha256, interpretation,
+        classes: result.classes.map(({ class_id, label }) => ({ class_id, label, label_vi: labelVi(label) })) };
     });
   }
   async diagnose(actor: string, zone: string | null, file?: AiUpload) {
@@ -135,6 +139,12 @@ export class AiService {
     return { files: (await readdir(dir, { withFileTypes: true })).filter((f) => f.isFile() && /\.pdf$/i.test(f.name)).map((f) => f.name).sort().slice(0, 100) };
   }
   async documents(actor: string) { await this.actor(actor, 'Admin'); return { documents: (await this.store.documents()).map(documentView) }; }
+  async prepared(actor: string) { await this.actor(actor, 'Admin'); return { files: await preparedEntries(this.config.root) }; }
+  async importPrepared(actor: string, filename: string) {
+    await this.actor(actor, 'Admin');
+    const { entry, bytes } = await loadPrepared(this.config.root, filename);
+    return this.importPdf(actor, entry.filename, bytes, entry.title, entry.source);
+  }
   async importFile(actor: string, filename: string, title?: string) {
     await this.actor(actor, 'Admin');
     if (!filename || /[/\\]/.test(filename) || !/\.pdf$/i.test(filename) || filename.length > 255) throw new BadRequestException('Tên PDF phải là file trong thư mục RAG');
@@ -144,7 +154,7 @@ export class AiService {
     const info = await stat(path); if (!info.isFile() || info.size > 10 * 1024 * 1024) throw new BadRequestException('PDF tối đa10MB');
     return this.importPdf(actor, filename, await readFile(path), title);
   }
-  async importPdf(actor: string, filename: string, bytes: Buffer, title?: string) {
+  async importPdf(actor: string, filename: string, bytes: Buffer, title?: string, source?: RagSource) {
     const admin = await this.actor(actor, 'Admin');
     if (!filename || /[/\\]/.test(filename) || filename.length > 255 || !/\.pdf$/i.test(filename) || bytes.length > 10 * 1024 * 1024 || !bytes.subarray(0, 5).equals(Buffer.from('%PDF-'))) throw new BadRequestException('Cần PDF hợp lệ tối đa10MB');
     if ((await this.store.documents()).length >= 100) throw new HttpException('Tối đa100 tài liệu RAG; kiểm tra corpus trước khi nhập thêm', HttpStatus.TOO_MANY_REQUESTS);
@@ -155,10 +165,11 @@ export class AiService {
         const hash = sha(bytes);
         if ((await this.store.documents()).some((v) => v.sha256 === hash)) throw new ConflictException('PDF đã được nhập');
         const extracted = await this.worker.extractPdf(bytes), chunks = makeChunks(extracted).map((c) => ({ ...c, id: sha(Buffer.from(`${hash}:${c.id}`)) }));
+        if (source && source.page_map.length !== extracted.page_count) throw new BadRequestException('Số trang PDF không khớp manifest');
         if ((await this.store.documents(true)).reduce((count, doc) => count + doc.chunks.length, 0) + chunks.length > 5000) throw new HttpException('Corpus vượt5000 chunks active; ngừng dùng tài liệu cũ trước khi nhập thêm', HttpStatus.TOO_MANY_REQUESTS);
         await this.recheck(admin);
         const now = new Date(), row: RagDocument = { _id: new ObjectId(), filename, title: title || filename.slice(0, 120), sha256: hash,
-          page_count: extracted.page_count, chunks, status: 'Active', created_by: actor, created_at: now, updated_at: now };
+          page_count: extracted.page_count, chunks, status: 'Active', created_by: actor, created_at: now, updated_at: now, ...(source ? { source } : {}) };
         // Keep immutable PDF bytes beside image files for coordinated file backup.
         const dir = join(this.config.root, 'storage/rag-documents'), name = `${row._id.toHexString()}.pdf`;
         await mkdir(dir, { recursive: true }); await writeFile(join(dir, name), bytes, { flag: 'wx' });

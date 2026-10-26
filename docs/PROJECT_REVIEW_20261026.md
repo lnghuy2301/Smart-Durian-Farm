@@ -13,7 +13,7 @@ Nhánh `feat/catalog-admin-completion`, kế thừa `87aea89`; workspace giữ c
 | IoT | Metadata Device/Sensor/Actuator,6 streams MQTT FINAL; telemetry/latest/history; Reset/Start/Stop/ACK/recovery, phân quyền và persistence | ACK là receipt; không chứng minh relay/bơm/van đã hoạt động; cần nghiệm thu xuyên suốt bằng ESP32 thật |
 | Dữ liệu/vận hành |13 bảng PG nghiệp vụ, technical workflows/audit;3 collection Mongo nghiệp vụ; migrations001–016, seed không ghi đè, backup/restore-check | Không có transaction chung PG/Mongo; backup cần dừng API theo guide, không coi là snapshot live |
 | Web | Theo vai trò, workflow/đối chiếu, QR tải PNG, tài khoản, IoT/control và các cải tiến26/10 đã có trong workspace | Nhiều thay đổi giao diện còn chưa commit; không tự gom/push thay người dùng |
-| AI | Có nền tảng YOLO11s-cls, lịch sử riêng, RAG PDF/Admin và hội thoại, Mongo017 | Chờ best.pt, chọn provider API và đánh giá thật; xem AI_BACKEND_IMPLEMENTATION.md |
+| AI | best.pt chạyCPU, top3 nhãn Việt, lịch sử riêng, corpus15 PDF/1.220 chunks và provenance018 | Còn chọn API chat, tập ảnh kiểm định và UI AI; xem AI_RAG_CORPUS_IMPLEMENTATION.md |
 
 ## Công việc đã thực hiện ngay trong đợt này
 

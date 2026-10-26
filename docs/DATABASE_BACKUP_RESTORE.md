@@ -1,5 +1,7 @@
 # Bổ sung AI — schema017 (26/10/2026)
 
+Cập nhật018: nguồn/trang/dự thảo lưu cùng corpus/citations; backup014–017 vẫn tương thích. [Corpus thực và restore-check](AI_RAG_CORPUS_IMPLEMENTATION.md) có15 snapshot PDF trong sidecar. PDF gốc trong inbox và weights phải sao lưu riêng.
+
 Backup mới bao gồm ba collection AI. Khi có ảnh chẩn đoán/PDF đã nhập, CLI tạo thêm `<archive>.json.assets/` với manifest/checksum; phải giữ và chuyển cùng file JSON. `verify` và `restore-check` kiểm tra cả hai; `restore-new` chỉ bổ sung file thiếu, từ chối ghi đè file khác hash. Archive014–016 vẫn phục hồi theo schema gốc rồi migrate tiếp. best.pt và PDF chưa nhập trong inbox là đầu vào riêng, cần tự sao lưu. Xem [AI_BACKEND_IMPLEMENTATION](AI_BACKEND_IMPLEMENTATION.md). Không đưa JSON/assets/model/private accounts lên Git.
 
 # Sao lưu, kiểm chứng phục hồi và chuẩn bị demo

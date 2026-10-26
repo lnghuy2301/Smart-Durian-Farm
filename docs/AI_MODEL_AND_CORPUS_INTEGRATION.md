@@ -1,5 +1,7 @@
 # Tích hợp model và PDF thật — 26/10/2026
 
+Đã chốt và triển khai tiếp: [AI_RAG_CORPUS_IMPLEMENTATION](AI_RAG_CORPUS_IMPLEMENTATION.md). Corpus15 PDF đã nhập, migration018 giữ nguồn/trang/dự thảo; top3 có nhãn tiếng Việt và thông báo gợi ý. Chat API chưa chọn. Các điểm “chờ chốt/chưa nhập” dưới đây là checkpoint trước quyết định mới.
+
 Nhánh `feat/ai-model-corpus-integration`, nền `41837bb`. Quyền API/lịch sử/CSDL theo [AI_BACKEND_IMPLEMENTATION](AI_BACKEND_IMPLEMENTATION.md). Chỉ làm backend/Python; giữ nguyên frontend/ERD/MQTT và PDF/weights gốc. Không thêm migration, không đổi .env, không tạo dữ liệu chẩn đoán giả trong database.
 
 ## Model đã kiểm tra
