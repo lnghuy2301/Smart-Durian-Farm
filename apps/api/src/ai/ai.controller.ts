@@ -24,6 +24,7 @@ export class AiFarmerGuard implements CanActivate {
 export class AiStatusController {
   constructor(@Inject(AiService) private readonly service: AiService) {}
   @Get('status') @Header('Cache-Control', 'no-store') status(@Req() req: AuthRequest) { return this.service.status(req.user!.id); }
+  @Get('model') @Header('Cache-Control', 'no-store') model(@Req() req: AuthRequest) { return this.service.model(req.user!.id); }
 }
 @ApiTags('ai-farmer') @ApiBearerAuth() @UseGuards(AuthGuard, AiFarmerGuard) @UseFilters(AiExceptionFilter) @Controller('ai')
 export class AiFarmerController {

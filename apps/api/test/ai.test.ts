@@ -3,13 +3,14 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
+import { createServer } from 'node:http';
 import { join, resolve, sep } from 'node:path';
 import { Test } from '@nestjs/testing';
 import { AppModule } from '../src/app.module';
 import { configureApplication } from '../src/application';
 import { readEnvironment } from '../src/config/environment';
 import { MockUserStore } from '../src/auth/mock-user.store';
-import { AiWorker, ChatProvider } from '../src/ai/ai.worker';
+import { AiWorker, ChatProvider, HttpAiWorker } from '../src/ai/ai.worker';
 import { AiStore } from '../src/ai/ai.store';
 import { Classification, Citation } from '../src/ai/ai.types';
 import { FarmsService } from '../src/farms/farms.service';
@@ -19,12 +20,31 @@ import { readAiConfig } from '../src/ai/ai.config';
 
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
 const prediction: Classification = { task: 'classify', model_sha256: 'a'.repeat(64), predictions: [{ class_id: 0, label: 'healthy', confidence: 0.9 }] };
+
+test('AI HTTP adapter requests model readiness with authenticated GET and images with POST', async () => {
+  const token = 'fixture-only-ai-token-long-enough-for-test', calls: { method?: string; url?: string; bytes: number }[] = [];
+  const server = createServer(async (req, res) => {
+    assert.equal(req.headers.authorization, `Bearer ${token}`);
+    let bytes = 0; for await (const part of req) bytes += part.length;
+    calls.push({ method: req.method, url: req.url, bytes });
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify(req.url === '/v1/model' ? { task: 'classify', model_sha256: prediction.model_sha256, classes: [{ class_id: 0, label: 'healthy' }] } : prediction));
+  });
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const port = (server.address() as { port: number }).port;
+    const worker = new HttpAiWorker({ enabled: true, url: `http://127.0.0.1:${port}`, token, root: tmpdir(), timeoutMs: 3000 });
+    assert.equal((await worker.model() as { task: string }).task, 'classify');
+    await worker.classify(Buffer.from('fixture-image-bytes'));
+    assert.deepEqual(calls, [{ method: 'GET', url: '/v1/model', bytes: 0 }, { method: 'POST', url: '/v1/classify', bytes: 19 }]);
+  } finally { await new Promise<void>((resolve) => server.close(() => resolve())); }
+});
 async function fixture() {
   const root = await mkdtemp(join(tmpdir(), 'sdf-ai-'));
   const config = readEnvironment({ NODE_ENV: 'test', AUTH_MODE: 'mock', DATABASE_URL: 'postgresql://test:test@127.0.0.1:1/test', MONGODB_URI: 'mongodb://127.0.0.1:1/test',
     AUTH_TEST_PHONE: '0900000000', AUTH_TEST_PASSWORD: 'AiFixtureOnly123!', AUTH_TEST_ADMIN_PHONE: '0900000001', AUTH_TEST_ADMIN_PASSWORD: 'AiAdminFixtureOnly123!', JWT_SECRET: 'ai-fixture-secret-with-at-least-32-bytes' });
   config.ai = { ...config.ai!, enabled: true, token: 'test-only-internal-token'.repeat(2), root };
-  const worker = { classify: async (): Promise<Classification> => structuredClone(prediction), extractPdf: async () => ({ page_count: 2, pages: [{ page: 2, text: 'Bệnh thối rễ sầu riêng cần thoát nước tốt. Theo dõi rễ cây và độ ẩm đất thường xuyên.' }] }) };
+  const worker = { model: async () => ({ task: 'classify', model_sha256: prediction.model_sha256, classes: [{ class_id: 0, label: 'healthy' }] }), classify: async (): Promise<Classification> => structuredClone(prediction), extractPdf: async () => ({ page_count: 2, pages: [{ page: 2, text: 'Bệnh thối rễ sầu riêng cần thoát nước tốt. Theo dõi rễ cây và độ ẩm đất thường xuyên.' }] }) };
   const provider = { enabled: false, configured() { return this.enabled; }, generate: async (input: { contexts: Citation[] }) => ({ text: 'Tài liệu hướng dẫn thoát nước tốt và theo dõi độ ẩm đất.', used_chunk_ids: [input.contexts[0].chunk_id] }) };
   const module = await Test.createTestingModule({ imports: [AppModule.register(config)] }).overrideProvider(AiWorker).useValue(worker).overrideProvider(ChatProvider).useValue(provider).compile();
   const app = module.createNestApplication({ logger: false }); configureApplication(app, config); await app.listen(0, '127.0.0.1');
@@ -45,6 +65,10 @@ test('AI diagnoses are private Farmer records, allow standalone images and enfor
   const f = await fixture();
   try {
     assert.equal((await f.http('ai/diagnoses')).status, 401);
+    assert.equal((await f.http('ai/model', 'GET', undefined, f.tokens.manager)).status, 403);
+    f.worker.model = async () => ({ task: 'classify', model_sha256: prediction.model_sha256, classes: [{ class_id: 0, label: 'healthy' }] });
+    const model = await f.http('ai/model', 'GET', undefined, f.tokens.owner);
+    assert.equal(model.status, 200); assert.equal((await model.json() as { classes: { label: string }[] }).classes[0].label, 'healthy');
     assert.equal((await f.upload(f.tokens.admin)).status, 403);
     assert.equal((await f.upload(f.tokens.manager)).status, 403);
     assert.equal((await f.upload(f.tokens.owner, undefined, Buffer.from('<svg/>'))).status, 400);

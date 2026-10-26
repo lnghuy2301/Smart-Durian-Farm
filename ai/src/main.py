@@ -27,6 +27,14 @@ def create_app(classifier=None, token=None):
     def health():
         return {"status": "ok", "model_file_present": model.path.is_file(), "task": "classify"}
 
+    @app.get("/v1/model", dependencies=[Depends(authorize)])
+    async def model_info():
+        try:
+            from starlette.concurrency import run_in_threadpool
+            return await run_in_threadpool(model.describe)
+        except Exception:
+            raise HTTPException(503, "Classification model not ready or busy") from None
+
     async def payload(request: Request, limit: int):
         data = bytearray()
         async for block in request.stream():

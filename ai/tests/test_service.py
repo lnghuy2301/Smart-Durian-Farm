@@ -8,8 +8,15 @@ from pypdf import PdfWriter
 from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
 from src.diagnosis.classifier import Classifier
 from src.main import create_app
+from src.rag.extract import readable_text
 
 TOKEN = "test-only-internal-token-32-characters-long"
+
+
+def test_vietnamese_font_names_decode_exactly_and_corrupt_encoding_is_rejected():
+    assert readable_text("HƯ/uni1EDANG D/uni1EAAN") == "HƯỚNG DẪN"
+    with pytest.raises(ValueError):
+        readable_text("Broken VietGAP: \u0019\u0011")
 
 
 def picture():
@@ -78,6 +85,23 @@ def test_classification_is_lazy_singleton_with_top_scores_and_hash(tmp_path):
         assert [p["label"] for p in result["predictions"]] == ["disease", "healthy", "other"]
         assert result["predictions"][0]["confidence"] == 0.7
     assert len(loads) == 1
+
+
+def test_model_readiness_requires_loading_and_retains_exact_class_names(tmp_path):
+    runner, loads = classifier(tmp_path)
+    client = TestClient(create_app(runner, TOKEN))
+    auth = {"Authorization": "Bearer " + TOKEN}
+    assert client.get("/v1/model").status_code == 401
+    for _ in range(2):
+        response = client.get("/v1/model", headers=auth)
+        assert response.status_code == 200
+        assert response.json()["classes"] == [
+            {"class_id": 0, "label": "healthy"}, {"class_id": 1, "label": "disease"},
+            {"class_id": 2, "label": "other"},
+        ]
+    assert len(loads) == 1
+    runner, _ = classifier(tmp_path, "detect")
+    assert TestClient(create_app(runner, TOKEN)).get("/v1/model", headers=auth).status_code == 503
 
 
 def test_wrong_task_and_invalid_images_do_not_create_predictions(tmp_path):

@@ -3,6 +3,7 @@ import { AiConfig } from './ai.config';
 import { Classification, PdfPages, Citation } from './ai.types';
 
 export abstract class AiWorker {
+  async model(): Promise<unknown> { throw new ServiceUnavailableException('Model chưa sẵn sàng'); }
   abstract classify(bytes: Buffer): Promise<Classification>;
   abstract extractPdf(bytes: Buffer): Promise<PdfPages>;
 }
@@ -16,13 +17,14 @@ export class DisabledChatProvider extends ChatProvider {
 }
 export class HttpAiWorker extends AiWorker {
   constructor(private readonly config: AiConfig) { super(); }
+  async model() { return this.request('/v1/model'); }
   async classify(bytes: Buffer) { return this.request('/v1/classify', bytes, 'application/octet-stream') as Promise<Classification>; }
   async extractPdf(bytes: Buffer) { return this.request('/v1/extract-pdf', bytes, 'application/pdf') as Promise<PdfPages>; }
-  private async request(path: string, bytes: Buffer, type: string): Promise<unknown> {
+  private async request(path: string, bytes?: Buffer, type?: string): Promise<unknown> {
     if (!this.config.enabled) throw new ServiceUnavailableException('AI service chưa được bật');
     try {
-      const response = await fetch(this.config.url + path, { method: 'POST', redirect: 'error', signal: AbortSignal.timeout(this.config.timeoutMs),
-        headers: { Authorization: `Bearer ${this.config.token}`, 'Content-Type': type }, body: new Uint8Array(bytes) });
+      const response = await fetch(this.config.url + path, { method: bytes ? 'POST' : 'GET', redirect: 'error', signal: AbortSignal.timeout(this.config.timeoutMs),
+        headers: { Authorization: `Bearer ${this.config.token}`, ...(type ? { 'Content-Type': type } : {}) }, body: bytes ? new Uint8Array(bytes) : undefined });
       if (response.status === 422 || response.status === 413) throw new BadRequestException('Ảnh/PDF không hợp lệ hoặc vượt giới hạn xử lý');
       if (!response.ok) throw new Error('AI unavailable');
       const reader = response.body?.getReader(); if (!reader) throw new Error('Empty response');

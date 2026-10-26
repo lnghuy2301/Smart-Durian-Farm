@@ -25,6 +25,25 @@
       "response": []
     },
     {
+      "name": "Farmer model readiness and classes",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_FARMER_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/model"
+      },
+      "response": []
+    },
+    {
       "name": "Farmer history",
       "request": {
         "method": "GET",

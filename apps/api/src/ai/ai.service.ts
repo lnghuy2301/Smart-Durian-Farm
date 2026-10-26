@@ -45,6 +45,18 @@ export class AiService {
     return { image_service_enabled: this.config.enabled, image_task: 'classify', declared_model: 'yolo11s-cls',
       chat_provider_configured: this.chat.configured(), retrieval: 'BM25', zone_optional: true };
   }
+  async model(actor: string) {
+    const user = await this.actor(actor);
+    if (!['Farmer', 'Admin'].includes(user.user.role)) throw new ForbiddenException('Vai trò không dùng AI');
+    return this.slot(async () => {
+      const result = await this.worker.model() as { task?: unknown; model_sha256?: unknown; classes?: { class_id: number; label: string }[] };
+      if (!result || result.task !== 'classify' || typeof result.model_sha256 !== 'string' || !/^[a-f\d]{64}$/.test(result.model_sha256)
+        || !Array.isArray(result.classes) || !result.classes.length || result.classes.length > 1000
+        || result.classes.some((c) => !Number.isSafeInteger(c.class_id) || c.class_id < 0 || typeof c.label !== 'string' || !c.label.trim() || c.label.length > 200)) throw new ServiceUnavailableException('Metadata model không hợp lệ');
+      await this.recheck(user);
+      return { task: result.task, model_sha256: result.model_sha256, classes: result.classes.map(({ class_id, label }) => ({ class_id, label })) };
+    });
+  }
   async diagnose(actor: string, zone: string | null, file?: AiUpload) {
     const user = await this.actor(actor, 'Farmer');
     if (!file || !Buffer.isBuffer(file.buffer) || !file.buffer.length || file.buffer.length > 5 * 1024 * 1024) throw new BadRequestException('Cần ảnh JPEG/PNG tối đa5MB');
