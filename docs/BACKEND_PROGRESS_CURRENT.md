@@ -1,5 +1,7 @@
 # Cập nhật AI26/10/2026
 
+Hiện hành27/10: [Flash-Lite và sẵn sàng nghiệm thu](PRE_ACCEPTANCE_READINESS.md). Code các module đã chốt đã có; model Gemini default/env chuyển3.1 Flash-Lite. Pre-check chỉ đọc xác nhận DB/corpus/ảnh/metadata ready, còn key trống. Không còn backlog “chưa có AI/weights/provider”; các việc còn lại là nghiệm thu live, chất lượng dữ liệu AI và quyết định production/release.
+
 27/10 — [Gemini](GEMINI_CHATBOT_IMPLEMENTATION.md) đã triển khai REST adapter, structured output/nguồn hợp lệ và lưu cặp tin nhắn nguyên tử, không thêm migration. Thiếu key vẫn chạy API, chặn gửi chat; người dùng tự điền GEMINI_API_KEY trong .env. UI AI local đã nối sẵn. Các checkpoint “chưa chọn API/chưa có UI” dưới đây là lịch sử.
 
 Checkpoint cuối: [ảnh và RAG thực](AI_RAG_CORPUS_IMPLEMENTATION.md) đã sẵn backend: best.pt chạyCPU, top3 nhãn Việt, corpus15 PDF/9 nguồn/396 trang/1.220 chunks, provenance018. Backend266/persistence310/Python10 đạt, backup/restore thực đạt. Còn chọn API chatbot, ảnh kiểm định accuracy và UI AI; không dùng các dòng “chưa có weights/chưa nhập” của checkpoint cũ bên dưới làm trạng thái hiện tại.

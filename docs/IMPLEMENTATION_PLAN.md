@@ -1,5 +1,11 @@
 # Kế hoạch triển khai tiếp theo
 
+## Hiện hành27/10 — sẵn sàng cho nghiệm thu local
+
+[PRE_ACCEPTANCE_READINESS](PRE_ACCEPTANCE_READINESS.md) là danh sách việc hiện tại: Gemini3.1 Flash-Lite đã được cấu hình, code nghiệp vụ/AI và persistence đã có. Chạy check:acceptance, điền key rồi nghiệm thu bốn vai trò, Gemini/ảnh và hardware thật; không seed/migrate hoặc viết lại module để bắt đầu test. TCVN lỗi font cần nguồn thay thế nếu muốn bổ sung. Production/release còn cần chốt host/Auth/TLS và quyền push/merge riêng.
+
+## Lịch sử checkpoint — không dùng mô tả chờ weights/API cũ làm backlog hiện tại
+
 27/10: [Gemini chatbot](GEMINI_CHATBOT_IMPLEMENTATION.md) đã có adapter, nguồn/trích dẫn và private history; .env có key trống để người dùng điền. Không còn chờ chọn vendor. Bước tiếp theo: nghiệm thu live sau điền key, đánh giá câu trả lời/ảnh thật và hoàn tất release/deploy; giữ nguyên corpus018 và frontend riêng.
 
 Cập nhật mới nhất26/10: [AI ảnh và corpus thực](AI_RAG_CORPUS_IMPLEMENTATION.md) đã có model chạyCPU,15 PDF/1.220 chunks và provenance018. Không nhập lại hoặc seed lại. AI tiếp theo là chọn API chatbot, đánh giá ảnh có nhãn và giao diện AI; các dòng chờ nhận weights/corpus bên dưới là lịch sử trước lần nhập này.

@@ -7,6 +7,7 @@
     "start:dev": "npm run build && concurrently -k \"tsc -p tsconfig.build.json --watch\" \"node --watch --watch-preserve-output dist/main.js\"",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
+    "check:acceptance": "npm run build && node dist/ai/pre-acceptance-cli.js",
     "lint": "eslint src test integration",
     "test": "tsc --outDir .test-dist && node --test --test-concurrency=2 .test-dist/test",
     "test:integration": "tsc --outDir .integration-dist && node --test .integration-dist/integration/database.integration.js",

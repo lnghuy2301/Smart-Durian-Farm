@@ -1,5 +1,7 @@
 # Ghi chú kỹ thuật hiện hành
 
+Gemini model hiện hành gemini-3.1-flash-lite; [pre-acceptance](PRE_ACCEPTANCE_READINESS.md) có lệnh chỉ đọc và phân biệt configured với live-tested. AI key không hiển thị hoặc gửi trong pre-check; worker Python chỉ local. Exit1 khi thiếu key/service là readiness cần chuẩn bị, không tự sửa dữ liệu hoặc bịa trạng thái đạt.
+
 27/10 follow-up: [khóa backlog canh tác](CULTIVATION_BACKLOG_BATCHING_FIX.md) giảm512→128 replacements/lô để dành ngân sách10s cho snapshot/verification. Không bỏ xác minh hash hoặc tăng timeout; giữ toàn vẹn từng batch. Backlog lớn cần nhiều snapshot hơn, không hứa thời gian phản hồi cố định.
 
 27/10 Gemini: [guide](GEMINI_CHATBOT_IMPLEMENTATION.md). API key server-only, host Google cố định, không retry generation; timeout30s và payload128KiB. Chỉ lưu cặp tin nhắn sau khi JSON/source/quyền/CAS hợp lệ. Không cần Python để chat, không migration/seed hoặc sửa dữ liệu vận hành. AI_CHAT_PROVIDER=gemini và GEMINI_API_KEY trống được chuẩn bị trong .env, chỉ đổi riêng provider và thêm key thiếu; không in/commit secrets.

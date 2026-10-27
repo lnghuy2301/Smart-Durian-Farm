@@ -15,7 +15,7 @@ function workspaceRoot() {
 export function readAiConfig(env: NodeJS.ProcessEnv): AiConfig {
   const provider = env.AI_CHAT_PROVIDER ?? 'disabled';
   if (provider !== 'disabled' && provider !== 'gemini') throw new Error('Invalid AI_CHAT_PROVIDER');
-  const apiKey = env.GEMINI_API_KEY?.trim() ?? '', model = env.GEMINI_MODEL ?? 'gemini-3.8-flash';
+  const apiKey = env.GEMINI_API_KEY?.trim() ?? '', model = env.GEMINI_MODEL ?? 'gemini-3.1-flash-lite';
   const timeoutMs = Number(env.GEMINI_TIMEOUT_MS ?? '30000'), maxOutputTokens = Number(env.GEMINI_MAX_OUTPUT_TOKENS ?? '4096');
   if ((apiKey && !/^[a-zA-Z0-9_-]{20,256}$/.test(apiKey)) || !/^gemini-[a-z0-9.-]{1,80}$/.test(model)
     || !Number.isInteger(timeoutMs) || timeoutMs < 1000 || timeoutMs > 40000 || !Number.isInteger(maxOutputTokens) || maxOutputTokens < 512 || maxOutputTokens > 8192) throw new Error('Invalid Gemini configuration');

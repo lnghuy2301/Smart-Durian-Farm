@@ -1,5 +1,7 @@
 # Smart Durian Farm — đặc tả hiện hành
 
+Chỉ dẫn trước nghiệm thu: [PRE_ACCEPTANCE_READINESS](PRE_ACCEPTANCE_READINESS.md), Gemini3.1 Flash-Lite, công cụ kiểm tra local chỉ đọc và các giới hạn/chờ nghiệm thu thực. Không suy ra Google/hardware đã được kiểm chứng từ kiểm thử giả lập.
+
 27/10 cập nhật chat: [Gemini RAG](GEMINI_CHATBOT_IMPLEMENTATION.md) đã có adapter và UI local gọi API; dùng key riêng ở server. Chờ nghiệm thu Google live/quota, không còn chờ chọn API. Các mô tả cũ dưới đây giữ làm checkpoint.
 
 AI hiện hành theo [AI_RAG_CORPUS_IMPLEMENTATION](AI_RAG_CORPUS_IMPLEMENTATION.md): model thật chạyCPU, top3 nhãn Việt giữ điểm/nhãn gốc, corpus15 PDF nguồn/trang/dự thảo018. Chat API chưa chọn, không có câu trả lời sinh thật; accuracy chưa đánh giá, UI AI chưa làm. Phần chờ weights trong checkpoint trước dưới đây đã hoàn tất.

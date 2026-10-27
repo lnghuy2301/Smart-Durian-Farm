@@ -9,6 +9,7 @@ import { readAiConfig, GeminiConfig } from '../src/ai/ai.config';
 import { GeminiChatProvider } from '../src/ai/gemini.provider';
 import { ChatProvider } from '../src/ai/ai.worker';
 import { Citation } from '../src/ai/ai.types';
+import { geminiReadiness } from '../src/ai/pre-acceptance-cli';
 
 const config: GeminiConfig = { provider: 'gemini', apiKey: 'fixture-gemini-key-never-real-12345', model: 'gemini-3.8-flash', timeoutMs: 1000, maxOutputTokens: 4096 };
 const context: Citation = { document_id: 'private-mongo-id', filename: 'prepared.pdf', sha256: 'b'.repeat(64), page: 1, chunk_id: 'a'.repeat(64), excerpt: 'Theo dõi độ ẩm và thoát nước.',
@@ -20,7 +21,12 @@ const status = (expected: number) => (e: unknown) => e instanceof HttpException 
 
 test('Gemini configuration tolerates absent key, rejects unsafe model/config, and factory selects the real adapter', async () => {
   const empty = readAiConfig({ AI_CHAT_PROVIDER: 'gemini' });
+  assert.equal(empty.chat!.model, 'gemini-3.1-flash-lite');
   assert.equal(new GeminiChatProvider(empty.chat!).configured(), false);
+  assert.equal(geminiReadiness(empty).state, 'needs_setup');
+  const configured = geminiReadiness({ ...empty, chat: { ...config, model: 'gemini-3.1-flash-lite' } });
+  assert.equal(configured.state, 'ready'); assert(!JSON.stringify(configured).includes(config.apiKey));
+  assert.equal((configured.details as { live_api_tested: boolean }).live_api_tested, false);
   for (const env of [{ AI_CHAT_PROVIDER: 'other' }, { GEMINI_MODEL: '../../evil' }, { GEMINI_API_KEY: 'line\nbreak' }, { GEMINI_TIMEOUT_MS: 'NaN' }, { GEMINI_MAX_OUTPUT_TOKENS: '9000' }]) assert.throws(() => readAiConfig(env));
   const env = readEnvironment({ NODE_ENV: 'test', AUTH_MODE: 'mock', DATABASE_URL: 'postgresql://test:test@127.0.0.1:1/test', MONGODB_URI: 'mongodb://127.0.0.1:1/test', AUTH_TEST_PHONE: '0900000000', AUTH_TEST_PASSWORD: 'FixturePassword!',
     AUTH_TEST_ADMIN_PHONE: '0900000001', AUTH_TEST_ADMIN_PASSWORD: 'FixtureAdminPassword!', JWT_SECRET: 'fixture-only-jwt-secret-at-least32chars', AI_CHAT_PROVIDER: 'gemini' });
@@ -29,20 +35,23 @@ test('Gemini configuration tolerates absent key, rejects unsafe model/config, an
   finally { await module.close(); }
 });
 
-test('Gemini uses fixed HTTPS host, secret header, bounded whitelisted context and JSON source enum', async () => {
+test('Gemini Flash-Lite and Flash use fixed HTTPS host, secret header, bounded context and JSON source enum', async () => {
+  for (const model of ['gemini-3.1-flash-lite', 'gemini-3.8-flash']) {
   let calls = 0;
-  const provider = new GeminiChatProvider(config, async (url, options) => {
-    calls++; assert.equal(url, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent');
+  const provider = new GeminiChatProvider({ ...config, model }, async (url, options) => {
+    calls++; assert.equal(url, `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`);
     assert.equal(options?.method, 'POST'); assert.equal(options?.redirect, 'error');
     assert.equal((options?.headers as Record<string, string>)['x-goog-api-key'], config.apiKey);
     const raw = String(options?.body), body = JSON.parse(raw); assert(!raw.includes(config.apiKey)); assert(!raw.includes(context.document_id));
     const data = JSON.parse(body.contents[0].parts[0].text);
     assert.equal(data.contexts[0].source.page, 265); assert.equal(data.contexts[0].source.is_draft, true);
     assert.equal(data.history.length, 6); assert.equal(body.tools, undefined);
+    assert.equal(body.generationConfig.thinkingConfig.thinkingLevel, 'LOW');
     assert.deepEqual(body.generationConfig.responseFormat.text.schema.properties.used_chunk_ids.items.enum, [context.chunk_id]);
     return Response.json(envelope(good));
   });
   assert.deepEqual(await provider.generate({ ...input, history: Array.from({ length: 20 }, () => input.history[0]) }), good); assert.equal(calls, 1);
+  }
 });
 
 test('Gemini never calls with missing key and sanitizes quota/auth/upstream/timeout errors without retry', async () => {

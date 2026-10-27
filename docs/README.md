@@ -4,6 +4,8 @@ Cập nhật 21/10/2026. Đọc checkpoint hiện hành trước các báo cáo 
 
 ## Điểm bắt đầu
 
+[Chuẩn bị nghiệm thu toàn diện27/10](PRE_ACCEPTANCE_READINESS.md): đúng model Gemini3.1 Flash-Lite, lệnh check:acceptance chỉ đọc, module đã có và các bước live/production còn cần người dùng.
+
 [Chatbot Gemini27/10](GEMINI_CHATBOT_IMPLEMENTATION.md): cấu hình key server, adapter REST/structured output, RAG/trích dẫn, private history và cách kiểm thử live. Không migration/seed; giữ corpus018.
 
 [AI ảnh/corpus đã nhập](AI_RAG_CORPUS_IMPLEMENTATION.md):15 PDF/9 nguồn,396 trang/1.220 chunks; nguồn/trang gốc và nhãn dự thảo, migration018, nhãn Việt/top3. Có hướng dẫn chuẩn bị/import/check/backup, chat API vẫn disabled.

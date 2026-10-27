@@ -1,5 +1,7 @@
 # AI — YOLO11s-cls và chatbot RAG
 
+Hiện hành: [chuẩn bị nghiệm thu](../docs/PRE_ACCEPTANCE_READINESS.md), Gemini model `gemini-3.1-flash-lite`; dùng `npm run check:acceptance --workspace @smart-durian/api` để kiểm cấu hình/DB/corpus/worker mà không gọi Google hoặc ghi dữ liệu.
+
 27/10: [Chatbot Gemini](../docs/GEMINI_CHATBOT_IMPLEMENTATION.md) đã có adapter REST, RAG/citations và lưu hội thoại. Điền GEMINI_API_KEY trong .env rồi restart API; không cần Python để chat. Thiếu key vẫn khởi động bình thường, không giả câu trả lời. Các checkpoint “chưa chọn API/disabled” bên dưới là lịch sử.
 
 Checkpoint mới nhất: [AI ảnh/corpus đã nhập](../docs/AI_RAG_CORPUS_IMPLEMENTATION.md). Model thật chạyCPU;15 PDF/9 nguồn/396 trang/1.220 chunks đã nhập. Dự thảo có nhãn, trích dẫn giữ trang gốc, file gốc không sửa; migration018. Chat API tiếp tục disabled theo lựa chọn người dùng. Guide bên dưới giữ lịch sử chuẩn bị nền tảng.

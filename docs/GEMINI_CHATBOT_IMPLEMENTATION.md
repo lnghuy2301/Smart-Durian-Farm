@@ -1,5 +1,7 @@
 # Chatbot RAG với Gemini — 27/10/2026
 
+Lựa chọn mới nhất: [Gemini3.1 Flash-Lite và pre-check](PRE_ACCEPTANCE_READINESS.md). .env/default/example đã đổi sang gemini-3.1-flash-lite, giữ key trống và giới hạn hiện có. Các mô tả default3.8 bên dưới là checkpoint adapter ban đầu;3.8 vẫn được hỗ trợ nếu cấu hình chủ động.
+
 Nhánh sửa kế tiếp đã tách riêng [backlog canh tác](CULTIVATION_BACKLOG_BATCHING_FIX.md); nhánh đó kế thừa toàn bộ Gemini. Xem kết quả cuối trong guide sửa backlog, không dùng kết quả full suite lỗi ở checkpoint ban đầu dưới đây làm kết luận sau sửa.
 
 Kết quả cuối sau sửa backlog: full persistence311/311 đạt, không fail/skip. Backend271/271, Python10/10 và web24 unit/58 regression/10 AI/5 database browser đạt; lint/typecheck/build đạt. Google live vẫn chưa chạy vì người dùng chưa điền key.

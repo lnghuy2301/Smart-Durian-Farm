@@ -14,6 +14,7 @@ import { configureApplication } from '../src/application';
 import { readEnvironment } from '../src/config/environment';
 import { AiWorker, ChatProvider, DisabledChatProvider } from '../src/ai/ai.worker';
 import { GeminiChatProvider } from '../src/ai/gemini.provider';
+import { preAcceptanceCheck } from '../src/ai/pre-acceptance-cli';
 import { Citation } from '../src/ai/ai.types';
 import { MongoAiStore } from '../src/ai/ai.store';
 import { createDatabaseBackup, restoreIntoEmptyDatabase, sealBackup } from '../src/persistence/backup';
@@ -131,6 +132,18 @@ test('AI full database runtime shares users/Zone authority, retains private hist
       const restored = await (await http(`ai/conversations/${conversation}`, 'GET', undefined, farmerToken)).json() as { messages: unknown[] };
       assert.equal(restored.messages.length, saved.messages.length);
       await app!.close(); app = undefined;
+    });
+    await t.test('pre-acceptance reports configuration without calling Gemini or changing database data', async () => {
+      const before = await createDatabaseBackup(f.pool, f.mongo, f.mongo.db(f.name));
+      const report = await preAcceptanceCheck({ NODE_ENV: 'test', DATABASE_URL: `${taskPgBase}/${f.name}`,
+        MONGODB_URI: `mongodb://127.0.0.1:27028/${f.name}?replicaSet=rs-test&directConnection=true`,
+        AUTH_TEST_PHONE: taskAuth.phoneNumber, AUTH_TEST_ADMIN_PHONE: taskAuth.admin.phoneNumber, DEMO_DEVICE_STATION_ID: 'TASK_FIXTURE_ONLY' },
+      { ...config.ai!, url: 'http://127.0.0.1:1', timeoutMs: 1000, chat: { provider: 'gemini', apiKey: 'fixture-only-readiness-secret-key', model: 'gemini-3.1-flash-lite', timeoutMs: 1000, maxOutputTokens: 4096 } });
+      assert.equal(report.scope, 'read_only_local_pre_acceptance');
+      assert.equal(report.checks.find((c) => c.name === 'gemini_configuration')!.state, 'ready');
+      assert.equal(report.checks.find((c) => c.name === 'local_image_worker')!.state, 'not_running');
+      assert(!JSON.stringify(report).includes('fixture-only-readiness-secret-key'));
+      assert.equal((await createDatabaseBackup(f.pool, f.mongo, f.mongo.db(f.name))).data_sha256, before.data_sha256);
     });
     await t.test('backup018 restores AI BSON records and metadata exactly into new databases', async () => {
       const archive = await createDatabaseBackup(f.pool, f.mongo, f.mongo.db(f.name));
