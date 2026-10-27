@@ -20,10 +20,12 @@ export class MongoCultivationStore {
     for (;;) {
       const result = await this.transaction(async (session): Promise<{ done: false } | { done: true; value: T }> => {
         const before = await this.snapshot(session), now = this.clock();
-        // Restart can leave10k overdue events. Commit the earliest512 and head
+        // Restart can leave10k overdue events. Commit the earliest128 and head
         // atomically per transaction, preserving ordering without extending the
         // deadline or attempting10k updates inside one10s transaction.
-        before.journal.lockDue(now, 512);
+        // Leave room for the full snapshot read/verification in the same10s
+        // transaction;512 replacements can exhaust that budget under load.
+        before.journal.lockDue(now, 128);
         const afterLock = before.journal.snapshot();
         if (afterLock.events.some((event) => event.status === 'Pending' && Date.parse(event.lock_at) <= now)) {
           await this.commit(session, before.ledger, before.snapshot, afterLock); return { done: false };

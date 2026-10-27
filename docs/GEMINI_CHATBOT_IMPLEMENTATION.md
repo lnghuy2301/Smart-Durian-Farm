@@ -1,5 +1,9 @@
 # Chatbot RAG với Gemini — 27/10/2026
 
+Nhánh sửa kế tiếp đã tách riêng [backlog canh tác](CULTIVATION_BACKLOG_BATCHING_FIX.md); nhánh đó kế thừa toàn bộ Gemini. Xem kết quả cuối trong guide sửa backlog, không dùng kết quả full suite lỗi ở checkpoint ban đầu dưới đây làm kết luận sau sửa.
+
+Kết quả cuối sau sửa backlog: full persistence311/311 đạt, không fail/skip. Backend271/271, Python10/10 và web24 unit/58 regression/10 AI/5 database browser đạt; lint/typecheck/build đạt. Google live vẫn chưa chạy vì người dùng chưa điền key.
+
 Nhánh `feat/ai-gemini-chatbot`, nền `e8d92df`. Người dùng đã chọn Gemini và tự điền key trong .env. Backend dùng adapter Gemini thật; kiểm thử dùng HTTP/provider giả lập, không gọi Google bằng key thật. Giữ UI AI đang có, corpus15 PDF/1.220 chunks, quyền Farmer và database018. Không migration, seed, sửa nguồn PDF/weights hoặc gửi MQTT/SMS/email.
 
 ## Cấu hình và chạy
