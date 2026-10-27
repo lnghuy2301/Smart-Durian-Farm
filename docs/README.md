@@ -4,6 +4,8 @@ Cập nhật 21/10/2026. Đọc checkpoint hiện hành trước các báo cáo 
 
 ## Điểm bắt đầu
 
+[Chạy4 terminal và danh sách nghiệm thu toàn diện](RUN_AND_FULL_ACCEPTANCE.md): thứ tự lệnh, vai trò, nghiệp vụ/AI/hardware, kết quả mong đợi, phần chưa được kiểm chứng và cách backup/kết thúc phiên.
+
 [Chuẩn bị nghiệm thu toàn diện27/10](PRE_ACCEPTANCE_READINESS.md): đúng model Gemini3.1 Flash-Lite, lệnh check:acceptance chỉ đọc, module đã có và các bước live/production còn cần người dùng.
 
 [Chatbot Gemini27/10](GEMINI_CHATBOT_IMPLEMENTATION.md): cấu hình key server, adapter REST/structured output, RAG/trích dẫn, private history và cách kiểm thử live. Không migration/seed; giữ corpus018.

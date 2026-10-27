@@ -1,5 +1,7 @@
 # Smart Durian Farm
 
+Hướng dẫn hiện hành: [4 terminal, lệnh chạy và checklist kiểm thử toàn diện](docs/RUN_AND_FULL_ACCEPTANCE.md). Dùng dữ liệu hiện có, không seed lại; AI worker/API/web chạy riêng, database chạy nền qua Docker.
+
 Ứng dụng quản lý vườn sầu riêng: React/TypeScript/Vite, NestJS, PostgreSQL, MongoDB và MQTT/ESP32. Cập nhật21/10/2026: MQTT FINAL (`fd7a4fb`) và công cụ backup/restore/demo-readiness, kế thừa database runtime `1f6c1fd` và cleanup `92ce66f`.
 
 ## Đọc trước
