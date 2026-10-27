@@ -7,7 +7,7 @@ import { DatabaseService } from '../database/database.service';
 import { migrationStatus } from '../persistence/migrations';
 import { assertAiSourceSchema } from '../persistence/ai-source-schema';
 import { demoReadiness } from '../persistence/demo-readiness';
-import { AiConfig, readAiConfig } from './ai.config';
+import { AiConfig, AiConfigurationError, readAiConfig } from './ai.config';
 import { MongoAiStore } from './ai.store';
 import { HttpAiWorker } from './ai.worker';
 import { retrieve } from './ai.rag';
@@ -16,6 +16,12 @@ export interface AcceptanceCheck { name: string; state: 'ready' | 'needs_setup' 
 export function geminiReadiness(config: AiConfig): AcceptanceCheck {
   return { name: 'gemini_configuration', state: config.chat?.provider === 'gemini' && !!config.chat.apiKey ? 'ready' : 'needs_setup',
     details: { provider: config.chat?.provider ?? 'disabled', model: config.chat?.model, key_present: !!config.chat?.apiKey, live_api_tested: false } };
+}
+export function acceptanceFailure(error: unknown) {
+  return { scope: 'read_only_local_pre_acceptance', can_start_full_manual_acceptance: false,
+    checks: [{ name: 'configuration_or_services', state: 'needs_setup', details: error instanceof AiConfigurationError
+      ? { field: error.field, message: error.hint }
+      : { message: 'Không hoàn tất kiểm tra; kiểm tra kết nối database, ledger và cấu hình local. Không tự sửa dữ liệu.' } }] };
 }
 export async function preAcceptanceCheck(env: NodeJS.ProcessEnv, config = readAiConfig(env)) {
   const checks: AcceptanceCheck[] = [geminiReadiness(config)];
@@ -65,5 +71,5 @@ export async function preAcceptanceCheck(env: NodeJS.ProcessEnv, config = readAi
 if (require.main === module) {
   loadEnv({ path: resolve(__dirname, '../../../../.env') });
   void preAcceptanceCheck(process.env).then((result) => { console.log(JSON.stringify(result, null, 2)); if (!result.can_start_full_manual_acceptance) process.exitCode = 1; })
-    .catch(() => { console.error('Pre-acceptance check failed; verify local configuration/services. No credentials or provider response logged.'); process.exitCode = 1; });
+    .catch((error: unknown) => { console.log(JSON.stringify(acceptanceFailure(error), null, 2)); process.exitCode = 1; });
 }

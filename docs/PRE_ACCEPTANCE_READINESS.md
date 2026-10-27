@@ -1,5 +1,7 @@
 # Chuẩn bị nghiệm thu toàn diện — 27/10/2026
 
+Cập nhật sửa pre-check: key Gemini được xem là token opaque, hỗ trợ dấu chấm và auth key mới, chỉ chặn ký tự không an toàn cho header. Lỗi cấu hình trả JSON chỉ rõ tên biến/hướng dẫn, không in giá trị. Readiness mới nhất: Gemini config/key hiện đã có và các mục DB/corpus/metadata ready; worker ảnh chưa chạy. Mở terminal `npm run dev:ai` rồi chạy lại check. Config ready không có nghĩa Google đã xác thực key.
+
 Nhánh `chore/gemini-flash-lite-acceptance`, nền `b6bd07b`. Đây là chỉ dẫn hiện hành trước khi người dùng kiểm thử, thay các mô tả cũ “AI chưa có/chưa chọn API”. Không tự coi test tự động là nghiệm thu Google/hardware thật.
 
 ## Gemini 3.1 Flash-Lite
@@ -14,7 +16,7 @@ GEMINI_TIMEOUT_MS=30000
 GEMINI_MAX_OUTPUT_TOKENS=4096
 ```
 
-Điền key vào dòng GEMINI_API_KEY đang trống, không đặt trong VITE_ hoặc Postman. Không cần key khác cho model này. Mã stable theo [Google](https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-lite.md) là `gemini-3.1-flash-lite`; không dùng suffix preview. Adapter giữ thinking LOW theo [Gemini3](https://ai.google.dev/gemini-api/docs/gemini-3/), structured output và giới hạn nguồn. Key/quyền truy cập/quota tài khoản vẫn phải kiểm tra bằng yêu cầu live sau khi điền.
+Giữ key đã có trong GEMINI_API_KEY; nếu chưa điền thì bổ sung, không đặt trong VITE_ hoặc Postman. Không cần key khác cho model này. Mã stable theo [Google](https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-lite.md) là `gemini-3.1-flash-lite`; không dùng suffix preview. Adapter giữ thinking LOW theo [Gemini3](https://ai.google.dev/gemini-api/docs/gemini-3/), structured output và giới hạn nguồn. Key/quyền truy cập/quota tài khoản vẫn phải kiểm tra bằng yêu cầu live sau khi điền.
 
 Sau khi sửa .env, restart API và tải lại trang. Không cần migrate/seed lại để đổi model. Chat dùng corpus trong Mongo, không cần Python; chức năng ảnh/nhập PDF cần worker Python.
 
@@ -51,7 +53,7 @@ Model worker được nạp để kiểm dependency/task/classes/checksum; khôn
 
 | Việc | Vì sao còn cần làm | Cách kiểm |
 | --- | --- | --- |
-| Điền key và nghiệm thu Gemini live | Key đang trống ở lần rà soát; mock không xác nhận tài khoản/quota/chất lượng | Gửi câu hỏi có nguồn, kiểm tiếng Việt/trang gốc/dự thảo và reload giữ history |
+| Nghiệm thu Gemini live | Key đã có ở lần sửa pre-check; kiểm tra local/mock không xác nhận tài khoản/quota/chất lượng | Gửi câu hỏi có nguồn, kiểm tiếng Việt/trang gốc/dự thảo và reload giữ history |
 | Bốn vai trò trên dữ liệu hiện có | Cần đối chiếu đúng tài khoản/phân công/HTX của phiên người dùng | [Checklist module](MODULE_ACCEPTANCE_CHECKLIST.md), tài khoản trong LOCAL_MODULE_ACCEPTANCE.private.md, không chia sẻ file private |
 | ESP32 xuyên suốt và quan sát bơm/van | Loopback/ACK không chứng minh trạng thái vật lý | [MQTT FINAL](MQTT_HARDWARE_PROTOCOL_FINAL_v1.0.md), thiếu/trễ ACK, mất mạng, Stop/restart; người dùng chủ động bật phần cứng |
 | Accuracy ảnh và câu trả lời | Chưa có tập ảnh kiểm định có nhãn hoặc kết quả chấm chất lượng live | Ảnh đúng/sai/ngoài phạm vi, top3; so câu trả lời với PDF, không suy ra “khỏe” từ10 lớp bệnh |

@@ -1,5 +1,7 @@
 # Chatbot RAG với Gemini — 27/10/2026
 
+Sửa validator key: không đoán alphabet/prefix/độ dài key cũ; chấp nhận token header opaque ASCII không khoảng trắng/điều khiển, tối đa4096 ký tự, gồm key có dấu chấm. Google hỗ trợ [standard/auth API keys](https://ai.google.dev/gemini-api/docs/api-key). Đây chỉ là kiểm tra cú pháp transport; Google mới xác thực quyền/quota. .env được giữ nguyên khi sửa lỗi này.
+
 Lựa chọn mới nhất: [Gemini3.1 Flash-Lite và pre-check](PRE_ACCEPTANCE_READINESS.md). .env/default/example đã đổi sang gemini-3.1-flash-lite, giữ key trống và giới hạn hiện có. Các mô tả default3.8 bên dưới là checkpoint adapter ban đầu;3.8 vẫn được hỗ trợ nếu cấu hình chủ động.
 
 Nhánh sửa kế tiếp đã tách riêng [backlog canh tác](CULTIVATION_BACKLOG_BATCHING_FIX.md); nhánh đó kế thừa toàn bộ Gemini. Xem kết quả cuối trong guide sửa backlog, không dùng kết quả full suite lỗi ở checkpoint ban đầu dưới đây làm kết luận sau sửa.

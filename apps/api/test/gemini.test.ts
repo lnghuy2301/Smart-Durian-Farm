@@ -9,7 +9,7 @@ import { readAiConfig, GeminiConfig } from '../src/ai/ai.config';
 import { GeminiChatProvider } from '../src/ai/gemini.provider';
 import { ChatProvider } from '../src/ai/ai.worker';
 import { Citation } from '../src/ai/ai.types';
-import { geminiReadiness } from '../src/ai/pre-acceptance-cli';
+import { acceptanceFailure, geminiReadiness } from '../src/ai/pre-acceptance-cli';
 
 const config: GeminiConfig = { provider: 'gemini', apiKey: 'fixture-gemini-key-never-real-12345', model: 'gemini-3.8-flash', timeoutMs: 1000, maxOutputTokens: 4096 };
 const context: Citation = { document_id: 'private-mongo-id', filename: 'prepared.pdf', sha256: 'b'.repeat(64), page: 1, chunk_id: 'a'.repeat(64), excerpt: 'Theo dõi độ ẩm và thoát nước.',
@@ -35,14 +35,30 @@ test('Gemini configuration tolerates absent key, rejects unsafe model/config, an
   finally { await module.close(); }
 });
 
+test('Opaque dotted auth keys pass configuration while unsafe keys identify only the field without disclosing secrets', () => {
+  const key = 'AQ.fixture-auth-key.with-dot=';
+  assert.equal(readAiConfig({ GEMINI_API_KEY: key }).chat!.apiKey, key);
+  assert.equal(readAiConfig({ GEMINI_API_KEY: 'AQ.' + 'x'.repeat(1000) }).chat!.apiKey.length, 1003);
+  for (const bad of [key + '\r\nInjected: value', 'Bearer ' + key, key + ' inside', 'x'.repeat(4097)]) {
+    try { readAiConfig({ GEMINI_API_KEY: bad }); assert.fail('unsafe key accepted'); }
+    catch (error) {
+      const report = acceptanceFailure(error);
+      assert.equal(report.checks[0].details.field, 'GEMINI_API_KEY');
+      assert(!JSON.stringify(report).includes(key)); assert(!JSON.stringify(report).includes(bad));
+    }
+  }
+  assert(!JSON.stringify(acceptanceFailure(new Error('private ' + key))).includes(key));
+});
+
 test('Gemini Flash-Lite and Flash use fixed HTTPS host, secret header, bounded context and JSON source enum', async () => {
   for (const model of ['gemini-3.1-flash-lite', 'gemini-3.8-flash']) {
   let calls = 0;
-  const provider = new GeminiChatProvider({ ...config, model }, async (url, options) => {
+  const authKey = model === 'gemini-3.1-flash-lite' ? 'AQ.fixture-opaque.auth-key=' : config.apiKey;
+  const provider = new GeminiChatProvider({ ...config, model, apiKey: authKey }, async (url, options) => {
     calls++; assert.equal(url, `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`);
     assert.equal(options?.method, 'POST'); assert.equal(options?.redirect, 'error');
-    assert.equal((options?.headers as Record<string, string>)['x-goog-api-key'], config.apiKey);
-    const raw = String(options?.body), body = JSON.parse(raw); assert(!raw.includes(config.apiKey)); assert(!raw.includes(context.document_id));
+    assert.equal((options?.headers as Record<string, string>)['x-goog-api-key'], authKey);
+    const raw = String(options?.body), body = JSON.parse(raw); assert(!raw.includes(authKey)); assert(!raw.includes(context.document_id));
     const data = JSON.parse(body.contents[0].parts[0].text);
     assert.equal(data.contexts[0].source.page, 265); assert.equal(data.contexts[0].source.is_draft, true);
     assert.equal(data.history.length, 6); assert.equal(body.tools, undefined);
