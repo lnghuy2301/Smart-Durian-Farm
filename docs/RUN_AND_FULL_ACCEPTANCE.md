@@ -1,5 +1,7 @@
 # Chạy dự án và kiểm thử toàn diện — 27/10/2026
 
+**Cập nhật28/10:** chatbot hiện chọn Groq. Dùng [cấu hình Groq](GROQ_CHATBOT_IMPLEMENTATION.md) với `GROQ_API_KEY`, `GROQ_MODEL=openai/gpt-oss-20b`; các mục Gemini bên dưới là checkpoint cũ, áp dụng bài kiểm tương đương với Groq. Key có mặt/readiness không chứng minh quota hoặc câu trả lời live thành công. Lệnh chạy4 terminal, corpus và các nghiệp vụ không đổi.
+
 Thư mục làm việc của **mọi terminal**: `D:\PROJECT\Smart-Durian-Farm`. Hướng dẫn này dùng dữ liệu/volume hiện có, không cài lại, không seed lại. Tài khoản/mật khẩu xem `docs/LOCAL_MODULE_ACCEPTANCE.private.md`; không chép thông tin đó vào báo cáo chia sẻ.
 
 ## 1. Bốn terminal và thứ tự chạy

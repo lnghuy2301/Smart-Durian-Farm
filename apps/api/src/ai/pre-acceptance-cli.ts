@@ -13,10 +13,12 @@ import { HttpAiWorker } from './ai.worker';
 import { retrieve } from './ai.rag';
 
 export interface AcceptanceCheck { name: string; state: 'ready' | 'needs_setup' | 'not_running'; details?: unknown }
-export function geminiReadiness(config: AiConfig): AcceptanceCheck {
-  return { name: 'gemini_configuration', state: config.chat?.provider === 'gemini' && !!config.chat.apiKey ? 'ready' : 'needs_setup',
+export function chatReadiness(config: AiConfig): AcceptanceCheck {
+  return { name: config.chat?.provider === 'groq' ? 'groq_configuration' : 'gemini_configuration', state: ['gemini', 'groq'].includes(config.chat?.provider ?? '') && !!config.chat?.apiKey ? 'ready' : 'needs_setup',
     details: { provider: config.chat?.provider ?? 'disabled', model: config.chat?.model, key_present: !!config.chat?.apiKey, live_api_tested: false } };
 }
+// Preserve imports used by existing acceptance tests/tools.
+export const geminiReadiness = chatReadiness;
 export function acceptanceFailure(error: unknown) {
   return { scope: 'read_only_local_pre_acceptance', can_start_full_manual_acceptance: false,
     checks: [{ name: 'configuration_or_services', state: 'needs_setup', details: error instanceof AiConfigurationError
@@ -24,7 +26,7 @@ export function acceptanceFailure(error: unknown) {
       : { message: 'Không hoàn tất kiểm tra; kiểm tra kết nối database, ledger và cấu hình local. Không tự sửa dữ liệu.' } }] };
 }
 export async function preAcceptanceCheck(env: NodeJS.ProcessEnv, config = readAiConfig(env)) {
-  const checks: AcceptanceCheck[] = [geminiReadiness(config)];
+  const checks: AcceptanceCheck[] = [chatReadiness(config)];
   const database = new DatabaseService({ postgresUrl: env.DATABASE_URL ?? '', mongoUri: env.MONGODB_URI ?? '', timeoutMs: 5000 });
   try {
     const ready = await database.readiness();
@@ -65,7 +67,7 @@ export async function preAcceptanceCheck(env: NodeJS.ProcessEnv, config = readAi
       checks.push({ name: 'local_image_worker', state: 'ready', details: { task: info.task, classes: info.classes.length, model_sha256: info.model_sha256 } });
     } catch { checks.push({ name: 'local_image_worker', state: 'not_running', details: 'Chạy npm run dev:ai; không cần worker Python riêng cho chat.' }); }
     return { scope: 'read_only_local_pre_acceptance', can_start_full_manual_acceptance: checks.every((c) => c.state === 'ready'), checks,
-      manual_checks_not_performed: ['Gemini key/quota and answer quality', 'Physical ESP32/pump/valve behavior', 'Labelled-image accuracy', 'Four-role acceptance with real OTP/email'] };
+      manual_checks_not_performed: ['Chat provider key/quota and answer quality', 'Physical ESP32/pump/valve behavior', 'Labelled-image accuracy', 'Four-role acceptance with real OTP/email'] };
   } finally { await database.onApplicationShutdown(); }
 }
 if (require.main === module) {

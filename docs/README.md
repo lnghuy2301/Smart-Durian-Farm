@@ -4,6 +4,8 @@ Cập nhật 21/10/2026. Đọc checkpoint hiện hành trước các báo cáo 
 
 ## Điểm bắt đầu
 
+[Chatbot Groq28/10](GROQ_CHATBOT_IMPLEMENTATION.md): provider hiện được chọn, chỗ nhập key riêng, model mặc định openai/gpt-oss-20b, giới hạn và kiểm thử. Thay phần cấu hình Gemini trong các hướng dẫn cũ khi dùng Groq; corpus/quyền/API hội thoại giữ nguyên.
+
 [Chạy4 terminal và danh sách nghiệm thu toàn diện](RUN_AND_FULL_ACCEPTANCE.md): thứ tự lệnh, vai trò, nghiệp vụ/AI/hardware, kết quả mong đợi, phần chưa được kiểm chứng và cách backup/kết thúc phiên.
 
 [Chuẩn bị nghiệm thu toàn diện27/10](PRE_ACCEPTANCE_READINESS.md): đúng model Gemini3.1 Flash-Lite, lệnh check:acceptance chỉ đọc, module đã có và các bước live/production còn cần người dùng.
