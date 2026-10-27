@@ -234,6 +234,8 @@ Nếu gặp lỗi: ghi bước tái lập, vai trò, ID hồ sơ, thông báo v�
 
 ## AI — nền tảng mới26/10
 
+27/10 thêm [nghiệm thu Gemini](GEMINI_CHATBOT_IMPLEMENTATION.md): điền key/restart API, kiểm status→gửi→nguồn/trang/dự thảo→reload giữ lịch sử; thử key sai/quota không tạo tin nhắn dở. Không đánh dấu đã nghiệm thu live chỉ dựa trên test giả lập.
+
 Checkpoint mới: [AI_RAG_CORPUS_IMPLEMENTATION](AI_RAG_CORPUS_IMPLEMENTATION.md), model thật và15 PDF đã nhập.
 
 - [ ] Admin xem prepared/documents và tìm “thán thư”, kiểm tra filename gốc/trang gốc và nhãn dự thảo trong source.

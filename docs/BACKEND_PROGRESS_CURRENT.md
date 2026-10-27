@@ -1,5 +1,7 @@
 # Cập nhật AI26/10/2026
 
+27/10 — [Gemini](GEMINI_CHATBOT_IMPLEMENTATION.md) đã triển khai REST adapter, structured output/nguồn hợp lệ và lưu cặp tin nhắn nguyên tử, không thêm migration. Thiếu key vẫn chạy API, chặn gửi chat; người dùng tự điền GEMINI_API_KEY trong .env. UI AI local đã nối sẵn. Các checkpoint “chưa chọn API/chưa có UI” dưới đây là lịch sử.
+
 Checkpoint cuối: [ảnh và RAG thực](AI_RAG_CORPUS_IMPLEMENTATION.md) đã sẵn backend: best.pt chạyCPU, top3 nhãn Việt, corpus15 PDF/9 nguồn/396 trang/1.220 chunks, provenance018. Backend266/persistence310/Python10 đạt, backup/restore thực đạt. Còn chọn API chatbot, ảnh kiểm định accuracy và UI AI; không dùng các dòng “chưa có weights/chưa nhập” của checkpoint cũ bên dưới làm trạng thái hiện tại.
 
 Đã triển khai nền tảng hai module AI: API chẩn đoán YOLO11s-cls và lịch sử riêng; hội thoại riêng, Admin nhập/quản lý PDF và truy hồi BM25 theo trang. Mongo migration017 và backup ảnh/PDF đi cùng dữ liệu. [Hướng dẫn đầy đủ](AI_BACKEND_IMPLEMENTATION.md). Chưa có weights của người dùng hoặc provider chatbot; chưa nghiệm thu suy luận/đáp án thật. Các checkpoint trước bên dưới là lịch sử, không phản ánh phần AI mới.

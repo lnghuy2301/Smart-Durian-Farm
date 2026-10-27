@@ -13,6 +13,7 @@ import { readEnvironment } from '../src/config/environment';
 import { MockUserStore } from '../src/auth/mock-user.store';
 import { AiWorker, ChatProvider, HttpAiWorker } from '../src/ai/ai.worker';
 import { AiStore } from '../src/ai/ai.store';
+import { GeminiChatProvider } from '../src/ai/gemini.provider';
 import { Classification, Citation } from '../src/ai/ai.types';
 import { FarmsService } from '../src/farms/farms.service';
 import { StandardsService } from '../src/standards/standards.service';
@@ -172,5 +173,27 @@ test('a token version revoked during inference cannot save files or diagnosis; i
     await f.users.replacePassword(f.owner.id, 0, f.owner.password); release(); assert.equal((await pending).status, 403);
     assert.equal((await f.app.get(AiStore).diagnoses(f.owner.id, 0, 10)).total, 0);
     assert.deepEqual(await readdir(join(f.root, 'storage/diagnostics')).catch(() => []), []);
+  } finally { await f.close(); }
+});
+
+test('Gemini adapter persists only validated grounded replies and provider failure keeps history unchanged', async () => {
+  const f = await fixture();
+  try {
+    const dir = join(f.root, 'data/rag/pdfs'); await mkdir(dir, { recursive: true }); await writeFile(join(dir, 'guide.pdf'), '%PDF-fixture');
+    assert.equal((await f.http('ai/rag/documents/import', 'POST', { filename: 'guide.pdf' }, f.tokens.admin)).status, 201);
+    const created = await f.http('ai/conversations', 'POST', { session_title: 'Gemini fixture' }, f.tokens.owner);
+    const id = (await created.json() as { id: string }).id;
+    let fail = false, calls = 0;
+    const provider = new GeminiChatProvider({ provider: 'gemini', apiKey: 'fixture-only-gemini-test-key', model: 'gemini-3.8-flash', timeoutMs: 1000, maxOutputTokens: 4096 }, async (_url, options) => {
+      calls++; if (fail) return new Response('private upstream failure', { status: 429 });
+      const data = JSON.parse(JSON.parse(String(options?.body)).contents[0].parts[0].text);
+      return Response.json({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: JSON.stringify({ text: 'Theo nguồn: cần thoát nước tốt.', used_chunk_ids: [data.contexts[0].chunk_id] }) }] } }] });
+    });
+    f.provider.enabled = true; f.provider.generate = (data) => provider.generate({ ...data, system: 'Server policy', question: 'thoát nước', history: [] });
+    assert.equal((await f.http(`ai/conversations/${id}/messages`, 'POST', { message: 'thoát nước' }, f.tokens.other)).status, 404); assert.equal(calls, 0);
+    assert.equal((await f.http(`ai/conversations/${id}/messages`, 'POST', { message: 'thoát nước' }, f.tokens.owner)).status, 201);
+    fail = true; assert.equal((await f.http(`ai/conversations/${id}/messages`, 'POST', { message: 'thoát nước' }, f.tokens.owner)).status, 429);
+    const saved = await (await f.http(`ai/conversations/${id}`, 'GET', undefined, f.tokens.owner)).json() as { messages: { citations: Citation[] }[] };
+    assert.equal(saved.messages.length, 2); assert.equal(saved.messages[1].citations[0].page, 2); assert.equal(calls, 2);
   } finally { await f.close(); }
 });

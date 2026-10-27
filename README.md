@@ -52,7 +52,7 @@ Development mặc định lưu database; test mặc định memory. `BUSINESS_ST
 
 Auth/Users/duyệt Manager, HTX, vật tư/tiêu chuẩn/liên kết, Farm/Zone/phân công, cây/thu hoạch, Device/Sensor/Actuator, MQTT/telemetry/điều khiển, nhật ký canh tác/hash-chain và QR public. Database runtime dùng chung pool/client/repositories cho HTTP, Auth, MQTT, workers và QR.
 
-Backend AI đã chạy best.pt YOLO11s-cls trênCPU, có top3 nhãn Việt/lịch sử riêng và corpus15 PDF có nguồn/trang/dự thảo: [hướng dẫn AI hiện hành](docs/AI_RAG_CORPUS_IMPLEMENTATION.md), [cài Python/model](ai/README.md). Chờ chọn API chatbot và tập ảnh kiểm định; chưa có UI AI. Android chưa triển khai. MQTT FINAL hardware-tested đã tích hợp; ACK xác nhận nhận command, không chứng minh trạng thái vật lý bơm/van.
+Backend AI có model YOLO11s-cls, top3 nhãn Việt/lịch sử riêng, corpus15 PDF có nguồn/trang/dự thảo và [chatbot Gemini](docs/GEMINI_CHATBOT_IMPLEMENTATION.md). Điền GEMINI_API_KEY trong .env rồi restart API; UI AI trong working tree đã nối các API hiện có. Còn nghiệm thu key/quota/câu trả lời live và tập ảnh kiểm định. [Cài Python/model](ai/README.md). Android chưa triển khai. MQTT FINAL hardware-tested đã tích hợp; ACK xác nhận nhận command, không chứng minh trạng thái vật lý bơm/van.
 
 ## Kiểm tra
 

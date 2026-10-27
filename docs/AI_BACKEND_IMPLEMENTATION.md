@@ -1,5 +1,7 @@
 # AI backend và CSDL — bàn giao26/10/2026
 
+Chat hiện hành27/10: [Gemini adapter và cách điền key](GEMINI_CHATBOT_IMPLEMENTATION.md). Chưa có key thì unavailable, không còn chờ chọn vendor; quyền/corpus/history018 giữ nguyên.
+
 Hiện hành: [AI_RAG_CORPUS_IMPLEMENTATION](AI_RAG_CORPUS_IMPLEMENTATION.md) — corpus đã nhập15 PDF, model thật, nhãn Việt/top3 và source provenance018. Các validator/backup017 ở dưới là nền tảng, không thay validator018 trong runtime mới.
 
 Cập nhật sau khi nhận file: [AI_MODEL_AND_CORPUS_INTEGRATION](AI_MODEL_AND_CORPUS_INTEGRATION.md). best.pt đã chạy CPU, GET `/api/ai/model` kiểm tra readiness/classes thực;10 PDF đã kiểm tra nhưng chưa nhập khi phạm vi nguồn còn chờ thống nhất. Các giới hạn nghiệp vụ dưới đây giữ nguyên.

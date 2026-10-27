@@ -1,5 +1,7 @@
 # Ghi chú kỹ thuật hiện hành
 
+27/10 Gemini: [guide](GEMINI_CHATBOT_IMPLEMENTATION.md). API key server-only, host Google cố định, không retry generation; timeout30s và payload128KiB. Chỉ lưu cặp tin nhắn sau khi JSON/source/quyền/CAS hợp lệ. Không cần Python để chat, không migration/seed hoặc sửa dữ liệu vận hành. AI_CHAT_PROVIDER=gemini và GEMINI_API_KEY trống được chuẩn bị trong .env, chỉ đổi riêng provider và thêm key thiếu; không in/commit secrets.
+
 AI26/10: [corpus/model thực](AI_RAG_CORPUS_IMPLEMENTATION.md), migration018. Không sửa001–017. Source page_map là số trang PDF gốc1-based, API hiển thị citation.source.page; `is_draft` không đồng nghĩa hiệu lực pháp lý. CLI corpus giữ maintenance locks, dùng chung AiService/repositories, kiểm checksum nguồn và snapshot, chạy lại bỏ qua bản đã có. .env không đổi; weights/PDF/manifest sinh ra/private backups không commit. Chat API giữ disabled, UI AI chưa làm.
 
 Cập nhật26/10/2026. [Rà soát hiện hành](PROJECT_REVIEW_20261026.md), [quy tắc nghiệp vụ](PROJECT_BUILD_SPEC.md), [runtime và tái lập](DATABASE_RUNTIME_IMPLEMENTATION.md), [tiến độ](BACKEND_PROGRESS_CURRENT.md).

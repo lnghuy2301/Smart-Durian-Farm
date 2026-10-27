@@ -1,5 +1,7 @@
 # Kế hoạch triển khai tiếp theo
 
+27/10: [Gemini chatbot](GEMINI_CHATBOT_IMPLEMENTATION.md) đã có adapter, nguồn/trích dẫn và private history; .env có key trống để người dùng điền. Không còn chờ chọn vendor. Bước tiếp theo: nghiệm thu live sau điền key, đánh giá câu trả lời/ảnh thật và hoàn tất release/deploy; giữ nguyên corpus018 và frontend riêng.
+
 Cập nhật mới nhất26/10: [AI ảnh và corpus thực](AI_RAG_CORPUS_IMPLEMENTATION.md) đã có model chạyCPU,15 PDF/1.220 chunks và provenance018. Không nhập lại hoặc seed lại. AI tiếp theo là chọn API chatbot, đánh giá ảnh có nhãn và giao diện AI; các dòng chờ nhận weights/corpus bên dưới là lịch sử trước lần nhập này.
 
 Ưu tiên hiện hành26/10: [nền tảng AI](AI_BACKEND_IMPLEMENTATION.md) đã triển khai theo yêu cầu mới: YOLO11s-cls, Zone tùy chọn, Farmer có lịch sử riêng, Admin quản lý PDF RAG. Tiếp theo nhận best.pt/versions Colab, chọn API chatbot và corpus để đánh giá thật; tiếp tục nghiệm thu bốn vai trò/hardware, môi trường triển khai và review Git. Không seed lại dữ liệu hiện có. Các checkpoint offline bên dưới giữ làm lịch sử.

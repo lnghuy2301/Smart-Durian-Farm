@@ -1,5 +1,7 @@
 # AI ảnh và corpus RAG đã nhập — 26/10/2026
 
+27/10: đã chọn và triển khai [Gemini chatbot](GEMINI_CHATBOT_IMPLEMENTATION.md). Corpus/migration018 giữ nguyên; chỉ chờ người dùng điền key để nghiệm thu live. Các mô tả “chưa chọn API” dưới đây là checkpoint trước quyết định Gemini.
+
 Nhánh `feat/ai-rag-corpus`, nền `b36b1f1`. Người dùng chốt: chatbot chưa chọn API; chấp nhận dự thảo nếu ghi rõ nguồn; chuẩn bị riêng phần sầu riêng, giữ bản gốc; ảnh chỉ trả top3 gợi ý, không tự kết luận hoặc khuyến cáo thuốc. Đây là checkpoint mới nhất, thay phần “chờ chốt nguồn/chưa nhập” trong [guide tích hợp model](AI_MODEL_AND_CORPUS_INTEGRATION.md). Auth/quyền theo [AI backend](AI_BACKEND_IMPLEMENTATION.md).
 
 ## Đã hoàn thành

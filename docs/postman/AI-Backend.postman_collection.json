@@ -233,7 +233,8 @@
               "language": "json"
             }
           }
-        }
+        },
+        "description": "Gemini RAG: fill GEMINI_API_KEY in server .env and restart API. Send only Farmer JWT and question here. Never paste the Gemini key into Postman. Missing key:503/no history write; quota:429; success:201 with citations."
       },
       "response": []
     },

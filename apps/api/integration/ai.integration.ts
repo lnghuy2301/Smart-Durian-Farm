@@ -12,7 +12,8 @@ import { Pool } from 'pg';
 import { AppModule } from '../src/app.module';
 import { configureApplication } from '../src/application';
 import { readEnvironment } from '../src/config/environment';
-import { AiWorker } from '../src/ai/ai.worker';
+import { AiWorker, ChatProvider, DisabledChatProvider } from '../src/ai/ai.worker';
+import { GeminiChatProvider } from '../src/ai/gemini.provider';
 import { Citation } from '../src/ai/ai.types';
 import { MongoAiStore } from '../src/ai/ai.store';
 import { createDatabaseBackup, restoreIntoEmptyDatabase, sealBackup } from '../src/persistence/backup';
@@ -28,11 +29,18 @@ test('AI full database runtime shares users/Zone authority, retains private hist
     AUTH_TEST_ADMIN_PHONE: taskAuth.admin.phoneNumber, AUTH_TEST_ADMIN_PASSWORD: taskAuth.admin.password, JWT_SECRET: taskAuth.jwtSecret });
   config.ai = { ...config.ai!, enabled: true, root, token: 'ai-test-only-token'.repeat(3) };
   let app: INestApplication | undefined;
+  let geminiEnabled = false, geminiFail = false;
+  const gemini = new GeminiChatProvider({ provider: 'gemini', apiKey: 'fixture-only-gemini-integration-key', model: 'gemini-3.8-flash', timeoutMs: 1000, maxOutputTokens: 4096 }, async (_url, options) => {
+    if (geminiFail) return new Response('sensitive provider failure', { status: 503 });
+    const payload = JSON.parse(JSON.parse(String(options?.body)).contents[0].parts[0].text);
+    const source = payload.contexts.find((c: { source: { is_draft: boolean } }) => c.source.is_draft) ?? payload.contexts[0];
+    return Response.json({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: JSON.stringify({ text: 'Theo nguồn dự thảo: cần theo dõi thoát nước.', used_chunk_ids: [source.chunk_id] }) }] } }] });
+  });
   const start = async () => {
     const module = await Test.createTestingModule({ imports: [AppModule.register(config)] }).overrideProvider(AiWorker).useValue({
       classify: async () => ({ task: 'classify', model_sha256: 'b'.repeat(64), predictions: [{ class_id: 2, label: 'test-only', confidence: 0.8 }] }),
       extractPdf: async () => ({ page_count: 1, pages: [{ page: 1, text: 'Theo dõi độ ẩm đất và thoát nước cho cây sầu riêng.' }] }),
-    }).compile();
+    }).overrideProvider(ChatProvider).useValue(geminiEnabled ? gemini : new DisabledChatProvider()).compile();
     app = module.createNestApplication({ logger: false }); configureApplication(app, config); await app.listen(0, '127.0.0.1');
   };
   const http = async (path: string, method = 'GET', body?: object, token?: string) => fetch(`${await app!.getUrl()}/api/${path}`, { method,
@@ -109,6 +117,19 @@ test('AI full database runtime shares users/Zone authority, retains private hist
       const saved = await store.conversation(current!._id, value.owner.id);
       assert.equal(saved!.messages.at(-1)!.citations[0].source?.is_draft, true);
       await assert.rejects(db.collection('AI_RAG_DOCUMENTS').updateOne({ _id: new ObjectId(id) }, { $set: { 'source.page_map': [0] } }), (e: unknown) => (e as { code: number }).code === 121);
+      await app!.close(); app = undefined;
+    });
+    await t.test('Gemini protocol reply persists source citations after restart; upstream failure never appends partial history', async () => {
+      geminiEnabled = true; await start();
+      const sent = await http(`ai/conversations/${conversation}/messages`, 'POST', { message: 'thoát nước' }, farmerToken);
+      assert.equal(sent.status, 201);
+      const saved = await sent.json() as { messages: { citations: Citation[] }[] };
+      assert.equal(saved.messages.at(-1)!.citations[0].source?.page, 265);
+      geminiFail = true;
+      assert.equal((await http(`ai/conversations/${conversation}/messages`, 'POST', { message: 'thoát nước' }, farmerToken)).status, 503);
+      await app!.close(); app = undefined; await start();
+      const restored = await (await http(`ai/conversations/${conversation}`, 'GET', undefined, farmerToken)).json() as { messages: unknown[] };
+      assert.equal(restored.messages.length, saved.messages.length);
       await app!.close(); app = undefined;
     });
     await t.test('backup018 restores AI BSON records and metadata exactly into new databases', async () => {

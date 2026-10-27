@@ -4,6 +4,8 @@ Cập nhật 21/10/2026. Đọc checkpoint hiện hành trước các báo cáo 
 
 ## Điểm bắt đầu
 
+[Chatbot Gemini27/10](GEMINI_CHATBOT_IMPLEMENTATION.md): cấu hình key server, adapter REST/structured output, RAG/trích dẫn, private history và cách kiểm thử live. Không migration/seed; giữ corpus018.
+
 [AI ảnh/corpus đã nhập](AI_RAG_CORPUS_IMPLEMENTATION.md):15 PDF/9 nguồn,396 trang/1.220 chunks; nguồn/trang gốc và nhãn dự thảo, migration018, nhãn Việt/top3. Có hướng dẫn chuẩn bị/import/check/backup, chat API vẫn disabled.
 
 [Tích hợp weights/PDF thật26/10](AI_MODEL_AND_CORPUS_INTEGRATION.md): best.pt đã chạyCPU; corpus còn cần chốt phạm vi/dự thảo/tài liệu lỗi font trước khi kích hoạt. Có API model readiness và lock môi trường.
