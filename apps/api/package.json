@@ -14,6 +14,8 @@
     "db:status": "npm run build && node dist/persistence/cli.js status",
     "db:migrate": "npm run build && node dist/persistence/cli.js migrate",
     "db:data:expand": "npm run build && node dist/persistence/rich-data-cli.js",
+    "db:cultivation:preview": "npm run build && node dist/persistence/cultivation-enrichment-cli.js preview",
+    "db:cultivation:expand": "npm run build && node dist/persistence/cultivation-enrichment-cli.js apply",
     "db:materials:expand": "npm run build && node dist/persistence/material-catalog-cli.js",
     "db:data:preview": "npm run build && node dist/persistence/operational-data-cli.js preview",
     "db:data:refresh": "npm run build && node dist/persistence/operational-data-cli.js apply",
