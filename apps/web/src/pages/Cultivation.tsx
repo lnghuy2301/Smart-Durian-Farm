@@ -35,6 +35,7 @@ import {
 import type { Page, Tree, Zone } from "../types/api";
 import { RecordReference } from "../components/ReadableValue";
 import { vietnamDay, type Period } from "./managerOverview";
+import type { ControlJournalPrefill } from "../control/journal";
 
 function LockState({
   event,
@@ -493,11 +494,13 @@ export function JournalDetailPage() {
 }
 export function JournalEditor({
   event,
+  initial,
   correction = false,
   onClose,
   onSaved,
 }: {
   event?: Journal;
+  initial?: ControlJournalPrefill;
   correction?: boolean;
   onClose: () => void;
   onSaved: () => void;
@@ -505,25 +508,26 @@ export function JournalEditor({
   const { api } = useSession();
   const task = useTask();
   const [uncertain, setUncertain] = useState(false);
+  const [workConfirmed, setWorkConfirmed] = useState(false);
   const [targetType, setTargetType] = useState<"Zone" | "Tree">(
     event?.target_type ?? "Zone",
   );
   const [zoneId, setZoneId] = useState(
-    event?.target_type === "Zone" ? event.target_id : "",
+    event?.target_type === "Zone" ? event.target_id : (initial?.zoneId ?? ""),
   );
   const [treeId, setTreeId] = useState(
     event?.target_type === "Tree" ? event.target_id : "",
   );
   const [activity, setActivity] = useState<Activity>(
-    event?.action_type ?? "Watering",
+    event?.action_type ?? initial?.activity ?? "Watering",
   );
   const [duration, setDuration] = useState(
-    String(event?.details.duration_minutes ?? ""),
+    String(event?.details.duration_minutes ?? initial?.duration ?? ""),
   );
   const [water, setWater] = useState(
     String(event?.details.water_volume_l ?? ""),
   );
-  const [note, setNote] = useState(event?.details.note ?? "");
+  const [note, setNote] = useState(event?.details.note ?? initial?.note ?? "");
   const [activityName, setActivityName] = useState(
     event?.details.activity_name ?? "",
   );
@@ -551,7 +555,7 @@ export function JournalEditor({
         className="workflow-form"
         onSubmit={(e) => {
           e.preventDefault();
-          if (uncertain) return;
+          if (uncertain || (initial && !workConfirmed)) return;
           void task.run(async (signal) => {
             const details =
               activity === "Watering"
@@ -614,6 +618,24 @@ export function JournalEditor({
           disabled={task.busy || uncertain}
           className="workflow-fieldset"
         >
+          {initial && (
+            <>
+              <Notice kind="warning">
+                Thời lượng điền sẵn chỉ ước tính từ các mốc lệnh, không phải
+                thời gian đo hoạt động. Hãy sửa theo thực tế; phun cần nhập vật
+                tư và lượng đã dùng. Nhật ký được ghi tại thời điểm bạn lưu.
+              </Notice>
+              <label>
+                <input
+                  type="checkbox"
+                  required
+                  checked={workConfirmed}
+                  onChange={(e) => setWorkConfirmed(e.target.checked)}
+                />{" "}
+                Tôi đã kiểm tra và xác nhận công việc thực tế.
+              </label>
+            </>
+          )}
           {!event && (
             <div className="form-grid">
               <Field label="Đối tượng canh tác">

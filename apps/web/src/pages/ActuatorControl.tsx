@@ -43,6 +43,7 @@ import {
 import { controlTime, TaskBadge, TaskProgress } from "../control/TaskProgress";
 import { ControlReadings } from "../control/ControlReadings";
 import "../control/control.css";
+import { ControlJournal } from "../control/ControlJournal";
 
 interface FarmScope {
   id: string;
@@ -601,6 +602,9 @@ function ControlWorkspace({
           onFailure={onFailure}
         />
       </section>
+      {progress?.root && controller && (
+        <ControlJournal key={progress.root._id} stop={progress.root} zoneId={zone.id} />
+      )}
       <section className="panel control-history" aria-label="Lịch sử lệnh">
         <div className="control-section-title">
           <div>
