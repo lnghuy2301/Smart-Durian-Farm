@@ -1,6 +1,6 @@
 # Sơ đồ hiện hành và nguồn dùng để vẽ
 
-Cập nhật21/10/2026, theo database runtime nền `1f6c1fd`; sơ đồ RAM/readiness-only cũ đã bị thay thế. [Source/runtime/tests](DATABASE_RUNTIME_IMPLEMENTATION.md), [nghiệp vụ](PROJECT_BUILD_SPEC.md), [tiến độ và giới hạn nghiệm thu](BACKEND_PROGRESS_CURRENT.md). Mermaid dưới đây là source chỉnh sửa được; không thay ERD người dùng, không phải bằng chứng đã test ESP32 thật.
+Cập nhật28/10/2026. [Source/runtime/tests](DATABASE_RUNTIME_IMPLEMENTATION.md), [nghiệp vụ](PROJECT_BUILD_SPEC.md), [tiến độ và giới hạn nghiệm thu](BACKEND_PROGRESS_CURRENT.md). Mermaid dưới đây là source chỉnh sửa được; không thay ERD người dùng, không phải bằng chứng đã test ESP32 thật.
 
 ## Kiến trúc
 
@@ -13,7 +13,11 @@ flowchart LR
     API --> Runtime[Shared database runtime / async ports]
     Worker[HTX / Cultivation workers] --> Runtime
     Runtime --> PG[(PostgreSQL: 13 business tables + technical)]
-    Runtime --> Mongo[(MongoDB: telemetry / tasks / cultivation + state)]
+    Runtime --> Mongo[(MongoDB: telemetry / tasks / cultivation / AI + state)]
+    API --> Image[Python local: YOLO11s-cls / PDF extraction]
+    API --> RAG[BM25 + source validation]
+    RAG --> Mongo
+    RAG --> Groq[Groq API: server key / bounded excerpts]
     API --> Auth[OTP / email verification]
     Auth --> SMS[Twilio Verify]
     Auth --> SMTP[SMTP email]
@@ -22,7 +26,7 @@ flowchart LR
     MQTT --> Runtime
 ```
 
-DB pool/client/repositories là cùng instances cho HTTP/MQTT/workers/QR. Không vẽ Android/AI như phần đã có; không có transaction chung PG/Mongo. ACK là receipt, physical_state Unknown.
+DB pool/client/repositories là cùng instances cho HTTP/MQTT/workers/QR/AI. Android ngoài phạm vi; không có transaction chung PG/Mongo. ACK là receipt, physical_state Unknown. AI private history không đi vào QR. Chỉ gửi các đoạn nguồn cần thiết và lịch sử ngắn tới Groq, không gửi secrets/ảnh hoặc toàn PDF.
 
 ## Quan hệ nghiệp vụ PostgreSQL
 
@@ -45,7 +49,7 @@ erDiagram
     AGRICULTURAL_MATERIALS ||--o{ STANDARD_MATERIALS : linked
 ```
 
-Sơ đồ quan hệ rút gọn, không liệt kê tất cả cột/FK. ERD đầy đủ đọc [ERD nguồn](ERD_DIAGRAM.xml), [postgres-schema.ts](../apps/api/src/persistence/postgres-schema.ts), [manifest001–014](../apps/api/src/persistence/migrations.ts) và mọi file schema được import. Manager nullable ở HTX; Farm có thể không thuộc HTX. Bảng kỹ thuật và Mongo nên vẽ riêng, không biến UUID reference qua Mongo thành FK SQL.
+Sơ đồ quan hệ rút gọn, không liệt kê tất cả cột/FK. ERD đầy đủ đọc [ERD nguồn](ERD_DIAGRAM.xml), [postgres-schema.ts](../apps/api/src/persistence/postgres-schema.ts), [manifest001–018](../apps/api/src/persistence/migrations.ts) và mọi file schema được import. Manager nullable ở HTX; Farm có thể không thuộc HTX. Bảng kỹ thuật và Mongo nên vẽ riêng, không biến UUID reference qua Mongo thành FK SQL.
 
 ## Telemetry
 
@@ -105,6 +109,29 @@ sequenceDiagram
 Sơ đồ trên chỉ happy path. Timeout/partial ACK/Stop preemption/recovery/restart xem [workflow đầy đủ](ACTUATOR_TASKS_WORKFLOW_DESIGN.md) và [journal](MONGO_ACTUATOR_TASKS_IMPLEMENTATION.md). Đủ ACK không chứng minh bơm/van vật lý đã hoạt động. Không tự ON sau restart.
 
 ## Tài nguyên vẽ thêm use case/sequence
+
+### Ghi nhật ký sau điều khiển
+
+```mermaid
+sequenceDiagram
+    actor F as Farmer có quyền hiện hành
+    participant W as Web điều khiển
+    participant T as Task API
+    participant C as Cultivation API
+    participant M as Mongo journal/hash-chain
+    F->>W: Chọn Stop đã nhận đủ ACK
+    F->>W: Ghi nhật ký từ phiên này
+    W->>T: GET Stop và lịch sử đúng Device
+    T-->>W: Start/Stop có quyền đọc
+    W-->>F: Gợi ý Zone/loại/thời lượng ước tính
+    F->>W: Xác nhận thực tế, bổ sung vật tư, Lưu
+    W->>C: POST nhật ký thông thường
+    C->>C: Recheck quyền/target/catalog
+    C->>M: Lưu Pending với tác giả/giờ server
+    M-->>F: Pending; khóa sau15 phút
+```
+
+ACK không tự tạo nhật ký, không suy ra vật tư/lượng nước và không chứng minh công việc vật lý. Ghi chú tham chiếu lệnh vẫn riêng tư. Xem [quy tắc/giới hạn](CONTROL_SESSION_JOURNAL.md).
 
 - Use case: Users/Auth/HTX/Farm/Zone/Assignments guides; tách actor chủ Farm và Farmer nhận việc dù cùng role Farmer; thêm khách quét QR. Twilio/SMTP/ESP32 là external systems.
 - Sequence nghiệp vụ: [Farm](FARMS_WORKFLOW_DESIGN.md), [Harvest](TREE_HARVESTS_WORKFLOW_DESIGN.md), [Cultivation](CULTIVATION_EVENTS_WORKFLOW_DESIGN.md), [QR](QR_TRACEABILITY_WORKFLOW_DESIGN.md), cùng controller/DTO và repository tương ứng.

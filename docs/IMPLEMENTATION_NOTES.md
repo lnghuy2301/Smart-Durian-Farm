@@ -1,14 +1,10 @@
-# Ghi chú kỹ thuật hiện hành
+# Ghi chú kỹ thuật hiện hành — 28/10/2026
 
-Gemini model hiện hành gemini-3.1-flash-lite; [pre-acceptance](PRE_ACCEPTANCE_READINESS.md) có lệnh chỉ đọc và phân biệt configured với live-tested. AI key không hiển thị hoặc gửi trong pre-check; worker Python chỉ local. Exit1 khi thiếu key/service là readiness cần chuẩn bị, không tự sửa dữ liệu hoặc bịa trạng thái đạt.
+Database runtime và AI đã được nối hoàn chỉnh. Chatbot hiện dùng Groq; Gemini giữ như adapter tùy chọn. Xem GROQ_CHATBOT_IMPLEMENTATION.md, BACKEND_PROGRESS_CURRENT.md và RUN_AND_FULL_ACCEPTANCE.md. Chẩn đoán ảnh/PDF dùng Python local; chatbot không cần Python để sinh câu trả lời.
 
-27/10 follow-up: [khóa backlog canh tác](CULTIVATION_BACKLOG_BATCHING_FIX.md) giảm512→128 replacements/lô để dành ngân sách10s cho snapshot/verification. Không bỏ xác minh hash hoặc tăng timeout; giữ toàn vẹn từng batch. Backlog lớn cần nhiều snapshot hơn, không hứa thời gian phản hồi cố định.
+Provider chỉ gửi câu hỏi,6 tin nhắn và5 đoạn RAG; kiểm nguồn/JSON trước khi lưu cặp tin nhắn. Key ở backend, không trả lỗi thô, không retry/fallback tự động. Pre-check chỉ kiểm cấu hình, không chứng minh key/quota hoặc chất lượng AI.
 
-27/10 Gemini: [guide](GEMINI_CHATBOT_IMPLEMENTATION.md). API key server-only, host Google cố định, không retry generation; timeout30s và payload128KiB. Chỉ lưu cặp tin nhắn sau khi JSON/source/quyền/CAS hợp lệ. Không cần Python để chat, không migration/seed hoặc sửa dữ liệu vận hành. AI_CHAT_PROVIDER=gemini và GEMINI_API_KEY trống được chuẩn bị trong .env, chỉ đổi riêng provider và thêm key thiếu; không in/commit secrets.
-
-AI26/10: [corpus/model thực](AI_RAG_CORPUS_IMPLEMENTATION.md), migration018. Không sửa001–017. Source page_map là số trang PDF gốc1-based, API hiển thị citation.source.page; `is_draft` không đồng nghĩa hiệu lực pháp lý. CLI corpus giữ maintenance locks, dùng chung AiService/repositories, kiểm checksum nguồn và snapshot, chạy lại bỏ qua bản đã có. .env không đổi; weights/PDF/manifest sinh ra/private backups không commit. Chat API giữ disabled, UI AI chưa làm.
-
-Cập nhật26/10/2026. [Rà soát hiện hành](PROJECT_REVIEW_20261026.md), [quy tắc nghiệp vụ](PROJECT_BUILD_SPEC.md), [runtime và tái lập](DATABASE_RUNTIME_IMPLEMENTATION.md), [tiến độ](BACKEND_PROGRESS_CURRENT.md).
+Khóa backlog canh tác tối đa128 replacements/lô, giữ snapshot/hash/context/head và timeout10s; không hứa catch-up10.000 là realtime. Nhật ký từ điều khiển là gợi ý sau Stop, người dùng xác nhận thực tế trước khi POST qua API hiện có; ACK không tự sinh công việc. Công cụ bổ sung dữ liệu lịch sử chỉ chạy offline, giữ nguyên các hash cũ và có backup AI sidecar.
 
 ## Authority và cấu hình
 
@@ -23,7 +19,7 @@ Cập nhật26/10/2026. [Rà soát hiện hành](PROJECT_REVIEW_20261026.md), [q
 ## Persistence và lỗi
 
 - PG:13 bảng nghiệp vụ; technical entity_metadata/workflow_requests/audit_events/notifications và migration ledger. Mongo:telemetry/tasks/cultivation cùng technical state.
-- Migration CLI kiểm checksum/store/order; hiện có001–016, trong đó015/016 mở Other và liều số/cơ sở đã apply local24/10. Không sửa migration cũ. Startup kiểm ledger, writable replica set, collections/validators/indexes trước receiver/worker; thiếu schema thì fail, không tự seed/fallback.
+- Migration CLI kiểm checksum/store/order; hiện có001–018, trong đó015/016 mở Other và liều số/cơ sở đã apply local24/10. Không sửa migration cũ. Startup kiểm ledger, writable replica set, collections/validators/indexes trước receiver/worker; thiếu schema thì fail, không tự seed/fallback.
 - SQL tham số hóa; khóa parent/users/requests/batch theo thứ tự của adapter; version và snapshot chống duyệt nội dung lỗi thời. Business record+request+version+audit trong transaction cùng store.
 - Không có transaction chung PG/Mongo. Giữ context/snapshot, recheck quyền và cơ chế khóa theo adapter; không gọi hai DB rồi tuyên bố atomic toàn hệ thống.
 - Seed nhận cấu hình local, không ghi đè UUID/identity/password/status/verified/context đã tồn tại, không gửi OTP/MQTT. Xung đột profile cần xử lý rõ, không reset dữ liệu.
@@ -33,7 +29,7 @@ Cập nhật26/10/2026. [Rà soát hiện hành](PROJECT_REVIEW_20261026.md), [q
 - Timestamp ISO/UTC; harvest_date là ngày thực tế theo lịch Việt Nam, kiểm hạn nhập bù7 ngày theo policy. Không nhận confirmed_at hay email verified do client tự đặt.
 - Telemetry measured_at là backend arrival do firmware hiện chưa gửi timestamp; received_at là bước ghi. Raw unit giữ nguyên, metadata mismatch không tự convert.
 - Telemetry FIFO10.000 readings; task journal5.000 theo rules terminal; Cultivation cap10.000 không FIFO xóa Locked. Hash v1/canonical mapping phải giữ nguyên qua BSON/restart.
-- Cultivation lock15 phút; catch-up tối đa512 earliest events/transaction; quyền correction theo phân công gốc. Snapshot read chia batch100 tránh lỗi cursor/CSOT. Không giả catch-up10.000 events là realtime.
+- Cultivation lock15 phút; catch-up tối đa128 earliest events/transaction; quyền correction theo phân công gốc. Snapshot read chia batch100 tránh lỗi cursor/CSOT. Không giả catch-up10.000 events là realtime.
 - OTP/email/SMS proof chưa xong là state ngắn hạn, restart phải xác minh lại; account verification, proposals, token version và history lưu bền.
 
 ## MQTT/control

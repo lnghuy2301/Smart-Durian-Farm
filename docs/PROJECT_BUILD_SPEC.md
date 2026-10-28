@@ -1,20 +1,14 @@
 # Smart Durian Farm — đặc tả hiện hành
 
-Chỉ dẫn trước nghiệm thu: [PRE_ACCEPTANCE_READINESS](PRE_ACCEPTANCE_READINESS.md), Gemini3.1 Flash-Lite, công cụ kiểm tra local chỉ đọc và các giới hạn/chờ nghiệm thu thực. Không suy ra Google/hardware đã được kiểm chứng từ kiểm thử giả lập.
-
-27/10 cập nhật chat: [Gemini RAG](GEMINI_CHATBOT_IMPLEMENTATION.md) đã có adapter và UI local gọi API; dùng key riêng ở server. Chờ nghiệm thu Google live/quota, không còn chờ chọn API. Các mô tả cũ dưới đây giữ làm checkpoint.
-
-AI hiện hành theo [AI_RAG_CORPUS_IMPLEMENTATION](AI_RAG_CORPUS_IMPLEMENTATION.md): model thật chạyCPU, top3 nhãn Việt giữ điểm/nhãn gốc, corpus15 PDF nguồn/trang/dự thảo018. Chat API chưa chọn, không có câu trả lời sinh thật; accuracy chưa đánh giá, UI AI chưa làm. Phần chờ weights trong checkpoint trước dưới đây đã hoàn tất.
-
-Cập nhật AI26/10/2026: [AI backend](AI_BACKEND_IMPLEMENTATION.md) có chẩn đoán YOLO11s-cls/lịch sử riêng, Zone tùy chọn có kiểm tra quyền, RAG PDF do Admin quản lý và hội thoại Farmer. Chờ best.pt và chọn API chatbot; chưa khẳng định accuracy hoặc trả lời thật. Phần nghiệp vụ bên dưới đối chiếu nền `1f6c1fd` và workflow đã duyệt; [tiến độ](BACKEND_PROGRESS_CURRENT.md) phân biệt kiểm thử tự động với nghiệm thu thực. Android chưa triển khai.
+Cập nhật28/10/2026. API/web/database và hai module AI đã có. [Tiến độ](BACKEND_PROGRESS_CURRENT.md), [chạy/nghiệm thu](RUN_AND_FULL_ACCEPTANCE.md). Các rule bên dưới giữ theo quyết định người dùng; chưa có nghiệm thu end-to-end thì không đánh dấu production/hardware đã đạt. Android ngoài phạm vi hiện tại.
 
 ## Kiến trúc và dữ liệu
 
 Web React/TypeScript/Vite gọi REST NestJS. PostgreSQL lưu13 bảng nghiệp vụ: USERS, COOPERATIVES, AGRICULTURAL_MATERIALS, FARMING_STANDARDS, STANDARD_MATERIALS, FARMS, ZONES, USERS_ZONES, TREES, TREE_HARVESTS, DEVICES, SENSORS, ACTUATORS. MongoDB lưu IOT_TELEMETRIES, ACTUATOR_TASKS, CULTIVATION_EVENTS và state kỹ thuật. QR không có bảng riêng.
 
-Workflow requests/version/audit/notifications dùng bảng kỹ thuật chung đã duyệt. HTTP/Auth/MQTT/workers/QR dùng chung runtime database; memory vẫn có cho test cô lập. Một PG pool/MongoClient/repository authority. Không giả có transaction chéo PG/Mongo. [Persistence](PERSISTENCE_DESIGN.md), [runtime](DATABASE_RUNTIME_IMPLEMENTATION.md).
+Workflow requests/version/audit/notifications dùng bảng kỹ thuật chung đã duyệt. Mongo bổ sung AI_DISEASE_DIAGNOSTICS, CHATBOT_CONVERSATIONS và AI_RAG_DOCUMENTS. HTTP/Auth/MQTT/workers/QR dùng chung runtime database; memory vẫn có cho test cô lập. Một PG pool/MongoClient/repository authority. Không giả có transaction chéo PG/Mongo. [Persistence](PERSISTENCE_DESIGN.md), [runtime](DATABASE_RUNTIME_IMPLEMENTATION.md).
 
-Đọc ERD_DIAGRAM.xml và migration001–014 cùng các file schema được manifest import để hiểu schema vật lý cuối. Không sửa migration đã Applied. Định danh đối ngoại của hardware khác UUID nội bộ; không dùng station/stream/capability thay PK/FK.
+Đọc ERD_DIAGRAM.xml và migration001–018 cùng các file schema được manifest import để hiểu schema vật lý cuối. Không sửa migration đã Applied. Định danh đối ngoại của hardware khác UUID nội bộ; không dùng station/stream/capability thay PK/FK.
 
 ## Tài khoản và HTX
 
@@ -66,10 +60,17 @@ Cập nhật24/10: Other yêu cầu details.activity_name1–200 và note tùy c
 - Target Zone hoặc cây cùng Zone; Watering thời lượng phút/lượng nước tùy chọn; Spraying/Fertilizing vật tư và lượng dùng, đơn vị snapshot. Chỉ vật tư Active; ngoài tiêu chuẩn được ghi kèm cảnh báo.
 - Pending15 phút cho tác giả sửa/xóa. Locked không sửa/xóa; correction là bản mới giữ phân công/context gốc. Target/action đổi được trong cùng Zone, recheck quyền gốc. Chủ correction nhật ký mình khi còn là chủ.
 - SHA-256 chain mỗi Zone gồm nhật ký Zone và cây, chỉ Locked nối theo lock_at rồi _id; genesis previous_hash=null. Không gọi là blockchain. Không tự sinh nhật ký từ ACK.
+- Sau Stop nhận đủ ACK, Farmer có thể mở gợi ý nhật ký từ phiên Bật hoàn tất trước đó, xác nhận thực tế và điền vật tư/liều trước khi lưu. Thời lượng điền sẵn chỉ ước tính; tác giả/created_at do API sinh lúc lưu. Xem [quy trình](CONTROL_SESSION_JOURNAL.md).
 - QR public không đăng nhập: metadata cây/Zone/HTX/tiêu chuẩn, hoạt động và vật tư/lượng dùng, thu hoạch đã xác nhận. Cả gốc và mọi correction Locked được hiển thị, có nhãn target/latest/applies; chuyển A→B thì A vẫn thấy chuỗi và nhãn nội dung hiện tại không còn áp dụng cho A. Pending chưa công khai.
 - Thu hoạch Pending sửa giữ nội dung đã xác nhận trên QR. Ẩn PII Farmer, địa chỉ/GPS Farm, số chứng nhận, field UUID nội bộ, ghi chú/lý do tự do và IoT. tree_code công khai vẫn theo định dạng DRN-UUID đã chốt.
 
 [Canh tác](CULTIVATION_EVENTS_WORKFLOW_DESIGN.md), [QR](QR_TRACEABILITY_WORKFLOW_DESIGN.md).
+
+## AI
+
+Farmer dùng chẩn đoán ảnh và chatbot, chỉ xem lịch sử riêng; Admin quản lý tài liệu RAG. Zone chẩn đoán được null, có chọn thì phải có quyền hiện hành. YOLO11s-cls10 lớp bệnh, chỉ gợi ý top3/điểm, chưa có healthy/out-of-domain và không tự khuyến cáo thuốc. Python local, ảnh riêng tư, model best.pt không commit.
+
+Chatbot hiện chọn [Groq](GROQ_CHATBOT_IMPLEMENTATION.md), Gemini là adapter tùy chọn. Chỉ dùng corpus được kích hoạt, trích nguồn/trang gốc và nhãn dự thảo. Lưu cặp tin nhắn sau validation/quyền/CAS; không retry generation, không có công cụ điều khiển hoặc sửa dữ liệu. Key backend-only, không gửi toàn PDF/ảnh/UUID/JWT tới provider; AI không xuất hiện trên QR public. [Corpus/provenance](AI_RAG_CORPUS_IMPLEMENTATION.md).
 
 ## MQTT, telemetry và điều khiển
 

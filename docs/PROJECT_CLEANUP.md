@@ -1,4 +1,26 @@
-# Dọn dự án ngày 21/10/2026
+# Dọn dự án và kiểm chứng — 28/10/2026
+
+Nhánh hiện hành `chore/project-review-cleanup-20261028`, kế thừa `feat/control-session-journal@198b3e1` và `feat/cultivation-history-enrichment@e51e144`. Không push/merge. Các mục21/10 bên dưới giữ chi tiết lần dọn nền; checkpoint này là hiện hành.
+
+## Đợt28/10
+
+- Hợp nhất BACKEND_PROGRESS_CURRENT, IMPLEMENTATION_PLAN và docs/README; bỏ checkpoint lặp “AI chưa làm/chờ provider/persistence chưa nối”. Đặc tả/ghi chú và sơ đồ kiến trúc có Mongo AI/Python/Groq, migrations018; retention/correction/quyền không đổi. Batch canh tác128, không còn512 trong hướng dẫn kỹ thuật hiện hành.
+- RUN_AND_FULL_ACCEPTANCE dùng Groq/key riêng/model hiện hành; trạng thái MQTT theo .env thực tế thay vì khẳng định luôn false. Thêm hướng dẫn nhật ký từ phiên và dữ liệu phong phú.
+- Xóa PRE_ACCEPTANCE_READINESS.md (đã có RUN_AND_FULL_ACCEPTANCE +GROQ_CHATBOT_IMPLEMENTATION), DEMO_READINESS_20261021.md (snapshot cũ, thay bằng runbook/tiến độ), PROJECT_REVIEW_20261026.md (thay BACKEND_PROGRESS_CURRENT). Chuyển toàn bộ liên kết Markdown tương ứng, không tạo archive trùng. Lịch sử Git giữ bản cũ.
+- Giữ Gemini adapter/guide vì vẫn chọn được qua cấu hình. Giữ toàn bộ guide adapter/workflow có logic/constraints/SQL/tests riêng, ERD/MQTT/PDF/nguồn UI/Postman riêng, assets/brand, best.pt, corpus, dependencies/venv, private accounts và backups.
+- Test browser role-navigation cập nhật kỳ vọng Farmer có2 liên kết AI (ảnh/chat) theo sidebar mới, thay1 cũ; không đổi quyền/menu để ép test qua. Mọi sửa đổi frontend khác của người dùng được giữ riêng.
+- Đã dọn696 files/7,10MiB output biên dịch test và cache Python có thể tái tạo sau khi chạy xong; giữ dist phục vụ start và ảnh/kết quả browser mới cho người dùng đối chiếu. Không git clean/reset, không xóa volume/database/AI storage hoặc tài khoản.
+
+## Kiểm chứng28/10
+
+- Backend276/276; web30/30 unit,60/60 browser regression,10/10 AI browser,1/1 browser nhật ký mới; Python10/10 (còn cảnh báo deprecation Starlette/httpx, không ảnh hưởng kết quả). Lint/typecheck/build backend/web đạt. AI browser sửa chờ URL/aria-current sau click thay vì đọc ngay trước React cập nhật, giữ trong file test riêng chưa track của người dùng. Bundle chính khoảng520kB vẫn có cảnh báo, chưa làm đợt tối ưu tải/chia chunk.
+- Integration enrichment1/1 kiểm resume sau lỗi checkpoint, chạy lại không trùng và không sửa dữ liệu cũ. Local đã thêm160 nhật ký; đối chiếu2.358 PG rows cũ và1.975 tài liệu Mongo nghiệp vụ cũ không đổi.
+- Backup sau nạp có2.519 PG rows/2.444 Mongo documents,16 AI assets. Restore-check trên database ngẫu nhiên của fixture trả đúng checksum010f8c76e95e4f2cc18f143561393f6632d15968d8d160db1d97740ad075891c; không restore đè.
+- Docker ban đầu chưa chạy. Lệnh fixture đầu thiếu -p làm recreate container cùng tên project chính; đã phát hiện và khôi phục container chính đúng volume, mở fixture riêng sdf-persistence-test. Đối chiếu dữ liệu chính15 Users/8 Farm/16 Zone/414 cây/130 nhật ký/3 task trước nạp còn nguyên. Không mất/xóa volume. Tài liệu fixture dùng -p rõ ràng để tránh lặp lại.
+- Không gửi lệnh hardware, OTP hoặc yêu cầu AI thật trong đợt rà soát. Không tự bật API vì MQTT_ENABLED hiện true và hardware có thể đang hoạt động; người dùng chủ động mở lại sau khi đọc kết quả.
+- Pre-check cuối: Groq cấu hình ready, DB up,18/18 migrations,15 PDF/1.220 chunks và metadata/tài khoản ready; image worker not_running. Vì vậy can_start_full_manual_acceptance=false tại thời điểm này; chạy npm run dev:ai rồi kiểm lại, không xem đó là lỗi database hoặc gọi là tất cả service đang chạy. Fixture riêng đã được dừng, DB chính giữ chạy.
+
+## Lịch sử lần dọn nền21/10
 
 Nhánh `chore/project-cleanup`, từ `1f6c1fd`. Phạm vi là tài liệu, công cụ thử API và output sinh tự động; không thay đổi nghiệp vụ, schema, migration, database hoặc giao thức hardware.
 

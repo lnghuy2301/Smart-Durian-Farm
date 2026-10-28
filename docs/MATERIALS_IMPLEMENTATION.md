@@ -1,6 +1,6 @@
 # Vật tư nông nghiệp — bàn giao module
 
-Cập nhật26/10: [quản trị danh mục trên web và rà soát dự án](PROJECT_REVIEW_20261026.md). Admin tạo/sửa vật tư/tiêu chuẩn và gắn/bỏ bridge từ chi tiết tiêu chuẩn; nhập liều số/đơn vị/cơ sở, giữ mô tả legacy khi sửa thuộc tính khác, không đổi snapshot lịch sử. Farmer/Manager chỉ đọc. API/schema/seed giữ nguyên; browser fixture4 nhóm kiểm tra mới đạt.
+Cập nhật26/10: [quản trị danh mục trên web và rà soát dự án](BACKEND_PROGRESS_CURRENT.md). Admin tạo/sửa vật tư/tiêu chuẩn và gắn/bỏ bridge từ chi tiết tiêu chuẩn; nhập liều số/đơn vị/cơ sở, giữ mô tả legacy khi sửa thuộc tính khác, không đổi snapshot lịch sử. Farmer/Manager chỉ đọc. API/schema/seed giữ nguyên; browser fixture4 nhóm kiểm tra mới đạt.
 
 Cập nhật24/10: [liều số và danh mục17 vật tư](BACKEND_PDF_REQUIREMENTS.md), migration016 thêm default_dosage_value/dosage_basis, unit giữ nguyên. default_dosage giữ nhãn tương thích client cũ; không parse mù hoặc đổi snapshot nhật ký. CLI riêng backup/audit, thêm12 và chuẩn hóa5 dòng khởi tạo chưa chỉnh, chạy lại không tạo trùng. Đọc mục này trước mô tả ERD/DTO cũ phía dưới.
 

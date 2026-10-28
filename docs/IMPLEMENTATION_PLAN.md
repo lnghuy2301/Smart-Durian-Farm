@@ -1,51 +1,23 @@
-# Kế hoạch triển khai tiếp theo
+# Kế hoạch tiếp theo — 28/10/2026
 
-## Hiện hành27/10 — sẵn sàng cho nghiệm thu local
+Đã có toàn bộ module backend/web đã chốt, kể cả AI ảnh/Groq chatbot. Không triển khai lại module hoặc seed lại để bắt đầu nghiệm thu. [Tiến độ](BACKEND_PROGRESS_CURRENT.md), [quy tắc](PROJECT_BUILD_SPEC.md), [chạy4 terminal](RUN_AND_FULL_ACCEPTANCE.md).
 
-[PRE_ACCEPTANCE_READINESS](PRE_ACCEPTANCE_READINESS.md) là danh sách việc hiện tại: Gemini3.1 Flash-Lite đã được cấu hình, code nghiệp vụ/AI và persistence đã có. Chạy check:acceptance, điền key rồi nghiệm thu bốn vai trò, Gemini/ảnh và hardware thật; không seed/migrate hoặc viết lại module để bắt đầu test. TCVN lỗi font cần nguồn thay thế nếu muốn bổ sung. Production/release còn cần chốt host/Auth/TLS và quyền push/merge riêng.
-
-## Lịch sử checkpoint — không dùng mô tả chờ weights/API cũ làm backlog hiện tại
-
-27/10: [Gemini chatbot](GEMINI_CHATBOT_IMPLEMENTATION.md) đã có adapter, nguồn/trích dẫn và private history; .env có key trống để người dùng điền. Không còn chờ chọn vendor. Bước tiếp theo: nghiệm thu live sau điền key, đánh giá câu trả lời/ảnh thật và hoàn tất release/deploy; giữ nguyên corpus018 và frontend riêng.
-
-Cập nhật mới nhất26/10: [AI ảnh và corpus thực](AI_RAG_CORPUS_IMPLEMENTATION.md) đã có model chạyCPU,15 PDF/1.220 chunks và provenance018. Không nhập lại hoặc seed lại. AI tiếp theo là chọn API chatbot, đánh giá ảnh có nhãn và giao diện AI; các dòng chờ nhận weights/corpus bên dưới là lịch sử trước lần nhập này.
-
-Ưu tiên hiện hành26/10: [nền tảng AI](AI_BACKEND_IMPLEMENTATION.md) đã triển khai theo yêu cầu mới: YOLO11s-cls, Zone tùy chọn, Farmer có lịch sử riêng, Admin quản lý PDF RAG. Tiếp theo nhận best.pt/versions Colab, chọn API chatbot và corpus để đánh giá thật; tiếp tục nghiệm thu bốn vai trò/hardware, môi trường triển khai và review Git. Không seed lại dữ liệu hiện có. Các checkpoint offline bên dưới giữ làm lịch sử.
-
-Checkpoint offline21/10: [dữ liệu IoT mẫu](OFFLINE_DEMO_TELEMETRY.md) đã nạp cho hai Device mô phỏng; không cần bật hardware/MQTT để xem lịch sử. Bước tiếp theo là người dùng smoke API/web với DB đã có mẫu, hoàn tất Manager thật/Join HTX, sau đó nghiệm thu hardware. AI chỉ bắt đầu sau khi chốt model/provider/corpus và phạm vi; chưa tự chọn dịch vụ trả phí hoặc giả kết quả AI.
-
-Cập nhật21/10/2026. API nghiệp vụ,13 PG adapters,3 Mongo adapters, shared database runtime, giao diện web và QR đã có. [Tiến độ/evidence](BACKEND_PROGRESS_CURRENT.md); không lập lại backlog persistence/UI đã hoàn tất.
-
-## Thứ tự ưu tiên
-
-| Bước | Công việc | Điều kiện đạt |
+| Ưu tiên | Công việc | Điều kiện hoàn tất |
 | --- | --- | --- |
-|1|Tích hợp MQTT FINAL v1.0 đã nhận|Parser/wire/units và metadata-based control đã tích hợp; purpose bất biến, Active mọi ON/OFF; hoàn tất regression trước chuyển vận hành|
-|2|Nghiệm thu ESP32 thật|Sáu streams đúng metadata/raw units; receipt correlation và thứ tự van/bơm; lỗi ACK/mất mạng/restart ghi evidence rõ|
-|3|Chốt dữ liệu và ba tài khoản demo chính|Farmer chủ Farm thật, Manager xác minh thật +Admin duyệt HTX, Admin riêng; giữ Farmer phụ để demo phân công/duyệt|
-|4|Smoke nghiệp vụ trên database+web|SMS/email, HTX/Farm approvals, assignment expiry, Harvest/Cultivation/correction, QR whitelist và restart|
-|5|Backup/restore đã có; diễn thử với tài khoản thật|CLI và8 tests backup đạt; actual snapshot/restore-check demo khớp, không restore đè. Xem DATABASE_BACKUP_RESTORE/DEMO_READINESS_20261021|
-|6|Review release và triển khai đích|Tests, docs, config, Auth/deploy/TLS/broker; chỉ push/merge theo yêu cầu rõ ràng|
+|1|Nghiệm thu kết hợp phần cứng|6 streams đúng trạm/đơn vị, ACK tương ứng taskId/action, thứ tự bơm/van, không tưới/phun đồng thời, Stop/recovery/mất mạng/restart. Quan sát vật lý riêng với ACK |
+|2|Thử nhật ký từ phiên điều khiển|Sau Stop đủ ACK, bấm Ghi nhật ký → xác nhận thực tế → kiểm thời lượng/vật tư → lưu; kiểm Zone/tác giả/Pending/Locked/QR. Không tự ghi từ ACK |
+|3|Nghiệm thu4 vai trò|SMS/email/Manager approval, Farm/HTX/Zone proposals, assignment scope/expiry, Harvest/correction, Cultivation/hash-chain/QR và AI private history |
+|4|Đánh giá AI|Người dùng đã báo hoạt động; kiểm top3 bằng ảnh có nhãn, câu hỏi có/ngoài nguồn, draft/source.page, quota và mạng lỗi. Không coi output hợp lệ là accuracy đạt |
+|5|Chốt dữ liệu và bản phát hành|Giữ dữ liệu/tài khoản thật; backup JSON+AI sidecar, ảnh/model/PDF gốc riêng; review frontend đang sửa, gom các nhánh qua PR khi được cho phép |
+|6|Chốt triển khai|Host/domain, Auth production, TLS/CORS/broker ACL, giám sát và quy trình backup/restore. Không tự chọn dịch vụ trả phí hoặc mở mạng |
 
-AI có nền tảng backend theo guide mới, còn weights/provider/corpus và nghiệm thu thật. Android chưa có, là phạm vi riêng. Không tự chọn nhà cung cấp hoặc thêm nghiệp vụ mới để tăng phần trăm hoàn thành.
+## Quy tắc vận hành
 
-## Checklist hardware
+- [MQTT FINAL v1.0](MQTT_HARDWARE_PROTOCOL_FINAL_v1.0.md) là contract đóng băng. Purpose chọn lúc đăng ký, mỗi vai trò đúng một actuator; mọi command kể cả OFF yêu cầu Active.
+- ACK là receipt;10s mỗi bước; sau restart không replay ON, trước Start phải Reset. Không đổi metadata Inactive khi tải chưa tắt vì OFF cũng sẽ bị chặn.
+- Dữ liệu lịch sử mới chỉ nối sau đuôi hash, không sửa Locked. Công cụ enrichment đã chạy một lần; không cần chạy lại để mở dự án.
+- Database fixture luôn dùng `docker compose -p sdf-persistence-test -f docker-compose.persistence-test.yml ...`; database chính giữ project riêng và volumes hiện có.
+- .env/private guide/model/PDF/backups không commit hoặc gửi cho AI bên ngoài; Postman nhập JWT/UUID/OTP thủ công.
+- Nghiệp vụ mới chưa rõ thì hỏi và chờ. Không push/merge khi chưa được cho phép.
 
-Dùng [nguồn MQTT hiện có](MQTT_HARDWARE_PROTOCOL_FINAL_v1.0.md), [implementation](MQTT_COMMUNICATION_IMPLEMENTATION.md) đã được người dùng xác nhận kiểm thử hardware; vẫn cần nghiệm thu full API/web/database với bản server đã tích hợp. Không tự phát command thật trong test tự động.
-
-1. Ghi revision, storage=database, readiness, broker connected/subscribed; không ghi credentials/JWT/OTP.
-2. Dùng Device station `E08CFE41DCAC` đã đăng ký, UUID nội bộ riêng. Không tạo station trùng. Đối chiếu [readiness](REAL_HARDWARE_DATABASE_READINESS.md).
-3. Streams301 air_temperature/C,302 air_humidity/%,303 soil_moisture/%rH,304 soil_temperature/C,305 soil_ph/H+,306 soil_ec/µS/cm. Legacy303 expected% được sửa qua quyền metadata khi cần; readings raw không sửa.
-4. Quan sát packet khoảng15s; latest/history/last_seen_at cập nhật; measured_at backend arrival, received_at bước ghi. Packet lỗi/retained/stream lạ không làm receiver chết hoặc tự đăng ký Sensor.
-5. Bơm2/shared, van3/watering, van4/spraying. Start từ Unknown: OFF2→ACK→OFF3→ACK→OFF4→ACK, rồi van chức năng ON→ACK→bơm ON→ACK. Chờ10s mỗi bước.
-6. Stop bơm trước rồi các van theo workflow. Không tưới/phun đồng thời trên cùng Device. ACK đủ chỉ xác nhận nhận command; quan sát hardware riêng để xác nhận bơm/van thực sự hoạt động.
-7. Kiểm ACK thiếu/trễ/trùng/sai action/Device, disconnect, Stop preemption và recovery. Không báo “đã tắt” khi thiếu ACK; Start tiếp phải Reset đủ ACK.
-8. Restart backend: dữ liệu còn, task dở Failed/mode Unknown, không tự ON; Start sau Reset. OTP dở phải xác minh lại.
-
-Report nghiệm thu: case, expected, actual, Pass/Fail/NotRun, thời gian và packet shape đã bỏ dữ liệu nhạy cảm. Tách kết quả receipt với quan sát vật lý. Loopback tests không thay bằng chứng hardware thật.
-
-## Chuẩn bị demo
-
-Seed hiện có là điểm xuất phát, không xóa tạo lại. Bổ sung qua API/seed non-overwriting; không SQL trực tiếp để bỏ qua approvals/metadata/audit. Dữ liệu thu hoạch/canh tác đi đúng workflow. Không tạo telemetry/ACK giả cho station thật. Giữ UUID/tree_code/station/stream/capability đã liên kết.
-
-[Seed profile](PERSISTENCE_SEED_SPEC.md), [runtime và commands test](DATABASE_RUNTIME_IMPLEMENTATION.md), [sơ đồ hiện hành](CURRENT_SYSTEM_DIAGRAMS.md). Không đánh dấu backup/restore, production Auth hay hardware đã đạt trước khi thực hiện.
+Ghi kết quả Pass/Fail/Chưa chạy trong [checklist đầy đủ](RUN_AND_FULL_ACCEPTANCE.md). Không đánh dấu hardware/Auth production/deploy đã đạt chỉ vì test tự động qua.

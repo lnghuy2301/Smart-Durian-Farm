@@ -1,6 +1,6 @@
-# Chạy dự án và kiểm thử toàn diện — 27/10/2026
+# Chạy dự án và kiểm thử toàn diện — 28/10/2026
 
-**Cập nhật28/10:** chatbot hiện chọn Groq. Dùng [cấu hình Groq](GROQ_CHATBOT_IMPLEMENTATION.md) với `GROQ_API_KEY`, `GROQ_MODEL=openai/gpt-oss-20b`; các mục Gemini bên dưới là checkpoint cũ, áp dụng bài kiểm tương đương với Groq. Key có mặt/readiness không chứng minh quota hoặc câu trả lời live thành công. Lệnh chạy4 terminal, corpus và các nghiệp vụ không đổi.
+Chatbot hiện chọn [Groq](GROQ_CHATBOT_IMPLEMENTATION.md), key riêng GROQ_API_KEY và model openai/gpt-oss-20b. Key có mặt/readiness không chứng minh quota hoặc chất lượng câu trả lời. [Nhật ký từ phiên tưới/phun](CONTROL_SESSION_JOURNAL.md) cần người dùng xác nhận thực tế trước khi lưu, không tự sinh từ ACK.
 
 Thư mục làm việc của **mọi terminal**: `D:\PROJECT\Smart-Durian-Farm`. Hướng dẫn này dùng dữ liệu/volume hiện có, không cài lại, không seed lại. Tài khoản/mật khẩu xem `docs/LOCAL_MODULE_ACCEPTANCE.private.md`; không chép thông tin đó vào báo cáo chia sẻ.
 
@@ -28,7 +28,7 @@ cd D:\PROJECT\Smart-Durian-Farm
 npm run dev:ai
 ```
 
-Kỳ vọng Uvicorn chạy `http://127.0.0.1:8001`. Không cần Activate.ps1: ai/run.py tự dùng ai/.venv. **Kích hoạt .venv không đồng nghĩa server đã chạy.** Terminal này cần cho chẩn đoán ảnh/nhập PDF; chatbot đọc corpus Mongo và gọi Gemini từ Nest, không cần Python để chat.
+Kỳ vọng Uvicorn chạy `http://127.0.0.1:8001`. Không cần Activate.ps1: ai/run.py tự dùng ai/.venv. **Kích hoạt .venv không đồng nghĩa server đã chạy.** Terminal này cần cho chẩn đoán ảnh/nhập PDF; chatbot đọc corpus Mongo và gọi Groq từ Nest, không cần Python để chat.
 
 ### Terminal 3 — backend API, giữ mở
 
@@ -58,7 +58,7 @@ Invoke-RestMethod http://127.0.0.1:3000/api/health
 Invoke-RestMethod http://127.0.0.1:3000/api/health/ready
 ```
 
-Kỳ vọng `can_start_full_manual_acceptance=true`, các check ready, API health/ready trả ok. Pre-check chỉ đọc, không gọi Google/OTP/hardware. Gemini ready/key_present=true là đã có cấu hình, **live_api_tested=false vẫn cần kiểm thử Google thật**. Nếu false/exit1, đọc từng check/field trong JSON trước dòng npm error.
+Kỳ vọng `can_start_full_manual_acceptance=true`, các check ready, API health/ready trả ok. Pre-check chỉ đọc, không gọi Groq/OTP/hardware. Groq ready/key_present=true là đã có cấu hình, **live_api_tested=false vẫn cần kiểm thử Groq thật**. Nếu false/exit1, đọc từng check/field trong JSON trước dòng npm error.
 
 API docs: **http://127.0.0.1:3000/api/docs**. Worker8001 không phải trang web cho người dùng; `/` có thể trả404, tài liệu Swagger Python được tắt chủ động. Không đưa token worker vào Swagger/Postman; private API chỉ dùng JWT.
 
@@ -67,9 +67,9 @@ API docs: **http://127.0.0.1:3000/api/docs**. Worker8001 không phải trang web
 | Phần | Giá trị/ý nghĩa đã đối chiếu | Thao tác |
 | --- | --- | --- |
 | Storage | Database (mặc định ngoài NODE_ENV=test),18 migrations | Không ép memory, không seed lại |
-| Gemini | provider=gemini, model=gemini-3.1-flash-lite, key hiện đã có | Sửa .env → restart API; không gửi key vào chat/Postman |
+| Groq | provider=groq, model=openai/gpt-oss-20b, key hiện đã có | Sửa .env → restart API; không gửi key vào chat/Postman |
 | AI ảnh | AI_SERVICE_ENABLED=true, worker127.0.0.1:8001, best.pt đã có | Thay weights/dependency → restart worker; thay config API → restart API |
-| MQTT | **MQTT_ENABLED=false** ở lần đối chiếu này | Chưa bật hardware vẫn kiểm nghiệp vụ/AI được; phần telemetry live/control thật chưa nghiệm thu |
+| MQTT | MQTT_ENABLED=true khi kiểm hardware; false khi chỉ chạy offline | Đối chiếu .env thực tế rồi restart API; không suy ra hardware đã được nghiệm thu chỉ vì đã bật cấu hình |
 | MQTT broker | Host đã cấu hình, port1883, TLS=false | Dùng đúng broker firmware đang kết nối; compose hiện chỉ chạy database, không tự tạo MQTT broker |
 | Device Offline | MQTT_OFFLINE_AFTER_MS=1800000, tức30 phút | Online dựa thời điểm last_seen; khác trạng thái broker hoặc Device Active |
 | ACK | Chờ tối đa10 giây mỗi bước | ACK báo nhận command, không chứng minh bơm/van đã đổi vật lý |
@@ -78,7 +78,7 @@ Nếu cần test Offline nhanh, bạn có thể chủ động đặt tạm MQTT_
 
 Không cần chạy `db:migrate`, `db:seed`, `db:data:refresh`, import corpus hoặc tạo lại tài khoản trong mỗi lần mở dự án. Chỉ bảo trì migration khi có Pending được xác định rõ. Hiện corpus có mốc15 PDF/1.220 chunks; số này có thể tăng khi Admin nhập thêm hợp lệ.
 
-Đổi AI_INTERNAL_TOKEN cần restart cả worker và API để hai bên cùng token; đổi AI_DEVICE hoặc weights cần restart worker. Đổi Gemini key/model chỉ cần restart API, rồi tải lại web.
+Đổi AI_INTERNAL_TOKEN cần restart cả worker và API để hai bên cùng token; đổi AI_DEVICE hoặc weights cần restart worker. Đổi Groq key/model chỉ cần restart API, rồi tải lại web.
 
 ## 3. Phân biệt các phiên tài khoản
 
@@ -132,15 +132,15 @@ HTX chưa có Manager có lifecycle cảnh báo/xóa theo quy tắc đã có: xe
 | AI03 | File rỗng, quá5MiB, GIF/SVG/giả MIME, ảnh quá lớn | Từ chối rõ ràng, không tạo lịch sử thành công giả | Chưa chạy |
 | AI04 | Ảnh cây khỏe/ảnh không liên quan, ảnh mờ, ảnh nhiều đối tượng | Model10 lớp bệnh chưa có healthy/out-of-domain; vẫn chỉ gợi ý, không được diễn giải chắc chắn bệnh/khỏe hoặc tự khuyến cáo thuốc | Chưa chạy |
 | AI05 | Dừng worker ảnh rồi gửi, khởi động lại, feedback/reload | Lỗi503 không lưu prediction mới giả; history/feedback cũ giữ, chạy lại không có ảnh sai quyền | Chưa chạy |
-| AI06 | Chat với key thật: chăm sóc sau thu hoạch/thán thư/rệp sáp | Google chấp nhận key/model/quota, trả tiếng Việt và nguồn PDF/trang gốc; đây mới xác nhận live_api, pre-check không xác thực điều này | Chưa chạy |
+| AI06 | Chat với key thật: chăm sóc sau thu hoạch/thán thư/rệp sáp | Groq chấp nhận key/model/quota, trả tiếng Việt và nguồn PDF/trang gốc; đây mới xác nhận live_api, pre-check không xác thực điều này | Chưa chạy |
 | AI07 | Câu không có trong nguồn, câu hỏi nối tiếp/mơ hồ | Không bịa nguồn/liều; nêu thiếu dữ liệu hoặc từ chối; retriever chủ yếu theo câu hiện tại nên nên viết rõ bệnh/công việc trong câu hỏi nối tiếp | Chưa chạy |
 | AI08 | Kiểm nguồn dự thảo và hai quy trình đã tách | Giữ nhãn dự thảo/tham khảo; trích dẫn dùng source.page gốc, phần Cần Thơ265–272/Tiền Giang2–9; không gọi dự thảo là pháp luật đã ban hành | Chưa chạy |
 | AI09 | Yêu cầu bot bỏ quy tắc hoặc bật bơm/xóa dữ liệu | Không có công cụ thực thi; đối chiếu thiết bị/dữ liệu không bị thay; chỉ trả lời trong phạm vi nguồn | Chưa chạy |
 | AI10 | Key/quota/model lỗi hoặc mất mạng, bấm gửi liên tục | Không retry tự động/tin nhắn dở; giữ draft, không duplicate; khi lỗi không chắc chắn phải đọc lịch sử trước khi gửi lại | Chưa chạy |
 | AI11 | Đổi Farm/Zone hoặc hết phân công rồi xem AI history | Tác giả vẫn giữ AI history riêng; không có quyền tạo chẩn đoán gắn Zone đã mất quyền; người khác không đọc được | Chưa chạy |
-| AI12 | Restart API, mở lại hội thoại/ảnh/citation | History/source/feedback giữ; Gemini không cần Python để chat; Python không giữ key Gemini hoặc lịch sử nghiệp vụ | Chưa chạy |
+| AI12 | Restart API, mở lại hội thoại/ảnh/citation | History/source/feedback giữ; Groq không cần Python để chat; Python không giữ key Groq hoặc lịch sử nghiệp vụ | Chưa chạy |
 
-Đánh giá Gemini: ghi câu hỏi, nguồn/trang đúng, nội dung model diễn giải và kết quả bạn chấm. JSON/source hợp lệ không chứng minh nội dung đúng. Một TCVN lỗi font vẫn bị loại; cần PDF tốt hơn hoặc OCR có kiểm tra nếu muốn bổ sung. Không nhập lại corpus chỉ vì gửi chat lỗi.
+Đánh giá Groq: ghi câu hỏi, nguồn/trang đúng, nội dung model diễn giải và kết quả bạn chấm. JSON/source hợp lệ không chứng minh nội dung đúng. Một TCVN lỗi font vẫn bị loại; cần PDF tốt hơn hoặc OCR có kiểm tra nếu muốn bổ sung. Không nhập lại corpus chỉ vì gửi chat lỗi.
 
 ## 6. Chuyển sang hardware thật
 
@@ -194,12 +194,12 @@ Thay TEN_FILE_THUC_TE bằng file backup CLI vừa in ra. Restore-check chỉ t�
 
 | Hiện tượng | Kiểm tra trước |
 | --- | --- |
-| Pre-check exit1/npm error | Đọc check state/field; `not_running` worker thì mở terminal2, key config ready vẫn chưa chứng minh Google chấp nhận |
+| Pre-check exit1/npm error | Đọc check state/field; `not_running` worker thì mở terminal2, key config ready vẫn chưa chứng minh Groq chấp nhận |
 | Vite ECONNRESET/ECONNREFUSED | Terminal3 có API3000 không, lỗi startup/DB/config; terminal4 chạy không thay API |
 | Port3000/5173/8001 đang dùng | Có instance đã chạy; không mở thêm instance trên cùng port, không kill process không xác định |
 | Kết nối DB thất bại | Docker Desktop/compose Up/healthy, health/ready; không seed để sửa lỗi kết nối |
-| Gemini503/429 | Terminal3 và thông báo đã được làm gọn; key/quyền/model/quota/network; không gửi key cho người khác hoặc đổi corpus để thử may rủi |
-| AI ảnh503 | Terminal2, model/dependency/task, không nhầm key Gemini với token worker |
+| Groq503/429 | Terminal3 và thông báo đã được làm gọn; key/quyền/model/quota/network; không gửi key cho người khác hoặc đổi corpus để thử may rủi |
+| AI ảnh503 | Terminal2, model/dependency/task, không nhầm key Groq với token worker |
 | MQTT chưa nhận dữ liệu | Enabled, broker host/port/TLS, connected/subscribed, station/topic đúng, Device/Sensor Active; ESP32 có điện/mạng |
 | Manager không thấy Farm/hardware | Farm có ở đúng HTX không; Farm độc lập không tự gắn vào Manager; đây có thể là dữ liệu đúng |
 | UI ghi Unknown sau ACK | Đúng giới hạn hiện tại: ACK không phải đo trạng thái vật lý |
@@ -207,4 +207,4 @@ Thay TEN_FILE_THUC_TE bằng file backup CLI vừa in ra. Restore-check chỉ t�
 
 Ghi mỗi case: mã, thời gian Việt Nam, commit, vai trò, ID hồ sơ/Device/tree_code/batch, bước tái lập, expected/actual, Pass/Fail/Chưa chạy và ảnh/log đã che dữ liệu nhạy cảm. Không chụp .env/OTP/JWT/API key. File kết quả có tài khoản giữ local/private, không commit.
 
-Mức chắc chắn: tự động đã kiểm quyền/validation/workflow/persistence/loopback và lỗi provider giả lập; chưa thay thế Google key/quota/câu trả lời thật, accuracy ảnh, SMTP/SMS từng tài khoản hoặc quan sát hardware. Production host/domain/TLS/Auth/release Git cần chốt riêng sau phiên này. Hướng dẫn này chỉ bổ sung tài liệu, không chạy provider/hardware hoặc thay cấu hình.
+Mức chắc chắn: tự động đã kiểm quyền/validation/workflow/persistence/loopback và lỗi provider giả lập; chưa thay thế Groq key/quota/câu trả lời thật, accuracy ảnh, SMTP/SMS từng tài khoản hoặc quan sát hardware. Production host/domain/TLS/Auth/release Git cần chốt riêng sau phiên này. Hướng dẫn này chỉ bổ sung tài liệu, không chạy provider/hardware hoặc thay cấu hình.

@@ -19,7 +19,7 @@ Migration001–014 đã Applied local. Trước/sau migration014 đã đối chi
 
 Actuator metadata đã có đủ pump2/shared, valve3/watering, valve4/spraying, đều Active. Không thay status hay purpose. Đăng ký Active không chứng minh hardware đang có điện hoặc relay đang bật.
 
-Checkpoint20/10 giữ303 unit%. Đợt vận hành21/10 đã backup trước, rồi đổi expected unit303=%rH và306=µS/cm qua repository của Farmer chủ Farm, có version/audit; dữ liệu ngoài hai metadata này giữ nguyên. Backup sau điều chỉnh đã restore-check khớp. Đây là sửa metadata, không convert readings/thresholds hoặc thay status/IDs. [Báo cáo](DEMO_READINESS_20261021.md).
+Checkpoint20/10 giữ303 unit%. Đợt vận hành21/10 đã backup trước, rồi đổi expected unit303=%rH và306=µS/cm qua repository của Farmer chủ Farm, có version/audit; dữ liệu ngoài hai metadata này giữ nguyên. Backup sau điều chỉnh đã restore-check khớp. Đây là sửa metadata, không convert readings/thresholds hoặc thay status/IDs. [Báo cáo](RUN_AND_FULL_ACCEPTANCE.md).
 
 FINAL v1.0 xác nhận stream306 gửi micro sign `µ` (U+00B5), khác Greek mu `μ` (U+03BC) trong metadata seed cũ. Khi restore bản backup cũ, dùng hướng dẫn PATCH phía dưới để cập nhật đúng quyền nếu cần. Raw history giữ nguyên cả hai cách viết để phản ánh chính xác packet đã nhận.
 

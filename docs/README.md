@@ -1,82 +1,44 @@
-# Mục lục tài liệu Smart Durian Farm
+# Mục lục hiện hành — 28/10/2026
 
-Cập nhật 21/10/2026. Đọc checkpoint hiện hành trước các báo cáo từng module. Kết quả kiểm thử của một đợt không chứng minh hardware thật đã hoạt động.
+## Bắt đầu tại đây
 
-## Điểm bắt đầu
+- [Tiến độ và việc còn lại](BACKEND_PROGRESS_CURRENT.md).
+- [Chạy4 terminal và checklist nghiệm thu](RUN_AND_FULL_ACCEPTANCE.md).
+- [Đặc tả nghiệp vụ](PROJECT_BUILD_SPEC.md), [ghi chú kỹ thuật](IMPLEMENTATION_NOTES.md), [kế hoạch](IMPLEMENTATION_PLAN.md), [bàn giao session](MODULE_HANDOFF.md).
+- [Nhật ký từ phiên tưới/phun](CONTROL_SESSION_JOURNAL.md), [bổ sung lịch sử canh tác](CULTIVATION_HISTORY_ENRICHMENT.md).
+- [Groq chatbot hiện được chọn](GROQ_CHATBOT_IMPLEMENTATION.md), [ảnh/RAG/corpus](AI_RAG_CORPUS_IMPLEMENTATION.md), [Python/model](../ai/README.md).
+- [Sơ đồ hệ thống](CURRENT_SYSTEM_DIAGRAMS.md), [dọn dự án và kiểm chứng](PROJECT_CLEANUP.md).
 
-[Chatbot Groq28/10](GROQ_CHATBOT_IMPLEMENTATION.md): provider hiện được chọn, chỗ nhập key riêng, model mặc định openai/gpt-oss-20b, giới hạn và kiểm thử. Thay phần cấu hình Gemini trong các hướng dẫn cũ khi dùng Groq; corpus/quyền/API hội thoại giữ nguyên.
+## Nguồn thiết kế
 
-[Chạy4 terminal và danh sách nghiệm thu toàn diện](RUN_AND_FULL_ACCEPTANCE.md): thứ tự lệnh, vai trò, nghiệp vụ/AI/hardware, kết quả mong đợi, phần chưa được kiểm chứng và cách backup/kết thúc phiên.
+Ưu tiên quyết định trực tiếp mới nhất của người dùng, đặc tả hiện hành và source/migrations đã chốt. [ERD](ERD_DIAGRAM.xml), [IoT spec](IOT_CORE_TABLES_SPEC.md), PDF yêu cầu và các nguồn thiết kế do người dùng quản lý được giữ nguyên; schema vật lý phải đọc đủ18 migrations.
 
-[Chuẩn bị nghiệm thu toàn diện27/10](PRE_ACCEPTANCE_READINESS.md): đúng model Gemini3.1 Flash-Lite, lệnh check:acceptance chỉ đọc, module đã có và các bước live/production còn cần người dùng.
+[MQTT FINAL v1.0](MQTT_HARDWARE_PROTOCOL_FINAL_v1.0.md) là nguồn giao thức cuối. [VERIFIED](MQTT_HARDWARE_PROTOCOL_VERIFIED.md) và [DOCX cũ](MQTT_Configuration_Smart_Farm_Durian_v1.0.docx) chỉ để đối chiếu, không dùng ghi đè FINAL. Quyết định nghiệp vụ bổ sung được mô tả trong [tích hợp FINAL](MQTT_FINAL_INTEGRATION.md).
 
-[Chatbot Gemini27/10](GEMINI_CHATBOT_IMPLEMENTATION.md): cấu hình key server, adapter REST/structured output, RAG/trích dẫn, private history và cách kiểm thử live. Không migration/seed; giữ corpus018.
+## Nghiệp vụ và API
 
-[AI ảnh/corpus đã nhập](AI_RAG_CORPUS_IMPLEMENTATION.md):15 PDF/9 nguồn,396 trang/1.220 chunks; nguồn/trang gốc và nhãn dự thảo, migration018, nhãn Việt/top3. Có hướng dẫn chuẩn bị/import/check/backup, chat API vẫn disabled.
-
-[Tích hợp weights/PDF thật26/10](AI_MODEL_AND_CORPUS_INTEGRATION.md): best.pt đã chạyCPU; corpus còn cần chốt phạm vi/dự thảo/tài liệu lỗi font trước khi kích hoạt. Có API model readiness và lock môi trường.
-
-[Backend AI26/10](AI_BACKEND_IMPLEMENTATION.md): YOLO11s-cls, lịch sử Farmer riêng, Zone tùy chọn có kiểm tra quyền, Admin quản lý PDF RAG; Mongo migration017. [Python/model](../ai/README.md), [Postman nhập tay](postman/AI-Backend.postman_collection.json). Chưa có best.pt hoặc provider chatbot; không trả kết quả giả.
-
-[Mời Farmer bằng tên/điện thoại26/10](ASSIGNMENT_FARMER_SEARCH.md), kết quả hiện tên+phone, Postman và quyền tra cứu theo Zone.
-
-[Rà soát26/10/2026](PROJECT_REVIEW_20261026.md): trạng thái source/kiểm thử, quản trị danh mục, việc còn cần nghiệm thu hoặc quyết định.
-
-Mới24/10: [Backend theo PDF](BACKEND_PDF_REQUIREMENTS.md), [Postman nhập tay](postman/Backend-PDF-Changes.postman_collection.json). Schema local016, danh mục17 vật tư; không cần seed lại để đăng nhập.
-
-| Cần làm | Tài liệu |
+| Nhóm | Tài liệu |
 | --- | --- |
-| Xem tiến độ | [BACKEND_PROGRESS_CURRENT](BACKEND_PROGRESS_CURRENT.md) |
-| Tiếp tục lập trình | [MODULE_HANDOFF](MODULE_HANDOFF.md), [IMPLEMENTATION_NOTES](IMPLEMENTATION_NOTES.md) |
-| Hiểu quy tắc | [PROJECT_BUILD_SPEC](PROJECT_BUILD_SPEC.md) |
-| Chọn việc tiếp theo | [IMPLEMENTATION_PLAN](IMPLEMENTATION_PLAN.md) |
-| Chạy database/API/MQTT/QR chung | [DATABASE_RUNTIME_IMPLEMENTATION](DATABASE_RUNTIME_IMPLEMENTATION.md) |
-| Vẽ sơ đồ | [CURRENT_SYSTEM_DIAGRAMS](CURRENT_SYSTEM_DIAGRAMS.md) |
-| Hiểu lần dọn này | [PROJECT_CLEANUP](PROJECT_CLEANUP.md) |
-
-## Nguồn dữ liệu và mức ưu tiên
-
-1. Quyết định trực tiếp mới nhất của người dùng; nếu thay đổi nghiệp vụ chưa rõ, hỏi và chờ.
-2. Checkpoint hiện hành, workflow đã duyệt, source và migration cuối cùng: dùng để xác nhận điều đã triển khai. Nếu chúng mâu thuẫn, ghi vấn đề để xử lý, không tự đổi quy tắc.
-3. [ERD_DIAGRAM.xml](ERD_DIAGRAM.xml) và [IOT_CORE_TABLES_SPEC](IOT_CORE_TABLES_SPEC.md) là nguồn thiết kế do người dùng quản lý; có thể còn khác enum/constraints đã duyệt sau đó. Schema vật lý phải đọc đủ migrations, không chỉ ERD ban đầu.
-4. [MQTT_HARDWARE_PROTOCOL_FINAL_v1.0](MQTT_HARDWARE_PROTOCOL_FINAL_v1.0.md) là nguồn giao thức cuối đã được người dùng kiểm thử hardware, đóng băng version1.0; [DOCX hiện có](MQTT_Configuration_Smart_Farm_Durian_v1.0.docx) giữ để đối chiếu. Bản FINAL thay thế VERIFIED/DOCX cũ về protocol. [Đối chiếu tích hợp](MQTT_FINAL_INTEGRATION.md) ghi rõ quyết định purpose bất biến, recipe lấy metadata và Active bắt buộc cho mọi ON/OFF đã triển khai.
-
-Các guide `*_IMPLEMENTATION.md` ghi cả phạm vi và kết quả ở thời điểm module được tạo. Mô tả RAM, số tests hoặc việc còn thiếu ở checkpoint cũ không thay thế trạng thái runtime hiện hành. Không sửa migrations đã Applied để khớp tài liệu cũ.
-
-## Nghiệp vụ
-
-| Nhóm | Hướng dẫn |
-| --- | --- |
-| Auth / Users / OTP | [Auth](AUTH_IMPLEMENTATION.md), [Users](USERS_IMPLEMENTATION.md), [Twilio](TWILIO_VERIFY_INTEGRATION.md) |
-| HTX / Manager | [HTX](COOPERATIVES_IMPLEMENTATION.md), [workflow lưu bền](POSTGRES_COOPERATIVE_WORKFLOWS_IMPLEMENTATION.md) |
-| Danh mục | [Vật tư](MATERIALS_IMPLEMENTATION.md), [tiêu chuẩn](STANDARDS_IMPLEMENTATION.md), [liên kết](STANDARD_MATERIALS_IMPLEMENTATION.md) |
-| Farm / Zone / phân công | [Farm workflow](FARMS_WORKFLOW_DESIGN.md), [Farm API](FARMS_IMPLEMENTATION.md), [Zone](ZONES_IMPLEMENTATION.md), [phân công](ASSIGNMENTS_IMPLEMENTATION.md) |
-| Cây / thu hoạch | [Cây](TREES_IMPLEMENTATION.md), [thu hoạch workflow](TREE_HARVESTS_WORKFLOW_DESIGN.md), [thu hoạch API](TREE_HARVESTS_IMPLEMENTATION.md) |
-| Nhật ký | [Workflow](CULTIVATION_EVENTS_WORKFLOW_DESIGN.md), [API](CULTIVATION_EVENTS_IMPLEMENTATION.md), [Mongo/hash-chain](MONGO_CULTIVATION_IMPLEMENTATION.md) |
+| Auth/Users/OTP | [Auth](AUTH_IMPLEMENTATION.md), [Users](USERS_IMPLEMENTATION.md), [Twilio](TWILIO_VERIFY_INTEGRATION.md), [chẩn đoán Manager](MANAGER_REGISTRATION_TROUBLESHOOTING.md) |
+| HTX | [HTX](COOPERATIVES_IMPLEMENTATION.md), [workflow lưu bền](POSTGRES_COOPERATIVE_WORKFLOWS_IMPLEMENTATION.md) |
+| Vật tư/tiêu chuẩn | [Vật tư](MATERIALS_IMPLEMENTATION.md), [tiêu chuẩn](STANDARDS_IMPLEMENTATION.md), [liên kết](STANDARD_MATERIALS_IMPLEMENTATION.md) |
+| Farm/Zone | [Farm workflow](FARMS_WORKFLOW_DESIGN.md), [Farm API](FARMS_IMPLEMENTATION.md), [Zone](ZONES_IMPLEMENTATION.md) |
+| Phân công | [Assignment](ASSIGNMENTS_IMPLEMENTATION.md), [tìm Farmer tên/phone](ASSIGNMENT_FARMER_SEARCH.md) |
+| Cây/thu hoạch | [Tree](TREES_IMPLEMENTATION.md), [Harvest workflow](TREE_HARVESTS_WORKFLOW_DESIGN.md), [Harvest API](TREE_HARVESTS_IMPLEMENTATION.md) |
+| Canh tác/QR | [Workflow](CULTIVATION_EVENTS_WORKFLOW_DESIGN.md), [API](CULTIVATION_EVENTS_IMPLEMENTATION.md), [hash-chain](MONGO_CULTIVATION_IMPLEMENTATION.md), [QR](QR_TRACEABILITY_WORKFLOW_DESIGN.md) |
 | IoT metadata | [Device](POSTGRES_DEVICES_IMPLEMENTATION.md), [Sensor](POSTGRES_SENSORS_IMPLEMENTATION.md), [Actuator](POSTGRES_ACTUATORS_IMPLEMENTATION.md) |
-| MQTT / telemetry | [Communication](MQTT_COMMUNICATION_IMPLEMENTATION.md), [telemetry workflow](IOT_TELEMETRIES_WORKFLOW_DESIGN.md), [Mongo telemetry](MONGO_TELEMETRY_IMPLEMENTATION.md) |
-| Điều khiển | [Workflow](ACTUATOR_TASKS_WORKFLOW_DESIGN.md), [API](ACTUATOR_TASKS_IMPLEMENTATION.md), [Mongo journal](MONGO_ACTUATOR_TASKS_IMPLEMENTATION.md) |
-| QR public | [Workflow](QR_TRACEABILITY_WORKFLOW_DESIGN.md), [API](QR_TRACEABILITY_IMPLEMENTATION.md) |
+| MQTT/telemetry | [Communication](MQTT_COMMUNICATION_IMPLEMENTATION.md), [workflow](IOT_TELEMETRIES_WORKFLOW_DESIGN.md), [Mongo](MONGO_TELEMETRY_IMPLEMENTATION.md) |
+| Điều khiển | [Workflow](ACTUATOR_TASKS_WORKFLOW_DESIGN.md), [API](ACTUATOR_TASKS_IMPLEMENTATION.md), [Mongo](MONGO_ACTUATOR_TASKS_IMPLEMENTATION.md) |
+| AI | [Backend/quyền](AI_BACKEND_IMPLEMENTATION.md), [weights](AI_MODEL_AND_CORPUS_INTEGRATION.md), [corpus](AI_RAG_CORPUS_IMPLEMENTATION.md), [Groq](GROQ_CHATBOT_IMPLEMENTATION.md), [Gemini tùy chọn](GEMINI_CHATBOT_IMPLEMENTATION.md) |
 
-## Persistence, demo và frontend
+## Dữ liệu, kiểm thử và giao diện
 
-- [Bộ dữ liệu vận hành một tháng](RICH_OPERATIONAL_DATASET.md): quyết định mới22/10 về Manager khởi tạo, vùng ĐBSCL/Tây Nguyên, workflow/hash-chain, backup/resume và đăng nhập từng vai trò.
+- [Database runtime](DATABASE_RUNTIME_IMPLEMENTATION.md), [persistence design](PERSISTENCE_DESIGN.md), [seed spec](PERSISTENCE_SEED_SPEC.md), [backup/restore](DATABASE_BACKUP_RESTORE.md).
+- [Bộ dữ liệu1 tháng](RICH_OPERATIONAL_DATASET.md), [chuẩn hóa dữ liệu](OPERATIONAL_DATA_REFRESH.md), [telemetry offline](OFFLINE_DEMO_TELEMETRY.md), [hardware metadata](REAL_HARDWARE_DATABASE_READINESS.md).
+- Các guide POSTGRES_* và MONGO_* giữ chi tiết adapter/constraints/locks/tests; không xóa chỉ vì được tạo ở session cũ. Câu “RAM/chưa làm” tại checkpoint cũ không thay thế tiến độ hiện hành.
+- [Frontend](frontend/README.md), [workflow UI](frontend/REFERENCE_WORKFLOWS_IMPLEMENTATION.md), các màn trong frontend/modules.
+- [Checklist từng module](MODULE_ACCEPTANCE_CHECKLIST.md); tài khoản/mật khẩu trong LOCAL_MODULE_ACCEPTANCE.private.md tại máy, không chia sẻ hoặc commit.
+- [Postman](postman/README.md): JSON trực tiếp, JWT/UUID/OTP nhập tay.
+- SpeedSMS còn được source/config/tests dùng; [guide](SPEEDSMS_INTEGRATION.md) giữ cho chế độ tương thích.
 
-- [Chuẩn hóa dữ liệu khởi tạo22/10](OPERATIONAL_DATA_REFRESH.md): profile tên/nội dung nghiệp vụ mới, ngoại lệ đổi hai station mô phỏng, backup và cách kiểm tra giao diện từng vai trò.
-
-- [Persistence design](PERSISTENCE_DESIGN.md): phân chia PG/Mongo và metadata kỹ thuật.
-- [Foundation](PERSISTENCE_FOUNDATION_IMPLEMENTATION.md): CLI, migration/seed và nguyên tắc không ghi đè.
-- [Seed spec hiện hành](PERSISTENCE_SEED_SPEC.md), [chuẩn bị hardware thật](REAL_HARDWARE_DATABASE_READINESS.md).
-- [IoT demo offline](OFFLINE_DEMO_TELEMETRY.md): chuẩn bị Sensor mẫu và lịch sử1.440 readings riêng hai Device mô phỏng, không cần hardware/MQTT.
-- [Backup/restore CLI](DATABASE_BACKUP_RESTORE.md), [demo readiness21/10](DEMO_READINESS_20261021.md): thao tác vận hành, role/HTX scope và báo cáo kiểm chứng thực tế.
-- Các guide `POSTGRES_*_IMPLEMENTATION.md`: SQL, quyền, locks, proposals, restart và tái lập riêng từng adapter.
-- [Frontend](frontend/README.md), [các workflow UI](frontend/REFERENCE_WORKFLOWS_IMPLEMENTATION.md), tài liệu từng màn hình trong `frontend/modules/`.
-- [Thông tin hiển thị tiếng Việt](frontend/modules/READABLE_BUSINESS_INFORMATION.md): tên liên quan theo quyền xem, ngày giờ Việt Nam, số và mã tra cứu.
-- [Checklist nghiệm thu từng module/vai trò](MODULE_ACCEPTANCE_CHECKLIST.md); bản có thông tin đăng nhập `LOCAL_MODULE_ACCEPTANCE.private.md` chỉ mở tại máy, được Git bỏ qua.
-- `postman/`: import collection cần dùng, thay JWT/UUID/OTP thủ công; giữ các collection người dùng đang chỉnh.
-- [SpeedSMS](SPEEDSMS_INTEGRATION.md) còn là provider tương thích được source/tests sử dụng. Demo hiện tại ưu tiên Twilio; không xóa adapter chỉ vì không dùng trong buổi demo.
-
-Không cần gửi `.env`, token, OTP, mật khẩu hoặc dump dữ liệu thật cho AI vẽ sơ đồ. Gửi mục lục này, checkpoint và đúng nhóm workflow/source liên quan.
-# Đăng ký Manager gặp lỗi kết nối
-
-[Chẩn đoán lỗi email/ECONNRESET, chạy API ổn định và kiểm tra danh sách chờ duyệt](MANAGER_REGISTRATION_TROUBLESHOOTING.md).
+Khi gửi tài liệu cho AI vẽ sơ đồ, dùng đặc tả + sơ đồ hệ thống + workflow của module + source/schema liên quan. Không gửi .env, private guide, database dump, OTP hoặc key.

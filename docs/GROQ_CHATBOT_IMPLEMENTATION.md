@@ -46,7 +46,7 @@ npm run typecheck --workspace @smart-durian/api
 npm run build
 ```
 
-Chưa xác nhận Groq live khi người dùng chưa điền key. Cần test câu trả lời tiếng Việt, nguồn/trang, câu ngoài nguồn, quota và chất lượng diễn giải thực tế. Không tuyên bố nội dung đúng chỉ dựa vào JSON và citation hợp lệ. Không cần migrate/seed/import lại corpus.
+Người dùng đã điền key và báo AI hoạt động trong phiên28/10. Đợt rà soát không tự gọi provider thật; vẫn cần đánh giá câu trả lời tiếng Việt, nguồn/trang, câu ngoài nguồn, quota và chất lượng diễn giải thực tế. Không tuyên bố nội dung đúng chỉ dựa vào JSON và citation hợp lệ. Không cần migrate/seed/import lại corpus.
 
 Kết quả28/10: toàn backend unit/workflow **276/276**, Groq+Gemini tập trung **9/9**, backend lint, TypeScript compile cả test/integration và build đạt. Các lượt này dùng provider giả, không gửi Groq/Gemini/OTP/command phần cứng thật. Không chạy lại toàn persistence vì không sửa schema/store hoặc dữ liệu vận hành.
 
