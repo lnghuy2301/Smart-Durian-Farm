@@ -88,6 +88,19 @@ export class AiService {
   async diagnoses(actor: string, page: AiPageDto) { await this.actor(actor, 'Farmer'); const result = await this.store.diagnoses(actor, page.offset, page.limit); return { ...result, items: result.items.map(diagnosisView), ...page }; }
   private async ownDiagnosis(actor: string, id: string) { await this.actor(actor, 'Farmer'); const row = await this.store.diagnosis(objectId(id), actor); if (!row) throw new NotFoundException('Không tìm thấy chẩn đoán của bạn'); return row; }
   async diagnosis(actor: string, id: string) { return diagnosisView(await this.ownDiagnosis(actor, id)); }
+  async deleteDiagnosis(actor: string, id: string) {
+    const row = await this.ownDiagnosis(actor, id);
+    if (!await this.store.deleteDiagnosis(row._id, actor)) throw new NotFoundException('Không tìm thấy chẩn đoán của bạn');
+    // Delete the owner-scoped DB record first. A concurrent feedback/image GET
+    // cannot recreate it. Only unlink its own generated filename, never a path
+    // from a request or another diagnosis; no recursive filesystem operations.
+    let imageCleanupPending = false;
+    if (row.image_file === `${row._id.toHexString()}.png` || row.image_file === `${row._id.toHexString()}.jpg`) {
+      try { await unlink(join(this.config.root, 'storage/diagnostics', row.image_file)); }
+      catch (error) { imageCleanupPending = (error as NodeJS.ErrnoException).code !== 'ENOENT'; }
+    } else imageCleanupPending = true;
+    return { deleted: true, image_cleanup_pending: imageCleanupPending };
+  }
   async feedback(actor: string, id: string, value: boolean) { await this.ownDiagnosis(actor, id); if (!await this.store.feedback(objectId(id), actor, value)) throw new NotFoundException(); return this.diagnosis(actor, id); }
   async image(actor: string, id: string) {
     const row = await this.ownDiagnosis(actor, id);

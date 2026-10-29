@@ -35,6 +35,7 @@ export class AiFarmerController {
   diagnose(@Req() req: AuthRequest, @Body() input: DiagnosisInput, @UploadedFile() file?: AiUpload) { this.limiter.take('ai-image', 10, req.user!.id); return this.service.diagnose(req.user!.id, input.zone_id ?? null, file); }
   @Get('diagnoses') @Header('Cache-Control', 'no-store') diagnoses(@Req() req: AuthRequest, @Query() page: AiPageDto) { return this.service.diagnoses(req.user!.id, page); }
   @Get('diagnoses/:id') @Header('Cache-Control', 'no-store') diagnosis(@Req() req: AuthRequest, @Param('id') id: string) { return this.service.diagnosis(req.user!.id, id); }
+  @Delete('diagnoses/:id') deleteDiagnosis(@Req() req: AuthRequest, @Param('id') id: string) { return this.service.deleteDiagnosis(req.user!.id, id); }
   @Patch('diagnoses/:id/feedback') feedback(@Req() req: AuthRequest, @Param('id') id: string, @Body() input: FeedbackInput) { return this.service.feedback(req.user!.id, id, input.user_feedback); }
   @Get('diagnoses/:id/image') @Header('Cache-Control', 'no-store')
   async image(@Req() req: AuthRequest, @Param('id') id: string, @Res({ passthrough: true }) response: ServerResponse) {

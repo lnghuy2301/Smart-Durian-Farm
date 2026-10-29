@@ -64,6 +64,25 @@ test('Prepared corpus binds original bytes, maps citations to source pages and m
     assert.equal((await f.http('ai/rag/documents/import-prepared', 'POST', { filename: 'selected.pdf' }, f.tokens.admin)).status, 409);
   } finally { await f.close(); }
 });
+test('Only the author can delete an image diagnosis and its private file; deleted records stay inaccessible', async () => {
+  const f = await fixture();
+  try {
+    const created = await f.upload(f.tokens.owner); assert.equal(created.status, 201);
+    const row = await created.json();
+    for (const token of [f.tokens.other, f.tokens.manager, f.tokens.admin]) {
+      assert([403, 404].includes((await f.http(`ai/diagnoses/${row.id}`, 'DELETE', undefined, token)).status));
+    }
+    assert.equal((await f.http(`ai/diagnoses/${row.id}/image`, 'GET', undefined, f.tokens.owner)).status, 200);
+    const removed = await f.http(`ai/diagnoses/${row.id}`, 'DELETE', undefined, f.tokens.owner);
+    assert.equal(removed.status, 200); assert.deepEqual(await removed.json(), { deleted: true, image_cleanup_pending: false });
+    assert.equal((await readdir(join(f.root, 'storage/diagnostics'))).length, 0);
+    assert.equal((await f.http(`ai/diagnoses/${row.id}`, 'GET', undefined, f.tokens.owner)).status, 404);
+    assert.equal((await f.http(`ai/diagnoses/${row.id}/image`, 'GET', undefined, f.tokens.owner)).status, 404);
+    assert.equal((await f.http(`ai/diagnoses/${row.id}/feedback`, 'PATCH', { user_feedback: true }, f.tokens.owner)).status, 404);
+    assert.equal((await f.http(`ai/diagnoses/${row.id}`, 'DELETE', undefined, f.tokens.owner)).status, 404);
+  } finally { await f.close(); }
+});
+
 async function fixture() {
   const root = await mkdtemp(join(tmpdir(), 'sdf-ai-'));
   const config = readEnvironment({ NODE_ENV: 'test', AUTH_MODE: 'mock', DATABASE_URL: 'postgresql://test:test@127.0.0.1:1/test', MONGODB_URI: 'mongodb://127.0.0.1:1/test',

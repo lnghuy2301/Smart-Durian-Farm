@@ -5,6 +5,7 @@ import { Conversation, Diagnosis, RagDocument, ChatMessage } from './ai.types';
 export abstract class AiStore {
   abstract addDiagnosis(value: Diagnosis): Promise<void>;
   abstract diagnosis(id: ObjectId, farmer: string): Promise<Diagnosis | null>;
+  abstract deleteDiagnosis(id: ObjectId, farmer: string): Promise<boolean>;
   abstract diagnoses(farmer: string, offset: number, limit: number): Promise<{ items: Diagnosis[]; total: number }>;
   abstract feedback(id: ObjectId, farmer: string, value: boolean): Promise<boolean>;
   abstract addConversation(value: Conversation): Promise<void>;
@@ -22,6 +23,7 @@ export class MemoryAiStore extends AiStore {
   private readonly docs = new Map<string, RagDocument>();
   async addDiagnosis(v: Diagnosis) { this.images.set(v._id.toHexString(), copy(v)); }
   async diagnosis(id: ObjectId, user: string) { const v = this.images.get(id.toHexString()); return v?.farmer_id === user ? copy(v) : null; }
+  async deleteDiagnosis(id: ObjectId, user: string) { const key = id.toHexString(); return this.images.get(key)?.farmer_id === user ? this.images.delete(key) : false; }
   async diagnoses(user: string, offset: number, limit: number) { return this.page([...this.images.values()].filter((v) => v.farmer_id === user), offset, limit); }
   async feedback(id: ObjectId, user: string, value: boolean) { const v = this.images.get(id.toHexString()); if (v?.farmer_id !== user) return false; v.user_feedback = value; return true; }
   async addConversation(v: Conversation) { this.chats.set(v._id.toHexString(), copy(v)); }
@@ -45,6 +47,7 @@ export class MongoAiStore extends AiStore {
   constructor(db: Db) { super(); this.images = db.collection<Diagnosis>('AI_DISEASE_DIAGNOSTICS'); this.chats = db.collection<Conversation>('CHATBOT_CONVERSATIONS'); this.docs = db.collection<RagDocument>('AI_RAG_DOCUMENTS'); }
   async addDiagnosis(v: Diagnosis) { await this.images.insertOne(v); }
   async diagnosis(id: ObjectId, farmer: string) { return this.images.findOne({ _id: id, farmer_id: farmer }); }
+  async deleteDiagnosis(id: ObjectId, farmer: string) { return (await this.images.deleteOne({ _id: id, farmer_id: farmer })).deletedCount === 1; }
   async diagnoses(farmer: string, offset: number, limit: number) { const filter = { farmer_id: farmer }; return { items: await this.images.find(filter).sort({ created_at: -1, _id: -1 }).skip(offset).limit(limit).toArray(), total: await this.images.countDocuments(filter) }; }
   async feedback(id: ObjectId, farmer: string, value: boolean) { return (await this.images.updateOne({ _id: id, farmer_id: farmer }, { $set: { user_feedback: value } })).matchedCount === 1; }
   async addConversation(v: Conversation) { await this.chats.insertOne(v); }
