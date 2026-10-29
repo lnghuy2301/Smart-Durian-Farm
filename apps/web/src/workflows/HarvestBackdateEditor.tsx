@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import "./HarvestBackdateEditor.css";
 import { useSession } from "../auth/session";
 import { ApiError } from "../api/client";
 import { collectPages } from "../api/collection";
@@ -102,7 +103,7 @@ export function HarvestBackdateEditor({
       }}
     >
       <form
-        className="workflow-form"
+        className="workflow-form harvest-backdate-form"
         onSubmit={(e) => {
           e.preventDefault();
           if (
@@ -145,7 +146,7 @@ export function HarvestBackdateEditor({
           disabled={task.busy || uncertain}
         >
           <Field label="Tìm Farmer theo tên hoặc số điện thoại">
-            <div className="actions">
+            <div className="backdate-farmer-search">
               <input
                 value={query}
                 maxLength={100}

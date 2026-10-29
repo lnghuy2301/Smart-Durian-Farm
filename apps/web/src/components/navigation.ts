@@ -99,7 +99,7 @@ export function navigationForRole(role: Role): NavigationGroup[] {
     id: "catalogs",
     title: "Danh mục canh tác",
     icon: Package,
-    items: [items.materials, items.standards],
+    items: [items.standards, items.materials],
   };
   if (role === "Admin")
     return [

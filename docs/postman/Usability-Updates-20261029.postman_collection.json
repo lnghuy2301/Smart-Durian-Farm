@@ -1,0 +1,25 @@
+{
+  "info": {
+    "name": "Smart Durian - API cập nhật giao diện 29-10-2026",
+    "description": "Nhập JWT và ID thủ công, không scripts/environment. Request DELETE chỉ chạy khi chủ động muốn xóa dữ liệu của chính tài khoản Farmer.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Admin - Tìm Farmer theo tên hoặc số điện thoại",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer COPY_ADMIN_JWT_HERE" }],
+        "url": "http://127.0.0.1:3000/api/users/farmers?q=Nguyen"
+      }
+    },
+    {
+      "name": "Farmer - Xóa một lần kiểm tra ảnh của mình",
+      "request": {
+        "method": "DELETE",
+        "header": [{ "key": "Authorization", "value": "Bearer COPY_FARMER_JWT_HERE" }],
+        "url": "http://127.0.0.1:3000/api/ai/diagnoses/COPY_DIAGNOSIS_ID_HERE"
+      }
+    }
+  ]
+}

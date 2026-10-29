@@ -122,12 +122,15 @@ export function Pagination({
   offset,
   limit,
   onChange,
+  hideSinglePage = false,
 }: {
   total: number;
   offset: number;
   limit: number;
   onChange: (offset: number) => void;
+  hideSinglePage?: boolean;
 }) {
+  if (hideSinglePage && offset === 0 && total <= limit) return null;
   return (
     <div className="pagination">
       <span>

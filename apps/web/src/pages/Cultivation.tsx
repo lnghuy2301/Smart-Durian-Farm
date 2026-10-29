@@ -1,3 +1,4 @@
+import "./JournalUsability.css";
 import { useCallback, useEffect, useState } from "react";
 import {
   Link,
@@ -62,7 +63,7 @@ function LockState({
     Math.ceil((Date.parse(event.lock_at) - now) / 1000),
   );
   return event.status === "Locked" ? (
-    <span className="badge">
+    <span className="badge journal-lock-badge">
       <Lock size={14} /> Đã khóa
     </span>
   ) : (
@@ -130,7 +131,7 @@ export function CultivationPage() {
               }
             >
               <option value="visible">Phạm vi được truy cập</option>
-              <option value="mine">Do tôi ghi · gồm lịch sử cũ</option>
+              <option value="mine">Do tôi ghi</option>
             </select>
           </Field>
           <RelationSelect

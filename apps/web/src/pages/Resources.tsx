@@ -418,10 +418,19 @@ export function ResourceList<T extends { id: string }>({
       title={def.title}
       subtitle={def.subtitle}
       actions={
-        <button className="button secondary" onClick={resource.reload}>
-          <RefreshCw size={16} />
-          Làm mới
-        </button>
+        <>
+          {["materials", "standards"].includes(def.path) && (
+            <CatalogTools
+              key={def.path}
+              path={def.path}
+              onSaved={resource.reload}
+            />
+          )}
+          <button className="button secondary" onClick={resource.reload}>
+            <RefreshCw size={16} />
+            Làm mới
+          </button>
+        </>
       }
     />
   );
@@ -443,13 +452,6 @@ export function ResourceList<T extends { id: string }>({
       )}
       {!nested && def.path === "tree-harvests" && (
         <HarvestTools onSaved={resource.reload} />
-      )}
-      {!nested && ["materials", "standards"].includes(def.path) && (
-        <CatalogTools
-          key={def.path}
-          path={def.path}
-          onSaved={resource.reload}
-        />
       )}
       <section className="panel">
         <form

@@ -148,7 +148,7 @@ export function IotMonitor({ compact = false }: { compact?: boolean }) {
                 compact={compact}
               />
             )}
-            <Pagination
+            <Pagination hideSinglePage
               {...data}
               onChange={(next) => {
                 setOffset(next);
@@ -278,11 +278,8 @@ function DeviceMonitor({
                 <p>Trạm chưa có số đo trong phạm vi truy cập.</p>
               </div>
             )}
-            <Pagination {...data.latest} onChange={setLatestOffset} />
-            <p className="table-note">
-              Hiển thị các số đo được lưu gần nhất. Dữ liệu có thể cũ dù trạm
-              đang trực tuyến.
-            </p>
+            <Pagination hideSinglePage {...data.latest} onChange={setLatestOffset} />
+
             {!compact && (
               <>
                 <SensorMetadata
@@ -421,7 +418,7 @@ function SensorMetadata({
       ) : (
         <p className="muted">Chưa có cảm biến được đăng ký.</p>
       )}
-      <Pagination {...data} onChange={onChange} />
+      <Pagination hideSinglePage {...data} onChange={onChange} />
     </div>
   );
 }
@@ -564,7 +561,7 @@ function TelemetryHistory({
           </>
         )}
       </DataState>
-      {resource.data && <Pagination {...resource.data} onChange={setOffset} />}
+      {resource.data && <Pagination hideSinglePage {...resource.data} onChange={setOffset} />}
       <Link className="table-note" to="/zones">
         Xem khu vực được quyền truy cập
         <ArrowUpRight size={12} />

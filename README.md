@@ -1,5 +1,7 @@
 # Smart Durian Farm
 
+[Điều chỉnh giao diện29/10](docs/frontend/modules/USABILITY_UPDATES_20261029.md): IoT gọn hơn, nhãn nhật ký, xóa lịch sử ảnh, Admin tìm Farmer để cấp nhập bù và nút thêm danh mục ở tiêu đề.
+
 Hướng dẫn hiện hành: [4 terminal, lệnh chạy và checklist kiểm thử toàn diện](docs/RUN_AND_FULL_ACCEPTANCE.md). Dùng dữ liệu hiện có, không seed lại; AI worker/API/web chạy riêng, database chạy nền qua Docker.
 
 Chatbot hiện chọn [Groq: điền key, restart API và kiểm thử](docs/GROQ_CHATBOT_IMPLEMENTATION.md). Key riêng `GROQ_API_KEY` trong `.env`; không cần nhập lại PDF hoặc đổi model ảnh.

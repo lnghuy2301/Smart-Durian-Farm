@@ -2,6 +2,8 @@
 
 ## Bắt đầu tại đây
 
+- [Sáu điều chỉnh giao diện29/10](frontend/modules/USABILITY_UPDATES_20261029.md), [API tìm Farmer nhập bù](ADMIN_HARVEST_BACKDATE_PICKER.md), [xóa lịch sử ảnh](AI_DIAGNOSIS_HISTORY_DELETION.md).
+
 - [Tiến độ và việc còn lại](BACKEND_PROGRESS_CURRENT.md).
 - [Chạy4 terminal và checklist nghiệm thu](RUN_AND_FULL_ACCEPTANCE.md).
 - [Đặc tả nghiệp vụ](PROJECT_BUILD_SPEC.md), [ghi chú kỹ thuật](IMPLEMENTATION_NOTES.md), [kế hoạch](IMPLEMENTATION_PLAN.md), [bàn giao session](MODULE_HANDOFF.md).

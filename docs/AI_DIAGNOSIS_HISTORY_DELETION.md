@@ -7,3 +7,5 @@ API mới: `DELETE /api/ai/diagnoses/:id`, JWT Farmer, không body. Trả `{dele
 Store RAM và Mongo dùng chung AiStore port hiện có, không schema/migration/connection mới. Xóa record trước rồi unlink đúng filename được sinh từ ID bản ghi; không nhận đường dẫn từ client, không recursive delete. Thiếu file coi là đã dọn; lỗi filesystem khác trả `image_cleanup_pending:true` để báo cần dọn ảnh orphan khi bảo trì, không phục hồi record hoặc lộ filename/path. Backup cũ có thể còn bản sao, không xóa backup vận hành.
 
 HTTP fixture kiểm quyền4 vai trò, bản ghi/ảnh trước và sau xóa, feedback/DELETE lại sau xóa. Không dùng dữ liệu/provider thật. Tái lập: `npm test --workspace @smart-durian/api`, hoặc compile tests rồi `node --test apps/api/.test-dist/test/ai.test.js`. Browser AI kiểm nút/hủy/xác nhận và bản đang xem; source giao diện AI riêng đang trong workspace được giữ nguyên cùng các sửa đổi khác.
+
+Mongo fixture ai-diagnosis-delete.integration.ts kiểm filter tác giả, xóa và feedback không upsert tái sinh. Browser mới đã kiểm Hủy giữ bản ghi, Xác nhận xóa và dọn view đang chọn. Không xóa dữ liệu vận hành trong kiểm thử.
