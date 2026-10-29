@@ -1,6 +1,6 @@
 # Twilio Verify — OTP SMS cho demo
 
-Cập nhật HTX: nhánh feat/cooperatives-management thêm xác minh SMS cho Manager sửa HTX, dùng Verify Service riêng qua TWILIO_HTX_VERIFY_SERVICE_SID và danh sách HTX_SMS_ALLOWED_PHONES. Không đổi service/allowlist SMS Farmer và không sửa .env thật. Đọc COOPERATIVES_IMPLEMENTATION.md để cấu hình hai khóa mới; thiếu cấu hình thì riêng bước SMS HTX trả 503. Collection Twilio hiện có vẫn giữ nguyên, kiểm thử HTX nằm trong Cooperatives-Local-Test riêng.
+Cập nhật29/10 — fix/shared-twilio-verify-service: demo Trial được dùng chung Verify Service. TWILIO_HTX_VERIFY_SERVICE_SID để trống sẽ dùng TWILIO_VERIFY_SERVICE_SID; HTX_SMS_ALLOWED_PHONES vẫn riêng và bắt buộc khi bật SMS sửa HTX. Account SID/Auth Token dùng chung, số nhận lấy từ tài khoản Manager. Không nới allowlist reset, không tự sửa .env. Hoàn tất OTP của một luồng trước khi mở luồng khác trên cùng số; chưa có điều phối OTP đồng thời giữa hai luồng phía provider. Xem COOPERATIVES_IMPLEMENTATION.md; cấu hình hai Service riêng ở checkpoint cũ dưới đây không còn bắt buộc.
 
 ## Trạng thái và phạm vi
 

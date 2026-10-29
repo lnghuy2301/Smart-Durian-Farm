@@ -100,9 +100,11 @@ TWILIO_HTX_VERIFY_SERVICE_SID=
 HTX_SMS_ALLOWED_PHONES=
 ```
 
-TWILIO_HTX_VERIFY_SERVICE_SID là **Verify Service riêng** với Code length 6, cùng Twilio account credentials hiện có. Không dùng lại Service SID reset: Twilio có thể dùng lại mã cho cùng số trong một cửa sổ, và hai luồng cùng service có thể tác động challenge của nhau. HTX_SMS_ALLOWED_PHONES là danh sách số tài khoản Manager được phép gửi, phân cách dấu phẩy, tối đa 20 mục, số di động VN dạng 0/84/+84. Backend chuẩn hóa và loại trùng. Ví dụ giá trị mẫu: `0900000003,0900000004`; thay bằng số thực sự được phép.
+Cập nhật29/10 theo quyết định demo Trial: TWILIO_HTX_VERIFY_SERVICE_SID **tùy chọn**. Để trống thì dùng TWILIO_VERIFY_SERVICE_SID hiện có; có thể điền VA SID riêng hoặc cùng SID. Dùng chung Account SID/Auth Token, Code length6. HTX_SMS_ALLOWED_PHONES là danh sách số tài khoản Manager được phép gửi, phân cách dấu phẩy, tối đa20 số di động VN dạng0/84/+84; backend chuẩn hóa/loại trùng. Không đổi danh sách SMS quên mật khẩu.
 
-Khi SMS_PROVIDER=twilio và chưa điền cả hai khóa: Auth Farmer vẫn chạy như cũ, bước SMS sửa HTX trả 503. Nếu điền thì cả hai phải hợp lệ và HTX SID khác reset SID; không tự sửa cấu hình hoặc nới allowlist Farmer. Dùng LIVE_SMS_ENABLED=true hiện có khi chủ động test thật; số không thuộc HTX allowlist bị chặn trước khi gọi provider. Chính sách tài khoản Twilio có thể giới hạn số nhận; kiểm tra cấu hình Console nếu provider từ chối.
+Khi SMS_PROVIDER=twilio, chưa điền SID HTX và allowlist thì API vẫn khởi động, riêng SMS sửa HTX trả503. Có allowlist và SID HTX trống thì tái dùng service chính; SID không trống phải đúng VA, không nhận AC. LIVE_SMS_ENABLED=true khi chủ động test thật; số ngoài allowlist bị chặn trước provider. Backend lấy số từ tài khoản Manager, không lấy contact_number HTX hay số người dùng nhập tùy ý.
+
+Demo dùng chung service: người dùng thực hiện OTP mật khẩu và OTP sửa HTX ở hai thời điểm riêng, hoàn tất một luồng trước khi bắt đầu luồng kia. Chưa thêm coordinator chung hoặc bảo đảm độc lập OTP đồng thời phía Twilio; mã/verification có thể được Twilio dùng lại trong cửa sổ hiệu lực. Các challenge/email/token-version/CAS của ứng dụng vẫn riêng và giữ nguyên. Đổi cấu hình cần build nếu vừa đổi code, rồi restart API; không seed/migrate hoặc sửa credentials.
 
 SMS_PROVIDER=mock: SMS HTX có outbox riêng, đọc qua test-sms sau email thành công. Email vẫn dùng SMTP thật trong test tay; không có endpoint đọc email OTP. SMTP đang có được dùng chung với USERS, nội dung thư ghi rõ xác nhận sửa HTX. SpeedSMS legacy không hỗ trợ SMS HTX thật trong đợt này; bước gửi trả 503.
 

@@ -90,11 +90,14 @@ export function readEnvironment(env: NodeJS.ProcessEnv): Environment {
       if (!/^\d+$/.test(rawSmsTimeout) || timeoutMs < 100 || timeoutMs > 30000) { throw new Error('SMS_TIMEOUT_MS must be between 100 and 30000'); }
       if (!['true', 'false'].includes(env.LIVE_SMS_ENABLED ?? 'false')) { throw new Error('LIVE_SMS_ENABLED must be true or false'); }
       sms = { provider: 'twilio', accountSid, authToken, serviceSid, allowedPhone, timeoutMs, liveEnabled: env.LIVE_SMS_ENABLED === 'true' };
-      const htxServiceSid = env.TWILIO_HTX_VERIFY_SERVICE_SID?.trim() ?? '';
+      const htxServiceOverride = env.TWILIO_HTX_VERIFY_SERVICE_SID?.trim() ?? '';
       const htxPhones = env.HTX_SMS_ALLOWED_PHONES?.trim() ?? '';
-      if (htxServiceSid || htxPhones) {
-        if (!/^VA[0-9a-fA-F]{32}$/.test(htxServiceSid) || htxServiceSid === serviceSid) {
-          throw new Error('TWILIO_HTX_VERIFY_SERVICE_SID must be a separate VA SID');
+      if (htxServiceOverride || htxPhones) {
+        // Trial/demo can share the existing Verify service. This does not merge
+        // application challenges or allowlists; operators run OTP flows sequentially.
+        const htxServiceSid = htxServiceOverride || serviceSid;
+        if (!/^VA[0-9a-fA-F]{32}$/.test(htxServiceSid)) {
+          throw new Error('TWILIO_HTX_VERIFY_SERVICE_SID must be a VA SID or empty to reuse TWILIO_VERIFY_SERVICE_SID');
         }
         const allowedPhones = htxPhones.split(',').map((phone) => phone.trim());
         if (!htxPhones || allowedPhones.length > 20 || allowedPhones.some((phone) => !phone)) {

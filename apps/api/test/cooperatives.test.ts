@@ -417,7 +417,7 @@ test('Deletion reference checks retain real Farm join/reject/leave history and n
   } finally { await f.app.close(); }
 });
 
-test('HTX SMS configuration uses a separate service/allowlist without broadening Farmer reset allowlist', async () => {
+test('HTX SMS supports shared or separate Verify service without broadening reset allowlist', async () => {
   const liveEnv = { ...env, SMS_PROVIDER: 'twilio', TWILIO_ACCOUNT_SID: `AC${'a'.repeat(32)}`, TWILIO_AUTH_TOKEN: 'b'.repeat(32),
     TWILIO_VERIFY_SERVICE_SID: `VA${'c'.repeat(32)}`, SMS_ALLOWED_PHONE: env.AUTH_TEST_PHONE, LIVE_SMS_ENABLED: 'true' };
   assert.equal(readEnvironment(liveEnv).auth!.cooperativeSms, undefined);
@@ -429,9 +429,16 @@ test('HTX SMS configuration uses a separate service/allowlist without broadening
   assert.equal(config.cooperativeSms!.serviceSid, additions.TWILIO_HTX_VERIFY_SERVICE_SID);
   assert.equal(config.cooperativeSms!.allowedPhone, '+84900000003');
   assert.deepEqual(config.cooperativeSms!.allowedPhones, ['+84900000004']);
+  for (const override of [undefined, '', '   ', liveEnv.TWILIO_VERIFY_SERVICE_SID]) {
+    const shared = readEnvironment({ ...liveEnv, HTX_SMS_ALLOWED_PHONES: additions.HTX_SMS_ALLOWED_PHONES, TWILIO_HTX_VERIFY_SERVICE_SID: override }).auth!;
+    assert.equal(shared.cooperativeSms!.serviceSid, liveEnv.TWILIO_VERIFY_SERVICE_SID);
+    assert.equal(shared.cooperativeSms!.accountSid, liveEnv.TWILIO_ACCOUNT_SID);
+    assert.deepEqual(shared.cooperativeSms!.allowedPhones, ['+84900000004']);
+    assert(shared.sms.provider === 'twilio'); assert.equal(shared.sms.allowedPhones, undefined);
+  }
   for (const invalid of [
-    { TWILIO_HTX_VERIFY_SERVICE_SID: liveEnv.TWILIO_VERIFY_SERVICE_SID },
-    { TWILIO_HTX_VERIFY_SERVICE_SID: '' }, { HTX_SMS_ALLOWED_PHONES: '' }, { HTX_SMS_ALLOWED_PHONES: '0900000003,' },
+    { TWILIO_HTX_VERIFY_SERVICE_SID: liveEnv.TWILIO_ACCOUNT_SID },
+    { TWILIO_HTX_VERIFY_SERVICE_SID: 'invalid' }, { HTX_SMS_ALLOWED_PHONES: '' }, { HTX_SMS_ALLOWED_PHONES: '0900000003,' },
     { HTX_SMS_ALLOWED_PHONES: 'not-phone' }, { HTX_SMS_ALLOWED_PHONES: Array(21).fill('0900000003').join(',') },
   ]) { assert.throws(() => readEnvironment({ ...liveEnv, ...additions, ...invalid })); }
   let sent = 0;
