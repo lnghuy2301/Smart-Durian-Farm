@@ -4,6 +4,7 @@ import { MockAuthConfig } from '../config/environment';
 import { hashPassword } from './password';
 import { AccountSnapshot, publicUser, UserAccounts, UserRecord } from './user-accounts';
 import { normalizeEmail, phoneIdentity } from './account-identity';
+import { candidateName, candidateSearch } from '../assignments/assignment-candidates';
 
 export type { UserRole, UserStatus } from './user-accounts';
 export type TestUser = UserRecord;
@@ -44,6 +45,13 @@ export class MockUserStore extends UserAccounts {
   activeFarmerNames() {
     return [...this.users.values()].filter((user) => user.role === 'Farmer' && user.status === 'Active')
       .map(({ id, user_name, phone_number }) => ({ id, user_name, phone_number }));
+  }
+  async searchActiveFarmers(query: string) {
+    const search = candidateSearch(query);
+    const items = this.activeFarmerNames().filter(u => search.phone
+      ? phoneIdentity(u.phone_number).includes(search.phone) || u.phone_number.replace(/\D/g, '').includes(query.replace(/\D/g, ''))
+      : candidateName(u.user_name).includes(search.name)).sort((a, b) => candidateName(a.user_name).localeCompare(candidateName(b.user_name)) || a.id.localeCompare(b.id));
+    return { items: items.slice(0, 20), has_more: items.length > 20 };
   }
 
   assertAvailable(phone: string, email?: string | null): void {

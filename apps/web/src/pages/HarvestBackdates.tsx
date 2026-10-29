@@ -1,12 +1,11 @@
+import { HarvestBackdateEditor } from "../workflows/HarvestBackdateEditor";
 import { useState } from "react";
 import { useSession } from "../auth/session";
 import { queryString } from "../api/client";
 import { DataState, PageHeader, Pagination, dateTime } from "../components/ui";
 import {
   ConfirmDialog,
-  EditorDialog,
   useGet,
-  uuidPattern,
 } from "../workflows/shared";
 import type { Page } from "../types/api";
 import { ReferenceScope, ReadableValue } from "../components/ReadableValue";
@@ -108,33 +107,7 @@ export function HarvestBackdatesPage() {
         )}
       </section>
       {create && (
-        <EditorDialog
-          title="Cấp quyền nhập bù"
-          fields={[
-            {
-              key: "user_id",
-              label: "Mã tài khoản Farmer",
-              pattern: uuidPattern,
-            },
-            {
-              key: "zone_id",
-              label: "Khu vực",
-              relation: { path: "zones", label: (x) => String(x.zone_name) },
-            },
-            {
-              key: "harvest_date",
-              label: "Ngày thu hoạch thực tế",
-              type: "date",
-            },
-            { key: "expires_at", label: "Hạn sử dụng", type: "datetime-local" },
-            {
-              key: "reason",
-              label: "Lý do cấp quyền",
-              type: "textarea",
-              maxLength: 500,
-            },
-          ]}
-          path="harvest-backdate-permissions"
+        <HarvestBackdateEditor
           onClose={() => setCreate(false)}
           onSaved={() => {
             setCreate(false);

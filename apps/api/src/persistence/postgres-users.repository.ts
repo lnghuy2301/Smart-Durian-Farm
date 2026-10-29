@@ -6,6 +6,7 @@ import { hashPassword, isPasswordHash } from '../auth/password';
 import { AccountSnapshot, publicUser, PublicUser, UserAccounts, UserRecord } from '../auth/user-accounts';
 import { safeInteger, utcIso } from './mappers';
 import { inPostgresTransaction } from './transactions';
+import { candidateSearch } from '../assignments/assignment-candidates';
 
 export interface RegisterStoredUser {
   user_name: string;
@@ -36,6 +37,18 @@ export class PostgresUsersRepository extends UserAccounts {
   async loadById(id: string): Promise<AccountSnapshot | null> {
     if (!UUID.test(id)) { return null; }
     return this.run(async () => this.first((await this.pool.query<UserRow>(`${READ} WHERE u.id=$1`, [id])).rows));
+  }
+  async searchActiveFarmers(query: string) {
+    const search = candidateSearch(query);
+    return this.run(async () => {
+      const result = await this.pool.query<{ id: string; user_name: string; phone_number: string }>(`SELECT id,user_name,phone_number FROM public.users
+        WHERE role='Farmer' AND status='Active' AND CASE WHEN $2::text IS NOT NULL THEN
+          strpos(CASE WHEN ltrim(phone_number,'+') ~ '^0[0-9]{9}$' THEN '84'||substr(ltrim(phone_number,'+'),2) ELSE ltrim(phone_number,'+') END,$2)>0
+          OR strpos(ltrim(phone_number,'+'),$3)>0
+        ELSE strpos(translate(regexp_replace(normalize(lower(user_name),NFD),$4,'','g'),'đ','d'),$1)>0 END
+        ORDER BY user_name,id LIMIT 21`, [search.name, search.phone, query.replace(/\D/g, ''), '[\u0300-\u036f]']);
+      return { items: result.rows.slice(0, 20), has_more: result.rows.length > 20 };
+    });
   }
 
   async loadByPhone(phone: string): Promise<AccountSnapshot | null> {

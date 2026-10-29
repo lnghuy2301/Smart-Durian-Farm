@@ -26,6 +26,7 @@ export function publicUser(user: UserRecord): PublicUser {
 // Snapshot chứa user/version từ cùng lần đọc. Auth không giữ live object hoặc
 // tự sửa password rồi ghi version riêng, vì DB có thể đổi trong lúc await hash.
 export abstract class UserAccounts {
+  abstract searchActiveFarmers(query: string): Promise<{ items: { id: string; user_name: string; phone_number: string }[]; has_more: boolean }>;
   abstract loadById(id: string): Promise<AccountSnapshot | null>;
   abstract loadByPhone(phone: string): Promise<AccountSnapshot | null>;
   abstract dummyPasswordHash(): Promise<string>;
