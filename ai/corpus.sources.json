@@ -2,7 +2,8 @@
   "format": "smart-durian-source-plan-v1",
   "sources": [
     {
-      "filename": "21.12.25_ Quy trình QLSB sau rieng-revised 3.pdf",
+      "filename": "Quản lý sâu bệnh sầu riêng - Tài liệu tham khảo.pdf",
+      "legacy_filename": "21.12.25_ Quy trình QLSB sau rieng-revised 3.pdf",
       "sha256": "3ede3b4b190b02bab6ff2ddeba0dba9109718f81a2c1e04bd5145f47aede31a3",
       "title": "Quản lý sâu bệnh sầu riêng — bản tham khảo chưa xác nhận ban hành",
       "is_draft": true,
@@ -14,7 +15,8 @@
       ]
     },
     {
-      "filename": "22.06.21- Draft Protocol of Durian (VN Ver)_clean.pdf",
+      "filename": "Dự thảo nghị định thư kiểm dịch sầu riêng xuất khẩu.pdf",
+      "legacy_filename": "22.06.21- Draft Protocol of Durian (VN Ver)_clean.pdf",
       "sha256": "8c78b79b7ac6806fd5e58ee21b65f5f5c0c364f11ef7add209ddba07cb3dc364",
       "title": "Dự thảo nghị định thư kiểm dịch sầu riêng xuất khẩu",
       "is_draft": true,
@@ -26,7 +28,8 @@
       ]
     },
     {
-      "filename": "DuThaoTCVN sauriengquatuoi.pdf",
+      "filename": "Dự thảo tiêu chuẩn sầu riêng quả tươi.pdf",
+      "legacy_filename": "DuThaoTCVN sauriengquatuoi.pdf",
       "sha256": "794dd2e87711677dc5bcaa03bee8ac1662a332136f673752f1dafb9627871e74",
       "title": "Dự thảo tiêu chuẩn sầu riêng quả tươi",
       "is_draft": true,
@@ -38,7 +41,8 @@
       ]
     },
     {
-      "filename": "Hướng dẫn kỹ thuật canh tác sầu riêng.pdf",
+      "filename": "Hướng dẫn kỹ thuật canh tác sầu riêng theo VietGAP.pdf",
+      "legacy_filename": "Hướng dẫn kỹ thuật canh tác sầu riêng.pdf",
       "sha256": "f3c04f50cca680aebfabd3fad7a0044c5b75757d6736a276142b5f518cebcbf9",
       "title": "Hướng dẫn kỹ thuật canh tác sầu riêng theo VietGAP",
       "is_draft": false,
@@ -50,7 +54,8 @@
       ]
     },
     {
-      "filename": "Hội thảo khoa học CTU về Sầu riêng-30_4_2024.pdf",
+      "filename": "Hội thảo khoa học về sầu riêng - Đại học Cần Thơ 2024.pdf",
+      "legacy_filename": "Hội thảo khoa học CTU về Sầu riêng-30_4_2024.pdf",
       "sha256": "fe2ff2e7ec425d6e53fa6520c06800ffa809e8781a2870af8d0a2a57fc094a70",
       "title": "Hội thảo khoa học CTU về sầu riêng năm 2024",
       "is_draft": false,
@@ -62,7 +67,8 @@
       ]
     },
     {
-      "filename": "Phu luc dinh kem QĐ 29_2025.pdf",
+      "filename": "Quy trình sầu riêng Cần Thơ - Phụ lục tham khảo.pdf",
+      "legacy_filename": "Phu luc dinh kem QĐ 29_2025.pdf",
       "sha256": "66cf4a7dc4e7836b05122fde41a2b5149482eba311d8b5c42a658f869200e3d6",
       "title": "Quy trình sầu riêng Cần Thơ — phụ lục bản tham khảo",
       "is_draft": true,
@@ -74,7 +80,8 @@
       ]
     },
     {
-      "filename": "QUY TRINH KEM QĐ 34_2025_QĐ-UBND.pdf",
+      "filename": "Quy trình sầu riêng Tiền Giang - Tài liệu tham khảo.pdf",
+      "legacy_filename": "QUY TRINH KEM QĐ 34_2025_QĐ-UBND.pdf",
       "sha256": "61b53ddf565f3c2a31571739002839b2fa27eab6649df1336684e4fe131e3665",
       "title": "Quy trình sầu riêng Tiền Giang — bản tham khảo",
       "is_draft": true,
@@ -86,7 +93,8 @@
       ]
     },
     {
-      "filename": "QĐ 29_2025_QĐ-UBND Can Tho.pdf",
+      "filename": "Quyết định 29-2025 Cần Thơ - Văn bản kèm theo.pdf",
+      "legacy_filename": "QĐ 29_2025_QĐ-UBND Can Tho.pdf",
       "sha256": "772c1729514e2127fb8ab68d1f3ae71875ccb1289aa455dba3d2c7c3c21f97f5",
       "title": "Quyết định 29/2025 Cần Thơ — phạm vi và văn bản kèm theo",
       "is_draft": false,
@@ -98,7 +106,8 @@
       ]
     },
     {
-      "filename": "STHDKT Canh tác sầu riêng.pdf",
+      "filename": "Sổ tay kỹ thuật canh tác sầu riêng VietGAP.pdf",
+      "legacy_filename": "STHDKT Canh tác sầu riêng.pdf",
       "sha256": "dea5dc9d1631381354e1eed106e33ae25b37060212601f0ba5a66b09908b274d",
       "title": "Sổ tay kỹ thuật cho nông dân canh tác sầu riêng VietGAP",
       "is_draft": false,
@@ -112,7 +121,8 @@
   ],
   "excluded": [
     {
-      "filename": "TCVN11892-1_2017_916963.pdf",
+      "filename": "Tiêu chuẩn TCVN 11892-1-2017 - Cần xử lý phông chữ.pdf",
+      "legacy_filename": "TCVN11892-1_2017_916963.pdf",
       "reason": "Font encoding corrupt; replacement or verified OCR required"
     }
   ]
