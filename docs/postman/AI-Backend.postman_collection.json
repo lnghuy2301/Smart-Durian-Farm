@@ -2,9 +2,29 @@
   "info": {
     "name": "AI Backend - Manual JWT and IDs",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "See docs/AI_BACKEND_IMPLEMENTATION.md. Paste JWT directly into each request Authorization tab. Replace UUID/ObjectId manually. Select local image/PDF in Body. No scripts/environment. Worker localhost:8001, API localhost:3000. Missing best.pt or disabled chat provider returns 503 without fabricated history."
+    "description": "See docs/RUNBOOK.md. Paste JWT directly into each request Authorization tab. Replace UUID/ObjectId manually. Select local image/PDF in Body. No scripts/environment. Worker localhost:8001, API localhost:3000. Missing best.pt or disabled chat provider returns 503 without fabricated history."
   },
   "item": [
+    {
+      "name": "Farmer delete own conversation and embedded messages",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_FARMER_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://localhost:3000/api/ai/conversations/PASTE_CONVERSATION_OBJECT_ID",
+        "description": "Permanently deletes only this Farmer's conversation and all embedded messages. Confirm before sending. Returns 200 {deleted:true}; another Farmer, unknown or already deleted ID returns 404; Admin/Manager 403; malformed ObjectId 400. No request body or provider call."
+      },
+      "response": []
+    },
     {
       "name": "Farmer status",
       "request": {

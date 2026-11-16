@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "Smart Durian Farm - Users - Nhap JSON",
-    "description": "Nhập JSON trực tiếp, không Scripts/Environment. Đọc docs/USERS_IMPLEMENTATION.md. Farmer: 01. Manager: 02 → 03 → 04; copy verification_id, OTP email, email_verification_token bằng tay. Admin: 05 → 06 → 07; paste access_token vào header Authorization và thay UUID trên URL bằng user.id Manager. Sau duyệt: 08. Các request 09–11 là tùy chọn; HTX chưa có Manager hiện chưa có API tạo riêng.",
+    "name": "Smart Durian Farm - Users",
+    "description": "Manual account/Manager approval acceptance. Read docs/RUNBOOK.md and docs/ARCHITECTURE.md. Farmer activates on registration. Manager must verify email, then Admin approves and attaches a cooperative. Paste verification IDs, OTP, JWT and UUID manually. Existing accounts live in the configured database.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [

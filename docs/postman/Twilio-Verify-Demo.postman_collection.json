@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "Smart Durian Farm - Twilio Verify - Nhap JSON",
+    "name": "Smart Durian Farm - Twilio Verify",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Nhập trực tiếp Body → raw → JSON rồi Send. Không có Scripts, biến hay Environment bắt buộc. Thay số ví dụ bằng AUTH_TEST_PHONE. Request 02 gửi SMS thật; sau khi nhận mã, nhập vào otp của request 03. API vẫn dùng tài khoản trong bộ nhớ."
+    "description": "Manual Twilio Verify acceptance. Read docs/RUNBOOK.md. Use a configured allowlisted number, paste OTP/JWT by hand; no scripts or environment required. SMS requests can incur provider charges. Runtime uses the configured database, not an implicit RAM fallback."
   },
   "item": [
     {

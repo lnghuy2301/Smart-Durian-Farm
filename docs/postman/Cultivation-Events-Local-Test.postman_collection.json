@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Smart Durian Farm — Cultivation Events (nhập JSON, copy JWT/UUID/ObjectId)",
-    "description": "25 literal requests; no scripts, variables or environments. Setup: docs/CULTIVATION_EVENTS_IMPLEMENTATION.md. Replace every PASTE_* manually. RAM only, Pending15min then Locked; no auto journal from hardware ACK.",
+    "description": "25 literal requests; no scripts, variables or environments. Setup: docs/RUNBOOK.md. Replace every PASTE_* manually. RAM only, Pending15min then Locked; no auto journal from hardware ACK.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
