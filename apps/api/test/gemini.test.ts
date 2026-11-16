@@ -86,7 +86,7 @@ test('Gemini never calls with missing key and sanitizes quota/auth/upstream/time
 test('Gemini rejects blocked, truncated, oversized, malformed or invented citations', async () => {
   const invalid = [
     { promptFeedback: { blockReason: 'SAFETY' } }, envelope(good, 'MAX_TOKENS'), { candidates: [] },
-    envelope({ ...good, used_chunk_ids: ['invented'] }), envelope({ ...good, used_chunk_ids: [] }),
+    envelope({ ...good, used_chunk_ids: ['invented'] }),
     envelope({ ...good, used_chunk_ids: [context.chunk_id, context.chunk_id] }), envelope({ ...good, extra: 'ignored?' }),
     envelope({ ...good, text: 'x'.repeat(8001) }), { candidates: [{ finishReason: 'STOP', content: { parts: [{ functionCall: { name: 'pump_on' } }] } }] },
   ];
@@ -97,4 +97,19 @@ test('Gemini rejects blocked, truncated, oversized, malformed or invented citati
   for (const content of ['not json', 'x'.repeat(128 * 1024 + 1)]) {
     await assert.rejects(new GeminiChatProvider(config, async () => new Response(content)).generate(input), status(503));
   }
+});
+
+test('Gemini allows citation-free general answers and a valid empty-context JSON schema', async () => {
+  const answer = { text: 'Xin chào! Chưa có dữ liệu thời tiết trực tiếp.', used_chunk_ids: [] };
+  for (const contexts of [[], input.contexts]) {
+    const provider = new GeminiChatProvider(config, async (_url, options) => {
+      const body = JSON.parse(String(options?.body));
+      const schema = body.generationConfig.responseFormat.text.schema.properties.used_chunk_ids;
+      assert.equal(schema.minItems, 0);
+      assert.notDeepEqual(schema.items.enum, []);
+      return Response.json(envelope(answer));
+    });
+    assert.deepEqual(await provider.generate({ ...input, contexts }), answer);
+  }
+  await assert.rejects(new GeminiChatProvider(config, async () => Response.json(envelope(good))).generate({ ...input, contexts: [] }));
 });

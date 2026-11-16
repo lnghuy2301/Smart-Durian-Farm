@@ -51,11 +51,11 @@ test('Groq sends bounded whitelisted RAG context, Bearer header and JSON mode to
   assert.equal(calls, 1);
 });
 
-test('Groq rejects absent key/context and HTTP/network failures without retries or leaked credentials', async () => {
+test('Groq rejects absent key and HTTP/network failures without retries or leaked credentials', async () => {
   let calls = 0;
   const fetcher = async () => { calls++; throw new Error(config.apiKey); };
   await assert.rejects(new GroqChatProvider({ ...config, apiKey: '' }, fetcher).generate(input));
-  await assert.rejects(new GroqChatProvider(config, fetcher).generate({ ...input, contexts: [] })); assert.equal(calls, 0);
+  assert.equal(calls, 0);
   for (const code of [400, 401, 403, 404, 429, 500, 503]) {
     calls = 0;
     await assert.rejects(new GroqChatProvider(config, async () => { calls++; return new Response(config.apiKey, { status: code }); }).generate(input),
@@ -67,9 +67,22 @@ test('Groq rejects absent key/context and HTTP/network failures without retries 
 
 test('Groq rejects truncated, malformed, oversized, tool calls and invented/duplicate citations', async () => {
   const invalid = [envelope(good, 'length'), { choices: [] }, envelope({ ...good, used_chunk_ids: ['invented'] }),
-    envelope({ ...good, used_chunk_ids: [] }), envelope({ ...good, used_chunk_ids: [good.used_chunk_ids[0], good.used_chunk_ids[0]] }),
+    envelope({ ...good, used_chunk_ids: [good.used_chunk_ids[0], good.used_chunk_ids[0]] }),
     envelope({ ...good, extra: 1 }), envelope({ ...good, text: 'x'.repeat(8001) }), envelope({ ...good, text: ' ' }),
     { choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: JSON.stringify(good), tool_calls: [{ function: { name: 'pump' } }] } }] }];
   for (const body of invalid) await assert.rejects(new GroqChatProvider(config, async () => Response.json(body)).generate(input));
   for (const body of ['not json', 'x'.repeat(128 * 1024 + 1)]) await assert.rejects(new GroqChatProvider(config, async () => new Response(body)).generate(input));
+});
+
+test('Groq accepts general answers with no citations, with or without retrieved context', async () => {
+  const answer = { text: '**Xin chào!** Tôi có thể giúp gì?', used_chunk_ids: [] };
+  for (const contexts of [[], input.contexts]) {
+    const provider = new GroqChatProvider(config, async (_url, options) => {
+      const body = JSON.parse(String(options?.body));
+      assert.match(body.messages[0].content, /used_chunk_ids.*\[\]/);
+      return Response.json(envelope(answer));
+    });
+    assert.deepEqual(await provider.generate({ ...input, contexts }), answer);
+  }
+  await assert.rejects(new GroqChatProvider(config, async () => Response.json(envelope(good))).generate({ ...input, contexts: [] }));
 });

@@ -1,4 +1,4 @@
-import { ArgumentsHost, Body, CanActivate, Catch, Controller, ExceptionFilter, ExecutionContext, ForbiddenException, Get, Header, HttpException, Inject, Injectable, Patch, Post, Query, Res, StreamableFile, UploadedFile, UseFilters, UseGuards, UseInterceptors, Param, Req } from '@nestjs/common';
+import { ArgumentsHost, Body, CanActivate, Catch, Controller, Delete, ExceptionFilter, ExecutionContext, ForbiddenException, Get, Header, HttpException, Inject, Injectable, Patch, Post, Query, Res, StreamableFile, UploadedFile, UseFilters, UseGuards, UseInterceptors, Param, Req } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import type { ServerResponse } from 'node:http';
@@ -44,6 +44,7 @@ export class AiFarmerController {
   @Post('conversations') create(@Req() req: AuthRequest, @Body() input: ConversationInput) { this.limiter.take('ai-chat', 20, req.user!.id); return this.service.createConversation(req.user!.id, input.session_title); }
   @Get('conversations') @Header('Cache-Control', 'no-store') conversations(@Req() req: AuthRequest, @Query() page: AiPageDto) { return this.service.conversations(req.user!.id, page); }
   @Get('conversations/:id') @Header('Cache-Control', 'no-store') conversation(@Req() req: AuthRequest, @Param('id') id: string) { return this.service.conversation(req.user!.id, id); }
+  @Delete('conversations/:id') deleteConversation(@Req() req: AuthRequest, @Param('id') id: string) { return this.service.deleteConversation(req.user!.id, id); }
   @Post('conversations/:id/messages') message(@Req() req: AuthRequest, @Param('id') id: string, @Body() input: ChatInput) { this.limiter.take('ai-chat', 20, req.user!.id); return this.service.message(req.user!.id, id, input.message); }
 }
 @ApiTags('ai-rag-admin') @ApiBearerAuth() @UseGuards(AuthGuard, AdminGuard) @UseFilters(AiExceptionFilter) @Controller('ai/rag')

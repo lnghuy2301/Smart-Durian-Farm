@@ -10,6 +10,7 @@ export abstract class AiStore {
   abstract feedback(id: ObjectId, farmer: string, value: boolean): Promise<boolean>;
   abstract addConversation(value: Conversation): Promise<void>;
   abstract conversation(id: ObjectId, farmer: string): Promise<Conversation | null>;
+  abstract deleteConversation(id: ObjectId, farmer: string): Promise<boolean>;
   abstract conversations(farmer: string, offset: number, limit: number): Promise<{ items: Conversation[]; total: number }>;
   abstract append(id: ObjectId, farmer: string, version: number, pair: ChatMessage[], now: Date): Promise<boolean>;
   abstract addDocument(value: RagDocument): Promise<void>;
@@ -28,6 +29,7 @@ export class MemoryAiStore extends AiStore {
   async feedback(id: ObjectId, user: string, value: boolean) { const v = this.images.get(id.toHexString()); if (v?.farmer_id !== user) return false; v.user_feedback = value; return true; }
   async addConversation(v: Conversation) { this.chats.set(v._id.toHexString(), copy(v)); }
   async conversation(id: ObjectId, user: string) { const v = this.chats.get(id.toHexString()); return v?.farmer_id === user ? copy(v) : null; }
+  async deleteConversation(id: ObjectId, user: string) { const key = id.toHexString(); return this.chats.get(key)?.farmer_id === user ? this.chats.delete(key) : false; }
   async conversations(user: string, offset: number, limit: number) { return this.page([...this.chats.values()].filter((v) => v.farmer_id === user), offset, limit); }
   async append(id: ObjectId, user: string, version: number, pair: ChatMessage[], now: Date) {
     const v = this.chats.get(id.toHexString());
@@ -52,6 +54,7 @@ export class MongoAiStore extends AiStore {
   async feedback(id: ObjectId, farmer: string, value: boolean) { return (await this.images.updateOne({ _id: id, farmer_id: farmer }, { $set: { user_feedback: value } })).matchedCount === 1; }
   async addConversation(v: Conversation) { await this.chats.insertOne(v); }
   async conversation(id: ObjectId, farmer: string) { return this.chats.findOne({ _id: id, farmer_id: farmer }); }
+  async deleteConversation(id: ObjectId, farmer: string) { return (await this.chats.deleteOne({ _id: id, farmer_id: farmer })).deletedCount === 1; }
   async conversations(farmer: string, offset: number, limit: number) { const filter = { farmer_id: farmer }; return { items: await this.chats.find(filter).sort({ created_at: -1, _id: -1 }).skip(offset).limit(limit).toArray(), total: await this.chats.countDocuments(filter) }; }
   async append(id: ObjectId, farmer: string, version: number, pair: ChatMessage[], now: Date) {
     return (await this.chats.updateOne({ _id: id, farmer_id: farmer, version, 'messages.198': { $exists: false } }, { $push: { messages: { $each: pair } }, $inc: { version: 1 }, $set: { updated_at: now } })).modifiedCount === 1;

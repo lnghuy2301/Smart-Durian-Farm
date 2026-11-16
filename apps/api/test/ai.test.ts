@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { ObjectId } from 'mongodb';
 import { createHash } from 'node:crypto';
 import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -89,7 +90,7 @@ async function fixture() {
     AUTH_TEST_PHONE: '0900000000', AUTH_TEST_PASSWORD: 'AiFixtureOnly123!', AUTH_TEST_ADMIN_PHONE: '0900000001', AUTH_TEST_ADMIN_PASSWORD: 'AiAdminFixtureOnly123!', JWT_SECRET: 'ai-fixture-secret-with-at-least-32-bytes' });
   config.ai = { ...config.ai!, enabled: true, token: 'test-only-internal-token'.repeat(2), root };
   const worker = { model: async () => ({ task: 'classify', model_sha256: prediction.model_sha256, classes: [{ class_id: 0, label: 'healthy' }] }), classify: async (): Promise<Classification> => structuredClone(prediction), extractPdf: async () => ({ page_count: 2, pages: [{ page: 2, text: 'Bệnh thối rễ sầu riêng cần thoát nước tốt. Theo dõi rễ cây và độ ẩm đất thường xuyên.' }] }) };
-  const provider = { enabled: false, configured() { return this.enabled; }, generate: async (input: { contexts: Citation[] }) => ({ text: 'Tài liệu hướng dẫn thoát nước tốt và theo dõi độ ẩm đất.', used_chunk_ids: [input.contexts[0].chunk_id] }) };
+  const provider = { enabled: false, configured() { return this.enabled; }, generate: async (input: Parameters<ChatProvider['generate']>[0]) => ({ text: 'Tài liệu hướng dẫn thoát nước tốt và theo dõi độ ẩm đất.', used_chunk_ids: [input.contexts[0].chunk_id] }) };
   const module = await Test.createTestingModule({ imports: [AppModule.register(config)] }).overrideProvider(AiWorker).useValue(worker).overrideProvider(ChatProvider).useValue(provider).compile();
   const app = module.createNestApplication({ logger: false }); configureApplication(app, config); await app.listen(0, '127.0.0.1');
   const users = app.get(MockUserStore), owner = users.user, admin = users.findByPhone('0900000001')!;
@@ -104,6 +105,62 @@ async function fixture() {
   const close = async () => { await app.close(); assert(resolve(root).startsWith(resolve(tmpdir()) + sep)); await rm(root, { recursive: true, force: true }); };
   return { root, app, users, owner, admin, other, manager, worker, provider, http, tokens, upload, close };
 }
+
+test('general chat works without PDF hits and stores no fabricated citations even when context is available', async () => {
+  const f = await fixture();
+  try {
+    f.provider.enabled = true;
+    let expectedContexts = 0;
+    f.provider.generate = async (input) => {
+      assert.equal(input.contexts.length, expectedContexts);
+      assert.match(input.system, /Thời điểm hiện tại do máy chủ cung cấp: \d{4}-\d{2}-\d{2}T/);
+      assert.match(input.system, /Asia\/Ho_Chi_Minh/);
+      return { text: '**Xin chào!** Tôi chưa có dữ liệu thời tiết trực tiếp.', used_chunk_ids: [] };
+    };
+    const chat = await (await f.http('ai/conversations', 'POST', { session_title: 'Trao đổi thông thường' }, f.tokens.owner)).json() as { id: string };
+    for (const message of ['Xin chào', 'Thời tiết hôm nay thế nào?']) {
+      const response = await f.http(`ai/conversations/${chat.id}/messages`, 'POST', { message }, f.tokens.owner);
+      assert.equal(response.status, 201);
+      const saved = await response.json() as { messages: { content: string; citations: unknown[] }[] };
+      assert.match(saved.messages.at(-1)!.content, /\*\*Xin chào!/);
+      assert.deepEqual(saved.messages.at(-1)!.citations, []);
+    }
+    const dir = join(f.root, 'data/rag/pdfs'); await mkdir(dir, { recursive: true }); await writeFile(join(dir, 'guide.pdf'), '%PDF-fixture');
+    assert.equal((await f.http('ai/rag/documents/import', 'POST', { filename: 'guide.pdf' }, f.tokens.admin)).status, 201);
+    expectedContexts = 1;
+    const response = await f.http(`ai/conversations/${chat.id}/messages`, 'POST', { message: 'Thối rễ sầu riêng' }, f.tokens.owner);
+    assert.equal(response.status, 201);
+    const saved = await response.json() as { messages: { citations: unknown[] }[] };
+    assert.equal(saved.messages.length, 6); assert.deepEqual(saved.messages.at(-1)!.citations, []);
+  } finally { await f.close(); }
+});
+
+test('only the Farmer author can delete a whole conversation; late writes cannot recreate it', async () => {
+  const f = await fixture();
+  try {
+    const created = await f.http('ai/conversations', 'POST', { session_title: 'Hội thoại cần xóa' }, f.tokens.owner);
+    assert.equal(created.status, 201);
+    const chat = await created.json() as { id: string };
+    const path = `ai/conversations/${chat.id}`;
+    const store = f.app.get(AiStore), id = new ObjectId(chat.id), now = new Date();
+    assert.equal(await store.append(id, f.owner.id, 0, [
+      { role: 'user', content: 'Câu hỏi đã lưu', citations: [], created_at: now },
+      { role: 'assistant', content: 'Câu trả lời đã lưu', citations: [], created_at: now },
+    ], now), true);
+    assert.equal((await f.http(path, 'DELETE')).status, 401);
+    assert.equal((await f.http(path, 'DELETE', undefined, f.tokens.other)).status, 404);
+    for (const token of [f.tokens.admin, f.tokens.manager]) assert.equal((await f.http(path, 'DELETE', undefined, token)).status, 403);
+    assert.equal((await f.http(path, 'GET', undefined, f.tokens.owner)).status, 200);
+    assert.equal((await f.http('ai/conversations/invalid', 'DELETE', undefined, f.tokens.owner)).status, 400);
+    const deleted = await f.http(path, 'DELETE', undefined, f.tokens.owner);
+    assert.equal(deleted.status, 200); assert.deepEqual(await deleted.json(), { deleted: true });
+    assert.equal((await f.http(path, 'GET', undefined, f.tokens.owner)).status, 404);
+    assert.equal((await f.http(path, 'DELETE', undefined, f.tokens.owner)).status, 404);
+    assert.equal((await f.http(`${path}/messages`, 'POST', { message: 'Không tạo lại' }, f.tokens.owner)).status, 404);
+    assert.equal(await store.append(id, f.owner.id, 1, [], now), false);
+    assert.equal((await store.conversations(f.owner.id, 0, 10)).total, 0);
+  } finally { await f.close(); }
+});
 
 test('AI diagnoses are private Farmer records, allow standalone images and enforce selected Zone scope', async () => {
   const f = await fixture();
