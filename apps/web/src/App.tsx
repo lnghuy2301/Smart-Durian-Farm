@@ -1,4 +1,8 @@
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
+import { lazy, Suspense } from "react";
+const AiToolsPage = lazy(() => import("./pages/ai/AiTools"));
+import "./pages/ReviewAdjustments.css";
+import { FarmsPage } from "./pages/MyGardens";
 import { AuthProvider } from "./auth/session";
 import {
   AuthLayout,
@@ -74,6 +78,18 @@ function SessionRoutes() {
         <Route path="requests" element={<RequestsPage />} />
         <Route path="actuator-control" element={<ActuatorControlPage />} />
         <Route path="account" element={<AccountPage />} />
+        <Route element={<RoleGuard roles={routeRoles.ai} />}>
+          <Route
+            path="ai/*"
+            element={
+              <Suspense
+                fallback={<p role="status">Đang mở hỗ trợ canh tác…</p>}
+              >
+                <AiToolsPage />
+              </Suspense>
+            }
+          />
+        </Route>
         <Route element={<RoleGuard roles={routeRoles.cooperativeUpdates} />}>
           <Route
             path="cooperative-updates"
@@ -112,10 +128,7 @@ function SessionRoutes() {
           path="standards/:id"
           element={<ResourcePage definition={standardDefinition} />}
         />
-        <Route
-          path="farms"
-          element={<ResourcePage definition={farmDefinition} />}
-        />
+        <Route path="farms" element={<FarmsPage />} />
         <Route
           path="farms/:id"
           element={<ResourcePage definition={farmDefinition} />}

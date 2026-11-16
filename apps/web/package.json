@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "node test/e2e.mjs",
+    "test:e2e:ai": "node test/ai-browser.mjs",
     "test:e2e:catalog": "node test/catalog-admin-browser.mjs",
     "test:e2e:assignments": "node test/assignment-search-browser.mjs",
     "format": "prettier --write src test vite.config.ts eslint.config.mjs",
@@ -37,6 +38,7 @@
     "lucide-react": "^1.53.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "react-markdown": "10.1.0",
     "react-router-dom": "^7.18.4"
   }
 }

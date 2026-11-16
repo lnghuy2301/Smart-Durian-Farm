@@ -56,6 +56,8 @@ export class ApiClient {
       method?: "GET" | "POST" | "PATCH" | "DELETE";
       body?: unknown;
       signal?: AbortSignal;
+      responseType?: "json" | "blob";
+      timeoutMs?: number;
     } = {},
   ): Promise<T> {
     if (!this.active) throw new DOMException("Phiên đã đóng", "AbortError");
@@ -70,7 +72,7 @@ export class ApiClient {
         controller.abort(
           new DOMException("Hết thời gian kết nối", "TimeoutError"),
         ),
-      20000,
+      options.timeoutMs ?? 20000,
     );
     try {
       const response = await fetch(
@@ -80,8 +82,12 @@ export class ApiClient {
           signal: controller.signal,
           credentials: "omit",
           headers: {
-            Accept: "application/json",
-            ...(options.body !== undefined
+            Accept:
+              options.responseType === "blob"
+                ? "image/jpeg, image/png"
+                : "application/json",
+            ...(options.body !== undefined &&
+            !(options.body instanceof FormData)
               ? { "Content-Type": "application/json" }
               : {}),
             ...(tokenAtRequest
@@ -89,16 +95,20 @@ export class ApiClient {
               : {}),
           },
           body:
-            options.body !== undefined
-              ? JSON.stringify(options.body)
-              : undefined,
+            options.body instanceof FormData
+              ? options.body
+              : options.body !== undefined
+                ? JSON.stringify(options.body)
+                : undefined,
         },
       );
       if (!this.active) throw new DOMException("Phiên đã đóng", "AbortError");
       const body: unknown =
         response.status === 204
           ? undefined
-          : await response.json().catch(() => undefined);
+          : response.ok && options.responseType === "blob"
+            ? await response.blob()
+            : await response.json().catch(() => undefined);
       if (!this.active || controller.signal.aborted)
         throw new DOMException("Phiên hoặc request đã đóng", "AbortError");
       if (!response.ok) {
@@ -119,6 +129,14 @@ export class ApiClient {
             : Array.isArray(message)
               ? message.filter((part) => typeof part === "string").join("; ")
               : "";
+        if (
+          response.status === 404 &&
+          /^Cannot DELETE \/(?:api\/)?ai\/conversations\//.test(detail)
+        )
+          throw new ApiError(
+            404,
+            "API đang chạy chưa có chức năng xóa hội thoại. Hãy build và khởi động lại API rồi tải lại trang; hội thoại chưa được xóa.",
+          );
         throw new ApiError(
           response.status,
           `${explanations[response.status] ?? "Máy chủ không thể xử lý yêu cầu."}${detail ? ` ${detail}` : ""}`,

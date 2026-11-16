@@ -16,6 +16,7 @@
     "typecheck:web": "npm run typecheck --workspace @smart-durian/web",
     "test:web": "npm run test --workspace @smart-durian/web",
     "test:web:e2e": "npm run test:e2e --workspace @smart-durian/web",
+    "test:web:ai": "npm run test:e2e:ai --workspace @smart-durian/web",
     "build": "npm run build --workspace @smart-durian/api",
     "lint": "npm run lint --workspace @smart-durian/api",
     "typecheck": "npm run typecheck --workspace @smart-durian/api",

@@ -2,6 +2,72 @@ import { afterEach, expect, test, vi } from "vitest";
 import { ApiClient, ApiError, queryString } from "../src/api/client";
 
 afterEach(() => vi.unstubAllGlobals());
+test("missing DELETE route explains the stale API instead of exposing the route path", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          message: "Cannot DELETE /api/ai/conversations/private-id",
+        }),
+        { status: 404 },
+      ),
+    ),
+  );
+  await expect(
+    new ApiClient("/api", "fixture-token").request(
+      "ai/conversations/private-id",
+      { method: "DELETE" },
+    ),
+  ).rejects.toThrow("build và khởi động lại API");
+});
+test("image multipart keeps the browser boundary and sends only the session bearer", async () => {
+  const fetcher = vi
+    .fn()
+    .mockResolvedValue(new Response(JSON.stringify({ id: "saved" })));
+  vi.stubGlobal("fetch", fetcher);
+  const form = new FormData();
+  form.append(
+    "image",
+    new Blob(["fixture"], { type: "image/png" }),
+    "photo.png",
+  );
+  await new ApiClient("/api", "fixture-token").request("ai/diagnoses", {
+    method: "POST",
+    body: form,
+  });
+  const options = fetcher.mock.calls[0][1];
+  expect(options.body).toBe(form);
+  expect(options.headers["Content-Type"]).toBeUndefined();
+  expect(options.headers.Authorization).toBe("Bearer fixture-token");
+  expect(options.credentials).toBe("omit");
+  expect(fetcher).toHaveBeenCalledOnce();
+});
+test("private image responses preserve binary data and JSON denial still closes a revoked session", async () => {
+  const fetcher = vi
+    .fn()
+    .mockResolvedValueOnce(
+      new Response(new Uint8Array([137, 80, 78, 71]), {
+        headers: { "Content-Type": "image/png" },
+      }),
+    )
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ message: "revoked" }), { status: 401 }),
+    );
+  vi.stubGlobal("fetch", fetcher);
+  const unauthorized = vi.fn();
+  const client = new ApiClient("/api", "fixture-token", unauthorized);
+  const blob = await client.request<Blob>("ai/diagnoses/id/image", {
+    responseType: "blob",
+  });
+  expect([...new Uint8Array(await blob.arrayBuffer())]).toEqual([
+    137, 80, 78, 71,
+  ]);
+  await expect(
+    client.request("ai/diagnoses/id/image", { responseType: "blob" }),
+  ).rejects.toMatchObject({ status: 401 });
+  expect(unauthorized).toHaveBeenCalledOnce();
+});
 test("an interrupted email request explains the API connection failure without resending or closing Admin", async () => {
   const fetcher = vi.fn().mockResolvedValue(new Response("", { status: 502 }));
   vi.stubGlobal("fetch", fetcher);
