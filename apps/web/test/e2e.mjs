@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { checkPdfAuth } from "./pdf-review-browser.mjs";
 import { mkdirSync, existsSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
@@ -10,6 +11,7 @@ import { checkTraceability } from "./traceability-browser.mjs";
 import { checkWorkflows } from "./workflows-browser.mjs";
 import { checkActuatorControl } from "./actuator-control-browser.mjs";
 import { checkRoleNavigation } from "./role-navigation-browser.mjs";
+import { checkManagerFilters } from "./manager-layout-browser.mjs";
 
 // Backend thật, RAM cô lập, không đọc .env root và không gửi SMTP/SMS thật.
 const webRoot = fileURLToPath(new URL("..", import.meta.url));
@@ -410,14 +412,20 @@ try {
     async () => {
       await visit("/materials");
       await page.locator("tbody tr").first().waitFor();
-      assert.equal(await page.locator("tbody tr").count(), 20);
+      assert.equal(await page.locator("tbody tr").count(), 10);
+      await page.getByRole("button", { name: "Sau", exact: true }).click();
+      await page.waitForURL("**/materials?offset=10");
+      await page
+        .getByRole("link", { name: "Vật tư kiểm thử 11", exact: true })
+        .waitFor();
+      assert.equal(await page.locator("tbody tr").count(), 10);
       await page.getByRole("button", { name: "Sau", exact: true }).click();
       await page.waitForFunction(
         () => document.querySelectorAll("tbody tr").length === 3,
       );
       await page.getByRole("button", { name: "Trước", exact: true }).click();
       await page.waitForFunction(
-        () => document.querySelectorAll("tbody tr").length === 20,
+        () => document.querySelectorAll("tbody tr").length === 10,
       );
       await page.getByLabel("Tìm theo tên vật tư").fill("kiểm thử 01");
       await page.getByRole("button", { name: "Tìm kiếm" }).click();
@@ -436,7 +444,7 @@ try {
     for (const [path, title] of [
       [`/farms/${farmAccepted.farm_id}`, "WEB-FARM"],
       [`/zones/${zone.id}`, zone.zone_name],
-      [`/trees/${tree.id}`, tree.tree_code],
+      [`/trees/${tree.id}`, `Cây SR-${tree.tree_code.slice(-8).toUpperCase()}`],
       [`/standards/${standard.id}`, standard.name],
     ]) {
       await visit(path);
@@ -486,12 +494,26 @@ try {
         }),
       });
       await history.locator("tbody tr").first().waitFor();
-      assert.equal(await history.locator("tbody tr").count(), 20);
+      const historyFields = await Promise.all(
+        ["Mã stream (không bắt buộc)", "Từ lúc", "Đến trước lúc"].map((label) =>
+          history.getByLabel(label, { exact: true }).boundingBox(),
+        ),
+      );
+      assert.ok(
+        historyFields.every((box) => Math.abs(box.y - historyFields[0].y) <= 1),
+      );
+      assert.equal(await history.locator("tbody tr").count(), 12);
       await history.getByRole("button", { name: "Sau", exact: true }).click();
       await page.waitForFunction(
         () =>
           document.querySelectorAll(".monitor-section:last-of-type tbody tr")
-            .length === 6,
+            .length === 12,
+      );
+      await history.getByRole("button", { name: "Sau", exact: true }).click();
+      await page.waitForFunction(
+        () =>
+          document.querySelectorAll(".monitor-section:last-of-type tbody tr")
+            .length === 2,
       );
       await page
         .getByLabel("Mã stream (không bắt buộc)", { exact: true })
@@ -607,6 +629,60 @@ try {
         .waitFor({ timeout: 23000 });
     },
   );
+  await check(
+    "station switching preserves layout while loading and never labels old readings as a new station",
+    async () => {
+      await visit("/iot");
+      await page.locator('.station-transition[aria-busy="false"]').waitFor();
+      const frame = page.locator(".station-transition");
+      const before = await frame.boundingBox();
+      let release;
+      const blocked = new Promise((resolve) => {
+        release = resolve;
+      });
+      const path = `**/api/telemetry/devices/${otherDevice.id}/latest?*`;
+      await page.route(path, async (route) => {
+        await blocked;
+        await route.continue().catch(() => {});
+      });
+      try {
+        await page
+          .getByLabel("Thiết bị / mã trạm", { exact: true })
+          .selectOption(otherDevice.id);
+        await page.locator(".monitor-loading").waitFor();
+        assert.ok((await frame.boundingBox()).height >= before.height - 1);
+        assert.equal(
+          await page
+            .locator(".sensor-card")
+            .filter({ hasText: "Nhiệt độ không khí A" })
+            .count(),
+          0,
+        );
+        release();
+        await page.locator('.station-transition[aria-busy="false"]').waitFor();
+        await page
+          .locator(".monitor-heading")
+          .getByText(otherDevice.station_id, { exact: true })
+          .waitFor();
+        assert.ok(
+          !(await page.locator(".sensor-cards").innerText()).includes(
+            "Nhiệt độ không khí A",
+          ),
+        );
+        await page
+          .getByLabel("Thiết bị / mã trạm", { exact: true })
+          .selectOption(device.id);
+        await page.locator('.station-transition[aria-busy="false"]').waitFor();
+        await page
+          .locator(".sensor-cards")
+          .getByText("Nhiệt độ không khí A", { exact: true })
+          .waitFor();
+      } finally {
+        release();
+        await page.unroute(path);
+      }
+    },
+  );
   await check("mobile layout and menu without body overflow", async () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await visit("/");
@@ -620,10 +696,10 @@ try {
     await page.getByRole("button", { name: "Mở menu", exact: true }).click();
     await page.locator(".sidebar.open").waitFor();
     await page
-      .getByRole("button", { name: "Canh tác & theo dõi", exact: true })
+      .getByRole("button", { name: "Vườn của tôi", exact: true })
       .click();
     await page
-      .getByRole("link", { name: "Khu vực, cây & thiết bị", exact: true })
+      .getByRole("link", { name: "Vườn & khu vực", exact: true })
       .click();
     await page.locator("tbody tr").first().waitFor();
     assert.equal(await page.locator(".sidebar.open").count(), 0);
@@ -642,17 +718,18 @@ try {
     });
     await page.setViewportSize({ width: 1440, height: 1000 });
   });
+  await checkPdfAuth({ page, origin, check, screenshots });
   await check(
     "Farmer registration becomes Active with no farm or owner claims",
     async () => {
       await visit("/register");
       await page
-        .getByRole("button", { name: "Manager HTX", exact: true })
+        .getByRole("button", { name: "Quản lý HTX", exact: true })
         .click();
       await page
         .getByLabel("Email (bắt buộc xác minh)", { exact: true })
         .fill("hidden-email@example.com");
-      await page.getByRole("button", { name: "Farmer", exact: true }).click();
+      await page.getByRole("button", { name: "Nhà nông", exact: true }).click();
       await page.locator('input[type="email"]').waitFor({ state: "hidden" });
       await page
         .getByLabel("Họ và tên", { exact: true })
@@ -764,7 +841,7 @@ try {
   async function registerManager(phone, email, name) {
     await visit("/register");
     await page
-      .getByRole("button", { name: "Manager HTX", exact: true })
+      .getByRole("button", { name: "Quản lý HTX", exact: true })
       .click();
     await page.getByLabel("Họ và tên", { exact: true }).fill(name);
     await page.getByLabel("Số điện thoại", { exact: true }).fill(phone);
@@ -1105,6 +1182,12 @@ try {
         path: `${screenshots}/manager-desktop.png`,
         fullPage: true,
       });
+      const statsBox = await page.locator(".manager-stats").boundingBox();
+      const inboxBox = await page.locator(".role-inbox").boundingBox();
+      const controlsBox = await page.locator(".manager-controls").boundingBox();
+      assert.ok(statsBox.y + statsBox.height <= inboxBox.y);
+      assert.ok(statsBox.y + statsBox.height <= controlsBox.y);
+      await checkManagerFilters({ page, visit, screenshots });
       await page
         .getByLabel("Vườn thành viên", { exact: true })
         .selectOption(farmAccepted.farm_id);
@@ -1288,6 +1371,7 @@ try {
     errors,
   });
   await checkRoleNavigation({
+    broker,
     browser,
     origin,
     http,

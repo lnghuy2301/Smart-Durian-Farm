@@ -233,6 +233,7 @@ function ManagerContent({
   if (records.farms.length === 0)
     return (
       <>
+        <ManagerStats view={view} farmId="" />
         <section className="panel role-getting-started">
           <span className="section-label">{cooperative.cooperative_name}</span>
           <h2>HTX chưa có vườn thành viên</h2>
@@ -253,11 +254,11 @@ function ManagerContent({
           </div>
         </section>
         <RequestInbox cooperativeId={cooperative.id} />
-        <ManagerStats view={view} farmId="" />
       </>
     );
   return (
     <>
+      <ManagerStats view={view} farmId={farmId} />
       <RequestInbox cooperativeId={cooperative.id} />
       <section className="panel manager-controls">
         <div className="panel-heading">
@@ -280,7 +281,7 @@ function ManagerContent({
               <option value="">Tất cả vườn trong HTX</option>
               {records.farms.map((farm) => (
                 <option key={farm.id} value={farm.id}>
-                  {farm.certificate_number} · {farm.address}
+                  {farm.address}
                 </option>
               ))}
             </select>
@@ -308,7 +309,6 @@ function ManagerContent({
           </Notice>
         )}
       </section>
-      <ManagerStats view={view} farmId={farmId} />
       <section className="panel">
         <div className="panel-heading">
           <div>

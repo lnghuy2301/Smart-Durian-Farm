@@ -1,6 +1,8 @@
-import { DataState, number } from "../components/ui";
+import { Notice, number } from "../components/ui";
+import { useSession } from "../auth/session";
 import { useCollection } from "./shared";
 export function WorkflowStats({ path, kind }: { path: string; kind: string }) {
+  const { user } = useSession();
   const resource = useCollection<{
     id: string;
     status?: string;
@@ -15,9 +17,12 @@ export function WorkflowStats({ path, kind }: { path: string; kind: string }) {
   const totals =
     kind === "farms"
       ? [
-          ["Vườn phù hợp", data.length],
           [
-            "Tổng diện tích",
+            user.role === "Farmer" ? "Vườn của tôi" : "Vườn phù hợp",
+            data.length,
+          ],
+          [
+            "Tổng diện tích (ha)",
             data.reduce((sum, x) => sum + (x.area_size ?? 0), 0),
           ],
           ["Đã tham gia HTX", data.filter((x) => x.cooperative_id).length],
@@ -26,7 +31,7 @@ export function WorkflowStats({ path, kind }: { path: string; kind: string }) {
         ? [
             ["Khu vực phù hợp", data.length],
             [
-              "Tổng diện tích",
+              "Tổng diện tích (ha)",
               data.reduce((sum, x) => sum + (x.area_size ?? 0), 0),
             ],
           ]
@@ -60,17 +65,29 @@ export function WorkflowStats({ path, kind }: { path: string; kind: string }) {
               ],
             ];
   return (
-    <DataState resource={resource}>
-      {() => (
-        <div className="workflow-stats" aria-label="Thống kê theo bộ lọc">
-          {totals.map(([label, value]) => (
-            <article className="workflow-stat" key={label}>
-              <span>{label}</span>
-              <strong>{number(Number(value))}</strong>
-            </article>
-          ))}
-        </div>
+    <>
+      <div
+        className="workflow-stats"
+        aria-label="Thống kê theo bộ lọc"
+        aria-busy={resource.loading}
+      >
+        {totals.map(([label, value]) => (
+          <article className="workflow-stat" key={label}>
+            <span>{label}</span>
+            <strong>
+              {resource.loading || resource.error ? "—" : number(Number(value))}
+            </strong>
+          </article>
+        ))}
+      </div>
+      {resource.error && (
+        <Notice kind="error">
+          Không tải được thống kê.{" "}
+          <button className="button secondary" onClick={resource.reload}>
+            Thử lại thống kê
+          </button>
+        </Notice>
       )}
-    </DataState>
+    </>
   );
 }

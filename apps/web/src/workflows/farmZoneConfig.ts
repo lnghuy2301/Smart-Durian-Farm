@@ -19,7 +19,7 @@ export const coordinates: InputField[] = [
 ];
 export const area: InputField = {
   key: "area_size",
-  label: "Diện tích",
+  label: "Diện tích (ha)",
   type: "number",
   min: 0.001,
   max: 9999.999,
@@ -38,7 +38,7 @@ export const zoneFields: InputField[] = [
     createOnly: true,
     relation: {
       path: "farms",
-      label: (x) => `${x.certificate_number} · ${x.address}`,
+      label: (x) => String(x.address),
     },
   },
   { key: "zone_name", label: "Tên khu vực", maxLength: 255 },

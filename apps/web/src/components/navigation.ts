@@ -10,6 +10,9 @@ import {
   Trees,
   Users,
   Droplets,
+  Bot,
+  Camera,
+  MessageCircle,
   type LucideIcon,
 } from "lucide-react";
 import type { Role } from "../types/api";
@@ -44,7 +47,7 @@ const items = {
   iot: { to: "/iot", title: "Giám sát môi trường", icon: Radio },
   control: {
     to: "/actuator-control",
-    title: "Điều khiển tưới / phun",
+    title: "Điều khiển tưới/phun thuốc",
     icon: Droplets,
   },
   devices: {
@@ -68,7 +71,7 @@ const items = {
   materials: { to: "/materials", title: "Vật tư", icon: Package },
   standards: {
     to: "/standards",
-    title: "Tiêu chuẩn & vật tư liên kết",
+    title: "Tiêu chuẩn canh tác",
     icon: ClipboardCheck,
   },
   requests: { to: "/requests", title: "Phiếu đề xuất", icon: ClipboardCheck },
@@ -91,7 +94,7 @@ export function navigationForRole(role: Role): NavigationGroup[] {
       items.journals,
       items.harvests,
       items.iot,
-      { ...items.control, title: "Theo dõi lệnh tưới / phun" },
+      { ...items.control, title: "Theo dõi lệnh tưới/phun thuốc" },
       items.devices,
     ],
   };
@@ -154,7 +157,27 @@ export function navigationForRole(role: Role): NavigationGroup[] {
       id: "owned",
       title: "Vườn của tôi",
       icon: Leaf,
-      items: [{ ...items.farms, title: "Vườn & quản lý khu vực" }],
+      items: [
+        {
+          ...items.farms,
+          title: "Vườn & khu vực",
+          paths: ["/farms"],
+        },
+        {
+          ...items.trees,
+          to: "/farms?view=trees",
+          // Shared detail URLs can belong to assigned work. Only the owned
+          // hub's query selects this context; a URL alone proves no ownership.
+          paths: [],
+          title: "Cây trồng",
+        },
+        {
+          ...items.devices,
+          to: "/farms?view=devices",
+          paths: [],
+          title: "Thiết bị",
+        },
+      ],
     },
     {
       id: "assigned",
@@ -167,11 +190,6 @@ export function navigationForRole(role: Role): NavigationGroup[] {
       title: "Canh tác & theo dõi",
       icon: Sprout,
       items: [
-        {
-          ...items.zones,
-          title: "Khu vực, cây & thiết bị",
-          paths: ["/zones", "/trees", "/devices", "/sensors", "/actuators"],
-        },
         {
           ...items.journals,
           to: "/cultivation-events?mine=1",
@@ -186,16 +204,39 @@ export function navigationForRole(role: Role): NavigationGroup[] {
       id: "requests",
       title: "Yêu cầu & tra cứu",
       icon: ClipboardCheck,
+      items: [items.requests, items.backdates],
+    },
+    {
+      id: "ai",
+      title: "Hỗ trợ AI",
+      icon: Bot,
       items: [
-        items.requests,
-        items.backdates,
-        items.standards,
-        items.materials,
+        {
+          to: "/ai/diagnoses",
+          title: "Kiểm tra ảnh sâu bệnh",
+          icon: Camera,
+        },
+        {
+          to: "/ai/chat",
+          title: "Hỏi trợ lý canh tác",
+          icon: MessageCircle,
+        },
       ],
     },
+    { ...catalogs, items: [items.standards, items.materials] },
   ];
 }
-export function selectedNavigation(role: Role, pathname: string) {
+export function selectedNavigation(role: Role, pathname: string, search = "") {
+  // The ownership hub keeps its existing tabs/URLs. Query-specific links must
+  // select a single sidebar item, including when opening a direct URL.
+  if (role === "Farmer" && pathname === "/farms") {
+    const view = new URLSearchParams(search).get("view");
+    const group = navigationForRole(role).find(
+      (entry) => entry.id === "owned",
+    )!;
+    const item = group.items[view === "trees" ? 1 : view === "devices" ? 2 : 0];
+    return { group, item };
+  }
   for (const group of navigationForRole(role)) {
     const item = group.items.find((entry) =>
       (entry.paths ?? [entry.to.split("?")[0]]).some(
@@ -213,4 +254,5 @@ export const routeRoles = {
   cooperativeUpdates: ["Admin", "Manager"],
   cooperativeNotifications: ["Manager"],
   assignedWork: ["Farmer"],
+  ai: ["Farmer"],
 } satisfies Record<string, Role[]>;

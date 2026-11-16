@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Download, ExternalLink, RefreshCw } from "lucide-react";
+import { ExternalLink, RefreshCw } from "lucide-react";
+import { QrDownload } from "../components/QrDownload";
 import { apiBaseUrl, publicApi, queryString } from "../api/client";
 import { Brand } from "../components/Brand";
 import {
@@ -113,14 +114,11 @@ export function TraceabilityPage() {
                     height={240}
                     alt={`Mã QR truy xuất cây ${data.tree.tree_code}`}
                   />
-                  <a
-                    className="button secondary"
-                    href={qrUrl}
-                    download={`${data.tree.tree_code}-qr.svg`}
-                  >
-                    <Download size={16} />
-                    Tải mã QR SVG
-                  </a>
+                  <QrDownload
+                    key={qrUrl}
+                    url={qrUrl}
+                    treeCode={data.tree.tree_code}
+                  />
                   <a
                     className="trace-url"
                     href={data.trace_url}

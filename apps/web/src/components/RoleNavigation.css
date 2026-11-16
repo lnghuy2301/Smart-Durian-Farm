@@ -9,9 +9,9 @@
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #456252;
+  color: #577062;
   font-size: var(--sd-font-control);
-  font-weight: 600;
+  font-weight: 400;
 }
 .role-sidebar .role-nav-toggle > svg {
   flex-shrink: 0;
@@ -23,7 +23,7 @@
   background: #f5faf6;
 }
 .role-sidebar .role-nav-toggle.current {
-  color: var(--sd-brand);
+  color: #577062;
   background: #f0f8f2;
 }
 .role-sidebar .role-nav-toggle .expanded {
@@ -56,8 +56,19 @@
   border-radius: 8px;
 }
 .role-sidebar .role-account-link.active {
-  color: var(--sd-brand);
+  color: #577062;
   background: var(--sd-soft-green);
+  font-weight: 400;
+}
+.role-sidebar nav a,
+.role-sidebar nav a.active {
+  color: #577062;
+  font-weight: 400;
+}
+.role-sidebar nav a:is(:hover, :active),
+.role-sidebar .role-nav-toggle:is(:hover, :active),
+.role-sidebar .role-account-link:is(:hover, :active) {
+  color: var(--sd-brand);
   font-weight: 600;
 }
 .role-sidebar .workspace-label {

@@ -1,0 +1,13 @@
+.stable-content-frame {
+  min-width: 0;
+  overflow: clip;
+  transition: block-size 200ms ease;
+}
+.stable-content-frame > div {
+  display: flow-root;
+}
+@media (prefers-reduced-motion: reduce) {
+  .stable-content-frame {
+    transition: none;
+  }
+}

@@ -78,7 +78,9 @@
 .control-state-grid strong {
   font-size: 18px;
 }
-.control-state-grid small,
+.control-state-grid small {
+  color: #52647b;
+}
 .control-reading-grid small {
   color: var(--sd-muted);
 }

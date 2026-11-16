@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   ArrowUpRight,
@@ -41,7 +41,7 @@ export function IotPage() {
         actions={
           <>
             <Link className="button" to="/actuator-control">
-              Điều khiển tưới / phun
+              Điều khiển tưới/phun thuốc
             </Link>
             <Link className="button secondary" to="/devices">
               Quản lý thiết bị IoT
@@ -141,14 +141,9 @@ export function IotMonitor({ compact = false }: { compact?: boolean }) {
                 {data.total} thiết bị trong phạm vi truy cập
               </span>
             </div>
-            {device && (
-              <DeviceMonitor
-                key={device.id}
-                device={device}
-                compact={compact}
-              />
-            )}
-            <Pagination hideSinglePage
+            {device && <StationMonitor device={device} compact={compact} />}
+            <Pagination
+              hideSinglePage
               {...data}
               onChange={(next) => {
                 setOffset(next);
@@ -166,12 +161,66 @@ export function IotMonitor({ compact = false }: { compact?: boolean }) {
     </section>
   );
 }
-function DeviceMonitor({
+function StationMonitor({
   device,
   compact,
 }: {
   device: Device;
   compact: boolean;
+}) {
+  const [status, setStatus] = useState({ id: device.id, ready: false });
+  const content = useRef<HTMLDivElement>(null);
+  const lastHeight = useRef(0);
+  // Reset before rendering the next station, including rapid A -> B -> A.
+  // Waiting for an effect here would briefly reuse A's old "ready" flag.
+  if (status.id !== device.id) setStatus({ id: device.id, ready: false });
+  const pending = status.id !== device.id || !status.ready;
+  const onSettled = useCallback(
+    () => setStatus({ id: device.id, ready: true }),
+    [device.id],
+  );
+  useEffect(() => {
+    if (pending || !content.current) return;
+    const element = content.current;
+    const measure = () => {
+      lastHeight.current = element.getBoundingClientRect().height;
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [pending]);
+  return (
+    <div
+      className="station-transition"
+      aria-busy={pending}
+      style={
+        pending && lastHeight.current
+          ? { minHeight: lastHeight.current }
+          : undefined
+      }
+    >
+      <div ref={content}>
+        {/* A new keyed monitor clears readings/history immediately. Reserve the
+          previous footprint while loading, never show A's values under B. */}
+        <DeviceMonitor
+          key={device.id}
+          device={device}
+          compact={compact}
+          onSettled={onSettled}
+        />
+      </div>
+    </div>
+  );
+}
+function DeviceMonitor({
+  device,
+  compact,
+  onSettled,
+}: {
+  device: Device;
+  compact: boolean;
+  onSettled: () => void;
 }) {
   const { api } = useSession();
   const [latestOffset, setLatestOffset] = useState(0);
@@ -185,11 +234,11 @@ function DeviceMonitor({
           signal,
         }),
         api.request<TelemetryPage>(
-          `telemetry/devices/${device.id}/latest${queryString({ limit: 20, offset: latestOffset })}`,
+          `telemetry/devices/${device.id}/latest${queryString({ limit: 10, offset: latestOffset })}`,
           { signal },
         ),
         api.request<Page<Sensor>>(
-          `sensors${queryString({ device_id: device.id, limit: 100, offset: sensorOffset })}`,
+          `sensors${queryString({ device_id: device.id, limit: 10, offset: sensorOffset })}`,
           { signal },
         ),
       ]);
@@ -212,6 +261,9 @@ function DeviceMonitor({
   const resource = accessError
     ? { loading: false, error: accessError, reload }
     : { ...snapshot, reload };
+  useEffect(() => {
+    if (!resource.loading && (compact || resource.error)) onSettled();
+  }, [resource.loading, resource.error, compact, onSettled]);
   return (
     <div className="device-monitor">
       <div className="monitor-heading">
@@ -232,66 +284,89 @@ function DeviceMonitor({
         Tự cập nhật sau mỗi 15 giây khi trang đang hiển thị. Lần kiểm tra thành
         công: {snapshot.checkedAt ? dateTime(snapshot.checkedAt) : "Chưa có"}.
       </p>
-      <DataState resource={resource}>
-        {(data) => (
-          <>
-            <div className="presence-strip">
-              <div>
-                <span className="section-label">KẾT NỐI TRẠM</span>
-                <Badge status={data.presence.connectivity} />
+      {resource.loading ? (
+        <div className="monitor-loading" role="status" aria-live="polite">
+          <p className="table-note">Đang tải số đo của {device.station_id}…</p>
+          <div className="sensor-cards" aria-hidden="true">
+            {[0, 1, 2].map((index) => (
+              <div className="sensor-card monitor-placeholder" key={index}>
+                <span className="placeholder-line" />
+                <strong>—</strong>
+                <span className="placeholder-line" />
               </div>
-              <div>
-                <span className="section-label">TRẠNG THÁI THIẾT BỊ</span>
-                <Badge status={data.presence.status} />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <DataState resource={resource}>
+          {(data) => (
+            <>
+              <div className="presence-strip">
+                <div>
+                  <span className="section-label">KẾT NỐI TRẠM</span>
+                  <Badge status={data.presence.connectivity} />
+                </div>
+                <div>
+                  <span className="section-label">TRẠNG THÁI THIẾT BỊ</span>
+                  <Badge status={data.presence.status} />
+                </div>
+                <div>
+                  <span className="section-label">TÍN HIỆU CUỐI</span>
+                  <strong>{dateTime(data.presence.last_seen_at)}</strong>
+                </div>
               </div>
-              <div>
-                <span className="section-label">TÍN HIỆU CUỐI</span>
-                <strong>{dateTime(data.presence.last_seen_at)}</strong>
+              {(!data.presence.broker_connected ||
+                !data.presence.receiver_ready) && (
+                <Notice kind="warning">
+                  Kênh nhận dữ liệu hiện chưa sẵn sàng. Số đo dưới đây là dữ
+                  liệu đã nhận trước đó, cần kiểm tra thời gian.
+                </Notice>
+              )}
+              <p className="table-note">
+                Trạm bị xem là mất kết nối sau{" "}
+                {number(data.presence.offline_after_ms / 60000)} phút không có
+                tín hiệu. Trạng thái thiết bị không biểu thị bật/tắt bơm.
+              </p>
+              <h3 className="workflow-subheading">Số đo gần nhất</h3>
+              <div className="sensor-cards">
+                {data.latest.items.map((reading) => (
+                  <ReadingCard
+                    key={reading._id}
+                    reading={reading}
+                    sensor={data.sensors.items.find(
+                      (item) => item.data_stream_id === reading.data_stream_id,
+                    )}
+                  />
+                ))}
               </div>
-            </div>
-            {(!data.presence.broker_connected ||
-              !data.presence.receiver_ready) && (
-              <Notice kind="warning">
-                Kênh nhận dữ liệu hiện chưa sẵn sàng. Số đo dưới đây là dữ liệu
-                đã nhận trước đó, cần kiểm tra thời gian.
-              </Notice>
-            )}
-            <p className="table-note">
-              Trạm bị xem là mất kết nối sau{" "}
-              {number(data.presence.offline_after_ms / 60000)} phút không có tín
-              hiệu. Trạng thái thiết bị không biểu thị bật/tắt bơm.
-            </p>
-            <div className="sensor-cards">
-              {data.latest.items.map((reading) => (
-                <ReadingCard
-                  key={reading._id}
-                  reading={reading}
-                  sensor={data.sensors.items.find(
-                    (item) => item.data_stream_id === reading.data_stream_id,
-                  )}
-                />
-              ))}
-            </div>
-            {data.latest.items.length === 0 && (
-              <div className="data-state">
-                <Radio size={30} />
-                <p>Trạm chưa có số đo trong phạm vi truy cập.</p>
-              </div>
-            )}
-            <Pagination hideSinglePage {...data.latest} onChange={setLatestOffset} />
-
-            {!compact && (
-              <>
-                <SensorMetadata
-                  data={data.sensors}
-                  onChange={setSensorOffset}
-                />
-                <TelemetryHistory deviceId={device.id} onDenied={denied} />
-              </>
-            )}
-          </>
-        )}
-      </DataState>
+              {data.latest.items.length === 0 && (
+                <div className="data-state">
+                  <Radio size={30} />
+                  <p>Trạm chưa có số đo trong phạm vi truy cập.</p>
+                </div>
+              )}
+              <Pagination
+                hideSinglePage
+                {...data.latest}
+                onChange={setLatestOffset}
+              />
+              {!compact && (
+                <>
+                  <SensorMetadata
+                    data={data.sensors}
+                    onChange={setSensorOffset}
+                  />
+                  <TelemetryHistory
+                    deviceId={device.id}
+                    onDenied={denied}
+                    onSettled={onSettled}
+                  />
+                </>
+              )}
+            </>
+          )}
+        </DataState>
+      )}
     </div>
   );
 }
@@ -376,7 +451,7 @@ function SensorMetadata({
             <thead>
               <tr>
                 <th>Cảm biến</th>
-                <th>Stream</th>
+                <th>Luồng dữ liệu</th>
                 <th>Loại</th>
                 <th>Đơn vị cấu hình</th>
                 <th>Ngưỡng</th>
@@ -425,9 +500,11 @@ function SensorMetadata({
 function TelemetryHistory({
   deviceId,
   onDenied,
+  onSettled,
 }: {
   deviceId: string;
   onDenied: (error: Error) => void;
+  onSettled: () => void;
 }) {
   const { api } = useSession();
   const [stream, setStream] = useState("");
@@ -440,7 +517,7 @@ function TelemetryHistory({
   }>({});
   const [offset, setOffset] = useState(0);
   const [error, setError] = useState("");
-  const path = `telemetry/devices/${deviceId}/history${queryString({ ...filter, limit: 20, offset })}`;
+  const path = `telemetry/devices/${deviceId}/history${queryString({ ...filter, limit: 12, offset })}`;
   const load = useCallback(
     async (signal: AbortSignal) => {
       try {
@@ -458,6 +535,9 @@ function TelemetryHistory({
     [api, path, onDenied],
   );
   const resource = useResource(path, load);
+  useEffect(() => {
+    if (!resource.loading) onSettled();
+  }, [resource.loading, onSettled]);
   return (
     <div className="monitor-section">
       <div className="panel-heading">
@@ -474,7 +554,7 @@ function TelemetryHistory({
         </button>
       </div>
       <form
-        className="toolbar"
+        className="toolbar monitor-history-filter"
         onSubmit={(e) => {
           e.preventDefault();
           if (
@@ -502,14 +582,14 @@ function TelemetryHistory({
             onChange={(e) => setStream(e.target.value)}
           />
         </Field>
-        <Field label="Từ lúc" hint="Giờ theo múi giờ máy đang sử dụng.">
+        <Field label="Từ lúc">
           <input
             type="datetime-local"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
           />
         </Field>
-        <Field label="Đến trước lúc" hint="Giờ theo múi giờ máy đang sử dụng.">
+        <Field label="Đến trước lúc">
           <input
             type="datetime-local"
             value={to}
@@ -521,6 +601,7 @@ function TelemetryHistory({
           Lọc lịch sử
         </button>
       </form>
+      <p className="table-note">Mốc thời gian theo múi giờ máy đang sử dụng.</p>
       {error && <Notice kind="error">{error}</Notice>}
       <DataState resource={resource} empty={resource.data?.items.length === 0}>
         {(data) => (
@@ -561,7 +642,9 @@ function TelemetryHistory({
           </>
         )}
       </DataState>
-      {resource.data && <Pagination hideSinglePage {...resource.data} onChange={setOffset} />}
+      {resource.data && (
+        <Pagination hideSinglePage {...resource.data} onChange={setOffset} />
+      )}
       <Link className="table-note" to="/zones">
         Xem khu vực được quyền truy cập
         <ArrowUpRight size={12} />

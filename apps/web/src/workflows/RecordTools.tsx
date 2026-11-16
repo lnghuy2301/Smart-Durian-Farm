@@ -168,9 +168,11 @@ export function RecordTools({
               ? proposal
                 ? "Đề xuất chỉnh sửa"
                 : "Chỉnh sửa"
-              : proposal
-                ? `Đề xuất tạo ${config.title}`
-                : `Thêm ${config.title}`}
+              : path === "farms"
+                ? "Tạo vườn"
+                : proposal
+                  ? `Đề xuất tạo ${config.title}`
+                  : `Thêm ${config.title}`}
           </button>
         )}
         {record && path === "farms" && writable && (

@@ -1,5 +1,5 @@
-import { RecordReference } from "../components/ReadableValue";
 import { calendarDate } from "../components/presentation";
+import { RecordReference } from "../components/ReadableValue";
 import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -14,6 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import { useSession } from "../auth/session";
+import { collectPages } from "../api/collection";
 import { useResource } from "../hooks/useResource";
 import {
   Badge,
@@ -36,6 +37,7 @@ import type {
   Harvest,
   Cooperative,
   User,
+  AssignmentHistory,
 } from "../types/api";
 
 export function Dashboard() {
@@ -48,20 +50,49 @@ function FarmerDashboard() {
   const [refresh, setRefresh] = useState(0);
   const load = useCallback(
     async (signal: AbortSignal) => {
-      const [zones, trees, harvests, confirmed] = await Promise.all([
-        api.request<Page<Zone>>("zones?limit=1&offset=0", { signal }),
-        api.request<Page<Tree>>("trees?limit=1&offset=0", { signal }),
-        api.request<Page<Harvest>>("tree-harvests?limit=5&offset=0", {
-          signal,
-        }),
-        api.request<Page<Harvest>>(
-          "tree-harvests?status=Confirmed&limit=1&offset=0",
-          { signal },
-        ),
-      ]);
-      return { zones, trees, harvests, confirmed };
+      const [zones, trees, harvests, confirmed, farms, assignments] =
+        await Promise.all([
+          api.request<Page<Zone>>("zones?limit=1&offset=0", { signal }),
+          api.request<Page<Tree>>("trees?limit=1&offset=0", { signal }),
+          api.request<Page<Harvest>>("tree-harvests?limit=5&offset=0", {
+            signal,
+          }),
+          api.request<Page<Harvest>>(
+            "tree-harvests?status=Confirmed&limit=1&offset=0",
+            { signal },
+          ),
+          collectPages<Farm>(
+            (offset) =>
+              api.request<Page<Farm>>(`farms?limit=100&offset=${offset}`, {
+                signal,
+              }),
+            (farm) => farm.id,
+          ),
+          collectPages<AssignmentHistory>(
+            (offset) =>
+              api.request<Page<AssignmentHistory>>(
+                `zone-assignments?limit=100&offset=${offset}`,
+                { signal },
+              ),
+            (entry) => entry.assignment.id,
+          ),
+        ]);
+      return {
+        zones,
+        trees,
+        harvests,
+        confirmed,
+        ownsFarm: farms.some((farm) => farm.owner_id === user.id),
+        activeWork: new Set(
+          assignments
+            .filter(
+              (entry) => entry.active && entry.assignment.user_id === user.id,
+            )
+            .map((entry) => entry.assignment.zone_id),
+        ).size,
+      };
     },
-    [api],
+    [api, user.id],
   );
   const resource = useResource("farmer-overview", load);
   return (
@@ -82,8 +113,6 @@ function FarmerDashboard() {
           </button>
         }
       />
-      <FarmerWorkspace key={`workspace:${refresh}`} />
-      <RequestInbox key={`inbox:${refresh}`} />
       <DataState resource={resource}>
         {(data) => (
           <>
@@ -103,64 +132,86 @@ function FarmerDashboard() {
                 note="Tất cả trạng thái cây"
               />
               <Stat
-                title="Thu hoạch xác nhận"
-                value={data.confirmed.total}
-                icon={Sprout}
-                to="/tree-harvests?status=Confirmed"
-                note="Hồ sơ đã được xác nhận"
+                title={
+                  data.ownsFarm
+                    ? "Thu hoạch xác nhận"
+                    : "Khu vực đang phụ trách"
+                }
+                value={data.ownsFarm ? data.confirmed.total : data.activeWork}
+                icon={data.ownsFarm ? Sprout : Users}
+                to={
+                  data.ownsFarm
+                    ? "/tree-harvests?status=Confirmed"
+                    : "/assigned-work"
+                }
+                note={
+                  data.ownsFarm
+                    ? "Hồ sơ đã được xác nhận"
+                    : "Phân công đang có hiệu lực"
+                }
               />
-            </div>
-            <EnvironmentPreview />
-            <RecentJournals />
-            <div className="dashboard-columns">
-              <section className="panel">
-                <div className="panel-heading">
-                  <div>
-                    <h2>Hồ sơ thu hoạch</h2>
-                    <p>{data.harvests.total} hồ sơ trong phạm vi truy cập</p>
-                  </div>
-                  <Link to="/tree-harvests">Xem tất cả →</Link>
-                </div>
-                {data.harvests.items.length ? (
-                  <div className="activity-list">
-                    {data.harvests.items.map((item) => (
-                      <Link
-                        className="activity"
-                        key={item.id}
-                        to={`/tree-harvests/${item.id}`}
-                      >
-                        <span className="section-icon">
-                          <Sprout size={19} />
-                        </span>
-                        <div>
-                          <strong>{item.season_name}</strong>
-                          <small>
-                            {item.batch_code} ·{" "}
-                            {calendarDate(item.harvest_date)}
-                          </small>
-                        </div>
-                        <div className="activity-right">
-                          <Badge status={item.status} />
-                          <small>{number(item.total_weight_kg)} kg</small>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="data-state">
-                    <Sprout size={30} />
-                    <p>Chưa có hồ sơ thu hoạch.</p>
-                  </div>
-                )}
-                <p className="table-note">
-                  Hiển thị tối đa 5 hồ sơ theo thứ tự API trả về.
-                </p>
-              </section>
-              <QuickLinks />
             </div>
           </>
         )}
       </DataState>
+      <FarmerWorkspace key={`workspace:${refresh}`} />
+      <RequestInbox key={`inbox:${refresh}`} />
+      {resource.data && (
+        <DataState resource={resource}>
+          {(data) => (
+            <>
+              <EnvironmentPreview />
+              <RecentJournals />
+              <div className="dashboard-columns">
+                <section className="panel">
+                  <div className="panel-heading">
+                    <div>
+                      <h2>Hồ sơ thu hoạch</h2>
+                      <p>{data.harvests.total} hồ sơ trong phạm vi truy cập</p>
+                    </div>
+                    <Link to="/tree-harvests">Xem tất cả →</Link>
+                  </div>
+                  {data.harvests.items.length ? (
+                    <div className="activity-list">
+                      {data.harvests.items.map((item) => (
+                        <Link
+                          className="activity"
+                          key={item.id}
+                          to={`/tree-harvests/${item.id}`}
+                        >
+                          <span className="section-icon">
+                            <Sprout size={19} />
+                          </span>
+                          <div>
+                            <strong>{item.season_name}</strong>
+                            <small>
+                              {item.batch_code} ·{" "}
+                              {calendarDate(item.harvest_date)}
+                            </small>
+                          </div>
+                          <div className="activity-right">
+                            <Badge status={item.status} />
+                            <small>{number(item.total_weight_kg)} kg</small>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="data-state">
+                      <Sprout size={30} />
+                      <p>Chưa có hồ sơ thu hoạch.</p>
+                    </div>
+                  )}
+                  <p className="table-note">
+                    Hiển thị tối đa 5 hồ sơ theo thứ tự API trả về.
+                  </p>
+                </section>
+                <QuickLinks />
+              </div>
+            </>
+          )}
+        </DataState>
+      )}
     </>
   );
 }

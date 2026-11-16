@@ -9,7 +9,7 @@ export const harvestFields: InputField[] = [
   { key: "season_name", label: "Tên mùa vụ", maxLength: 50 },
   {
     key: "harvest_date",
-    label: "Ngày thu hoạch thực tế (lịch Việt Nam)",
+    label: "Ngày thu hoạch",
     type: "date",
   },
   {

@@ -1,5 +1,7 @@
 import { CatalogTools, StandardMaterialPanel } from "../workflows/CatalogTools";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
+import "./FilterLayout.css";
+import { shortTreeCode } from "../components/presentation";
 import {
   ReadableValue,
   ReferenceScope,
@@ -38,6 +40,7 @@ import type {
 interface Column<T> {
   label: string;
   value: (item: T) => ReactNode;
+  numeric?: boolean;
 }
 interface Filter {
   key: string;
@@ -50,6 +53,7 @@ export interface Definition<T extends { id: string }> {
   subtitle: string;
   search: string;
   name: (item: T) => string;
+  fullName?: (item: T) => string;
   columns: Column<T>[];
   filters?: Filter[];
   relationships?: string[];
@@ -91,12 +95,17 @@ export const materialDefinition: Definition<Material> = {
     { label: "Loại vật tư", value: (x) => typeNames[x.material_type] },
     {
       label: "Liều mặc định",
+      numeric: true,
       value: (x) =>
         x.default_dosage_value != null && x.dosage_basis
           ? `${number(x.default_dosage_value)} ${x.unit}/${x.dosage_basis}`
           : x.default_dosage,
     },
-    { label: "Cách ly", value: (x) => `${x.quarantine_days} ngày` },
+    {
+      label: "Cách ly",
+      value: (x) => `${x.quarantine_days} ngày`,
+      numeric: true,
+    },
     { label: "Trạng thái", value: (x) => <Badge status={x.status} /> },
   ],
   detail: [
@@ -138,7 +147,7 @@ export const standardDefinition: Definition<Standard> = {
   ),
 };
 const coordinates = <T extends { longitude: number; latitude: number }>(x: T) =>
-  `${number(x.latitude)}, ${number(x.longitude)}`;
+  `${x.latitude.toLocaleString("en-US", { useGrouping: false, maximumFractionDigits: 7 })}, ${x.longitude.toLocaleString("en-US", { useGrouping: false, maximumFractionDigits: 7 })}`;
 export const farmDefinition: Definition<Farm> = {
   path: "farms",
   title: "Vườn trồng",
@@ -147,7 +156,7 @@ export const farmDefinition: Definition<Farm> = {
   name: (x) => x.certificate_number,
   columns: [
     { label: "Địa chỉ", value: (x) => x.address },
-    { label: "Diện tích", value: (x) => number(x.area_size) },
+    { label: "Diện tích (ha)", value: (x) => number(x.area_size) },
     {
       label: "Hợp tác xã",
       value: (x) =>
@@ -170,7 +179,7 @@ export const farmDefinition: Definition<Farm> = {
       value: (x) => <ReadableValue field="owner_id" value={x.owner_id} />,
     },
     { label: "Địa chỉ", value: (x) => x.address },
-    { label: "Diện tích", value: (x) => number(x.area_size) },
+    { label: "Diện tích (ha)", value: (x) => number(x.area_size) },
     { label: "Vĩ độ, kinh độ", value: coordinates },
     {
       label: "Ngày tham gia HTX",
@@ -203,12 +212,12 @@ export const zoneDefinition: Definition<Zone> = {
   name: (x) => x.zone_name,
   relationships: ["farm_id"],
   columns: [
-    { label: "Diện tích", value: (x) => number(x.area_size) },
+    { label: "Diện tích (ha)", value: (x) => number(x.area_size) },
     { label: "Vĩ độ, kinh độ", value: coordinates },
   ],
   detail: [
     { label: "Tên khu vực", value: (x) => x.zone_name },
-    { label: "Diện tích", value: (x) => number(x.area_size) },
+    { label: "Diện tích (ha)", value: (x) => number(x.area_size) },
     { label: "Vĩ độ, kinh độ", value: coordinates },
     {
       label: "Tiêu chuẩn",
@@ -245,7 +254,8 @@ export const treeDefinition: Definition<Tree> = {
   title: "Cây trồng",
   subtitle: "Hồ sơ cây theo khu vực trong phạm vi truy cập.",
   search: "Tìm giống hoặc mã cây",
-  name: (x) => x.tree_code,
+  name: (x) => shortTreeCode(x.tree_code),
+  fullName: (x) => x.tree_code,
   relationships: ["zone_id"],
   filters: [
     {
@@ -359,12 +369,14 @@ export function ResourceList<T extends { id: string }>({
   definition: def,
   nested = false,
   detailPath,
+  onSettled,
 }: {
   definition: Definition<T>;
   nested?: boolean;
   detailPath?: string;
+  onSettled?: () => void;
 }) {
-  const { api } = useSession();
+  const { api, user } = useSession();
   const [params, setParams] = useSearchParams();
   const prefix = nested ? "linked_" : "";
   const q = (params.get(`${prefix}q`) ?? "").slice(0, 100);
@@ -378,7 +390,7 @@ export function ResourceList<T extends { id: string }>({
   const filters: Record<string, string | number | undefined> = {
     ...def.fixedFilters,
     q: def.search ? q : undefined,
-    limit: 20,
+    limit: def.path === "materials" ? 10 : 20,
     offset,
   };
   for (const filter of def.filters ?? []) {
@@ -396,6 +408,9 @@ export function ResourceList<T extends { id: string }>({
     [api, path],
   );
   const resource = useResource(path, load);
+  useEffect(() => {
+    if (!resource.loading) onSettled?.();
+  }, [resource.loading, onSettled]);
   function change(key: string, value: string) {
     setParams((previous) => {
       const next = new URLSearchParams(previous);
@@ -455,7 +470,7 @@ export function ResourceList<T extends { id: string }>({
       )}
       <section className="panel">
         <form
-          className="toolbar"
+          className={`toolbar ${user.role === "Manager" ? "manager-filter-grid" : ""}`}
           onSubmit={(event) => {
             event.preventDefault();
             change("q", search.trim());
@@ -487,10 +502,12 @@ export function ResourceList<T extends { id: string }>({
             </Field>
           ))}
           {def.search && (
-            <button className="button secondary" type="submit">
-              <Search size={17} />
-              Tìm kiếm
-            </button>
+            <div className="resource-filter-action">
+              <button className="button secondary" type="submit">
+                <Search size={17} />
+                Tìm kiếm
+              </button>
+            </div>
           )}
           {!nested &&
             def.relationships?.map((key) => {
@@ -499,8 +516,7 @@ export function ResourceList<T extends { id: string }>({
                   ? {
                       label: "Vườn trồng",
                       path: "farms",
-                      name: (x: Values) =>
-                        `${x.certificate_number} · ${x.address}`,
+                      name: (x: Values) => String(x.address),
                     }
                   : key === "zone_id"
                     ? {
@@ -517,7 +533,8 @@ export function ResourceList<T extends { id: string }>({
                       : {
                           label: "Cây",
                           path: `trees${queryString({ zone_id: typeof filters.zone_id === "string" ? filters.zone_id : undefined })}`,
-                          name: (x: Values) => `${x.tree_code} · ${x.variety}`,
+                          name: (x: Values) =>
+                            `${shortTreeCode(String(x.tree_code))} · ${x.variety}`,
                         };
               return (
                 <RelationSelect
@@ -537,20 +554,22 @@ export function ResourceList<T extends { id: string }>({
               );
             })}
           {def.relationships?.some((key) => params.has(key)) && (
-            <button
-              type="button"
-              className="button secondary"
-              onClick={() =>
-                setParams((previous) => {
-                  const next = new URLSearchParams(previous);
-                  for (const key of def.relationships ?? []) next.delete(key);
-                  next.delete("offset");
-                  return next;
-                })
-              }
-            >
-              Bỏ lọc liên kết
-            </button>
+            <div className="resource-filter-action">
+              <button
+                type="button"
+                className="button secondary"
+                onClick={() =>
+                  setParams((previous) => {
+                    const next = new URLSearchParams(previous);
+                    for (const key of def.relationships ?? []) next.delete(key);
+                    next.delete("offset");
+                    return next;
+                  })
+                }
+              >
+                Bỏ lọc liên kết
+              </button>
+            </div>
           )}
         </form>
         <DataState
@@ -570,7 +589,12 @@ export function ResourceList<T extends { id: string }>({
                   <tr>
                     <th>{def.title}</th>
                     {def.columns.map((col) => (
-                      <th key={col.label}>{col.label}</th>
+                      <th
+                        key={col.label}
+                        className={col.numeric ? "resource-number" : undefined}
+                      >
+                        {col.label}
+                      </th>
                     ))}
                     <th>
                       <span className="sr-only">Chi tiết</span>
@@ -583,13 +607,21 @@ export function ResourceList<T extends { id: string }>({
                       <td>
                         <Link
                           className="item-name"
+                          title={def.fullName?.(item)}
                           to={`/${detailPath ?? def.path}/${item.id}`}
                         >
                           {def.name(item)}
                         </Link>
                       </td>
                       {def.columns.map((col) => (
-                        <td key={col.label}>{col.value(item)}</td>
+                        <td
+                          key={col.label}
+                          className={
+                            col.numeric ? "resource-number" : undefined
+                          }
+                        >
+                          {col.value(item)}
+                        </td>
                       ))}
                       <td>
                         <Link

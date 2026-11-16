@@ -13,8 +13,8 @@ test("role menus expose work groups without system management for Manager/Farmer
     const groups = navigationForRole(role);
     const paths = groups.flatMap((group) => group.items.map((item) => item.to));
     expect(new Set(paths).size).toBe(paths.length);
-    expect(groups.length).toBeLessThanOrEqual(4);
-    expect(paths).not.toContain("/ai");
+    expect(groups.length).toBeLessThanOrEqual(role === "Farmer" ? 6 : 4);
+    expect(paths.includes("/ai/diagnoses")).toBe(role === "Farmer");
     expect(paths.includes("/pending-managers")).toBe(role === "Admin");
   }
   const manager = navigationForRole("Manager").flatMap((group) =>
@@ -27,8 +27,18 @@ test("role menus expose work groups without system management for Manager/Farmer
     navigationForRole("Manager")
       .flatMap((group) => group.items)
       .find((item) => item.to === "/actuator-control")?.title,
-  ).toBe("Theo dõi lệnh tưới / phun");
+  ).toBe("Theo dõi lệnh tưới/phun thuốc");
   const farmer = navigationForRole("Farmer");
+  const aiIndex = farmer.findIndex((group) => group.id === "ai");
+  expect(aiIndex).toBeGreaterThan(-1);
+  expect(farmer[aiIndex].items.map((item) => item.to)).toEqual([
+    "/ai/diagnoses",
+    "/ai/chat",
+  ]);
+  expect(farmer[aiIndex + 1].items.map((item) => item.to)).toEqual([
+    "/standards",
+    "/materials",
+  ]);
   expect(farmer.map((group) => group.title)).toContain("Vườn của tôi");
   expect(farmer.map((group) => group.title)).toContain("Công việc được giao");
   expect(
@@ -39,6 +49,22 @@ test("role menus expose work groups without system management for Manager/Farmer
 });
 
 test("nested direct URLs select a single containing group while account and guards retain separate role rules", () => {
+  expect(
+    selectedNavigation("Farmer", "/ai/chat", "?id=private-chat")?.item.to,
+  ).toBe("/ai/chat");
+  expect(selectedNavigation("Farmer", "/ai/diagnoses")?.group.id).toBe("ai");
+  expect(
+    selectedNavigation("Farmer", "/farms", "?view=trees")?.item.title,
+  ).toBe("Cây trồng");
+  expect(
+    selectedNavigation("Farmer", "/farms", "?view=devices")?.item.title,
+  ).toBe("Thiết bị");
+  expect(
+    selectedNavigation("Farmer", "/farms", "?view=zones")?.item.title,
+  ).toBe("Vườn & khu vực");
+  expect(
+    selectedNavigation("Farmer", "/farms", "?view=invalid")?.item.title,
+  ).toBe("Vườn & khu vực");
   expect(selectedNavigation("Manager", "/sensors/sensor-id")?.group.id).toBe(
     "production",
   );
@@ -49,6 +75,10 @@ test("nested direct URLs select a single containing group while account and guar
     selectedNavigation("Farmer", "/cultivation-events/event-id")?.item.to,
   ).toBe("/cultivation-events?mine=1");
   expect(selectedNavigation("Farmer", "/account")).toBeUndefined();
+  expect(selectedNavigation("Farmer", "/trees/shared-tree")).toBeUndefined();
+  expect(
+    selectedNavigation("Farmer", "/devices/assigned-device"),
+  ).toBeUndefined();
   expect(routeRoles.administration).not.toContain("Manager");
   expect(routeRoles.cooperativeNotifications).toEqual(["Manager"]);
   expect(routeRoles.assignedWork).toEqual(["Farmer"]);

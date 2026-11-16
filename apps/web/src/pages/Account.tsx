@@ -1,43 +1,61 @@
 import { useSession } from "../auth/session";
-import { Field, PageHeader } from "../components/ui";
+import { Badge, Field, PageHeader } from "../components/ui";
+import { Mail, Phone, UserRound } from "lucide-react";
 import { valueLabels } from "../components/presentation";
 import { AccountTools } from "../components/AccountTools";
+import "./Account.css";
 export function AccountPage() {
   const { user } = useSession();
   return (
-    <>
+    <div className="account-page">
       <PageHeader
         title="Thông tin tài khoản"
-        subtitle="Thông tin tài khoản đang đăng nhập."
+        subtitle="Quản lý thông tin cá nhân, liên hệ và bảo mật của bạn."
       />
-      <section className="panel workflow-summary">
-        <h2>{user.user_name}</h2>
-        <dl className="details">
+      <section className="panel account-overview" aria-label="Hồ sơ tài khoản">
+        <div className="account-profile">
+          <span className="account-avatar" aria-hidden="true">
+            <UserRound size={30} />
+          </span>
           <div>
-            <dt>Vai trò</dt>
-            <dd>{valueLabels[user.role]}</dd>
+            <h2>{user.user_name}</h2>
+            <p>{valueLabels[user.role]}</p>
           </div>
+        </div>
+        <dl className="account-contact-details">
           <div>
-            <dt>Số điện thoại</dt>
+            <dt>
+              <Phone size={16} /> Số điện thoại
+            </dt>
             <dd>{user.phone_number}</dd>
           </div>
           <div>
-            <dt>Email</dt>
-            <dd>{user.gmail ?? "Chưa có email"}</dd>
-          </div>
-          <div>
-            <dt>Xác minh email</dt>
-            <dd>{user.gmail_verify ? "Đã xác minh" : "Chưa xác minh"}</dd>
+            <dt>
+              <Mail size={16} /> Email
+            </dt>
+            <dd>
+              {user.gmail ?? "Chưa có email"}{" "}
+              <Badge
+                status={user.gmail_verify ? "Đã xác minh" : "Chưa xác minh"}
+              />
+            </dd>
           </div>
         </dl>
-        <Field
-          label="Mã tài khoản"
-          hint="Sao chép mã này để chủ vườn mời bạn phụ trách khu vực. Mã không thay thế quyền truy cập."
-        >
-          <input readOnly value={user.id} onFocus={(e) => e.target.select()} />
-        </Field>
+        <details className="account-id">
+          <summary>Xem mã tài khoản</summary>
+          <Field
+            label="Mã tài khoản"
+            hint="Sao chép mã này để chủ vườn mời bạn phụ trách khu vực. Mã không thay thế quyền truy cập."
+          >
+            <input
+              readOnly
+              value={user.id}
+              onFocus={(e) => e.target.select()}
+            />
+          </Field>
+        </details>
       </section>
       <AccountTools />
-    </>
+    </div>
   );
 }

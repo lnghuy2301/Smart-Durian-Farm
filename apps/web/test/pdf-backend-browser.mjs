@@ -213,7 +213,7 @@ try {
       await login("PdfBrowserChanged123!");
       await visit("/account");
       await page
-        .getByRole("heading", { name: "Cập nhật tài khoản", exact: true })
+        .getByRole("heading", { name: "Thông tin cá nhân", exact: true })
         .waitFor();
       await page.screenshot({
         path: `${folder}/account-desktop.png`,

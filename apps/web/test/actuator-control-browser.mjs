@@ -259,6 +259,18 @@ export async function checkActuatorControl({
           .getByLabel("Trạm điều khiển", { exact: true })
           .selectOption(device.id);
         await stateText(owner, "Chưa xác định").first().waitFor();
+        await owner
+          .getByRole("heading", {
+            name: "Điều khiển tưới/phun thuốc",
+            exact: true,
+          })
+          .waitFor();
+        assert.equal(await owner.locator(".control-readings").count(), 0);
+        const farmLabel = await owner
+          .getByLabel("Vườn trồng", { exact: true })
+          .locator(`option[value="${farmId}"]`)
+          .innerText();
+        assert.ok(!farmLabel.includes("CONTROL-WEB"));
         assert.equal(posted.length, 0);
         await command(owner, "Tưới nước").click();
         await owner

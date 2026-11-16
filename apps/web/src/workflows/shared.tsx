@@ -430,10 +430,12 @@ export function Diff({
   changes,
   snapshot,
   labels = {},
+  renderValue,
 }: {
   changes: Record<string, unknown>;
   snapshot?: Record<string, unknown> | null;
   labels?: Record<string, string>;
+  renderValue?: (field: string, value: unknown) => ReactNode;
 }) {
   return (
     <div className="table-scroll">
@@ -451,11 +453,21 @@ export function Diff({
               <th>{labels[key] ?? fieldLabels[key] ?? "Thông tin bổ sung"}</th>
               {snapshot && (
                 <td className="break-word">
-                  <ReadableValue field={key} value={snapshot[key]} />
+                  {renderValue ? (
+                    renderValue(key, snapshot[key])
+                  ) : (
+                    <ReadableValue field={key} value={snapshot[key]} />
+                  )}
                 </td>
               )}
-              <td className="workflow-diff-new break-word">
-                <ReadableValue field={key} value={value} />
+              <td
+                className={`${snapshot ? "workflow-diff-new " : ""}break-word`}
+              >
+                {renderValue ? (
+                  renderValue(key, value)
+                ) : (
+                  <ReadableValue field={key} value={value} />
+                )}
               </td>
             </tr>
           ))}

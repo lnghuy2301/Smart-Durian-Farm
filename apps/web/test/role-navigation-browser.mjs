@@ -1,4 +1,12 @@
 import assert from "node:assert/strict";
+import { assertManagerFilterAlignment } from "./manager-layout-browser.mjs";
+import {
+  assertReadableRequest,
+  checkGardenTransition,
+  checkDashboardLinks,
+  checkTelemetryPages,
+  checkJournalRows,
+} from "./readable-requests-browser.mjs";
 
 // All records belong to the existing isolated Nest test application. No .env,
 // production database, hardware or real email/SMS is used here.
@@ -15,6 +23,7 @@ export async function checkRoleNavigation({
   codes,
   screenshots,
   errors,
+  broker,
 }) {
   const contexts = [];
   const { AuthService } = apiModule("auth/auth.service");
@@ -139,7 +148,7 @@ export async function checkRoleNavigation({
     page.getByRole("heading", { name, exact: true }).waitFor();
   const group = (page, name) =>
     page.locator(".sidebar nav").getByRole("button", { name, exact: true });
-  const noSystemMenu = async (page) => {
+  const noSystemMenu = async (page, aiAllowed = false) => {
     assert.equal(
       await page.locator('.sidebar a[href="/pending-managers"]').count(),
       0,
@@ -148,7 +157,10 @@ export async function checkRoleNavigation({
       await page.locator('.sidebar a[href="/cooperatives/new"]').count(),
       0,
     );
-    assert.equal(await page.locator('.sidebar a[href*="ai"]').count(), 0);
+    assert.equal(
+      await page.locator('.sidebar a[href^="/ai/"]').count(),
+      aiAllowed ? 2 : 0,
+    );
   };
   let manager;
   try {
@@ -217,7 +229,16 @@ export async function checkRoleNavigation({
         await farmer
           .locator('.role-inbox-item[href*="kind=assignment"]')
           .waitFor();
-        await noSystemMenu(farmer);
+        await noSystemMenu(farmer, true);
+        await farmer
+          .locator(".farmer-stats")
+          .getByText("Khu vực đang phụ trách", { exact: true })
+          .waitFor();
+        const stats = await farmer.locator(".farmer-stats").boundingBox();
+        const workspace = await farmer
+          .getByRole("region", { name: "Vườn của tôi", exact: true })
+          .boundingBox();
+        assert.ok(stats.y + stats.height <= workspace.y);
         for (const path of [
           "/pending-managers",
           "/cooperatives/new",
@@ -240,11 +261,27 @@ export async function checkRoleNavigation({
       "role navigation assigned-only Farmer accepts invitation and enters current Zone without owner actions",
       async () => {
         await visit(farmer, "/assigned-work");
-        await heading(farmer, "Công việc được giao");
+        await farmer
+          .getByRole("heading", {
+            name: "Công việc được giao",
+            exact: true,
+            level: 1,
+          })
+          .waitFor();
         await farmer
           .locator('.role-inbox-item[href*="kind=assignment"]')
           .waitFor();
         await visit(farmer, `/requests?kind=assignment&id=${invitation.id}`);
+        const sender = await http("auth/me", "GET", undefined, ownerToken);
+        await assertReadableRequest(
+          farmer,
+          [workZone.zone_name, sender.user_name],
+          [outer.farm_id],
+        );
+        await farmer.screenshot({
+          path: `${screenshots}/readable-assignment-invitation.png`,
+          fullPage: true,
+        });
         await farmer
           .getByRole("button", { name: "Chấp nhận đề xuất", exact: true })
           .click();
@@ -343,6 +380,53 @@ export async function checkRoleNavigation({
           path: `${screenshots}/role-farmer-mixed-desktop.png`,
           fullPage: true,
         });
+        await visit(farmer, "/farms?view=zones");
+        await heading(farmer, "Khu vực trong vườn");
+        await farmer
+          .getByRole("link", { name: ownedZone.zone_name, exact: true })
+          .waitFor();
+        const options = await farmer
+          .getByLabel("Vườn trồng", { exact: true })
+          .locator("option")
+          .allTextContents();
+        assert.ok(options.includes("Vườn riêng của Farmer nhận việc"));
+        assert.ok(!options.includes("Vườn giao việc cho Farmer"));
+        assert.ok(options.every((label) => !label.includes("NAV-")));
+        for (const label of ["Cây trồng", "Thiết bị"]) {
+          await farmer
+            .getByRole("navigation", { name: "Nội dung vườn của tôi" })
+            .getByRole("button", { name: label, exact: true })
+            .click();
+          await farmer.getByLabel("Khu vực", { exact: true }).waitFor();
+          await farmer
+            .getByLabel("Khu vực", { exact: true })
+            .locator(`option[value="${ownedZone.id}"]`)
+            .waitFor({ state: "attached" });
+          assert.equal(
+            await farmer.getByLabel("Vườn trồng", { exact: true }).inputValue(),
+            approved.farm_id,
+          );
+          assert.equal(
+            await farmer.getByLabel("Khu vực", { exact: true }).inputValue(),
+            ownedZone.id,
+          );
+          const active = farmer.locator('.sidebar a[aria-current="page"]');
+          assert.equal(await active.count(), 1);
+          assert.equal(await active.innerText(), label);
+        }
+        await visit(farmer, `/farms?view=zones&farm_id=${outer.farm_id}`);
+        await farmer
+          .getByText(
+            "Vườn được chọn không thuộc danh sách vườn của bạn. Hãy chọn lại.",
+            { exact: true },
+          )
+          .waitFor();
+        assert.equal(
+          await farmer
+            .getByRole("link", { name: workZone.zone_name, exact: true })
+            .count(),
+          0,
+        );
       },
     );
     await check(
@@ -427,6 +511,11 @@ export async function checkRoleNavigation({
         manager = await session(managerToken);
         await visit(manager, "/");
         await heading(manager, "HTX chưa có vườn thành viên");
+        const statsBox = await manager.locator(".manager-stats").boundingBox();
+        const onboarding = await manager
+          .locator(".role-getting-started")
+          .boundingBox();
+        assert.ok(statsBox.y + statsBox.height <= onboarding.y);
         await manager.locator(".manager-stats").waitFor();
         assert.deepEqual(
           await manager
@@ -435,6 +524,13 @@ export async function checkRoleNavigation({
           ["0", "0", "0", "0"],
         );
         await noSystemMenu(manager);
+        await visit(manager, "/trees");
+        await manager
+          .getByText("Chưa có mục được cấp quyền phù hợp.", { exact: true })
+          .waitFor();
+        await assertManagerFilterAlignment(manager);
+        await visit(manager, "/");
+        await heading(manager, "HTX chưa có vườn thành viên");
         assert.equal(
           await manager
             .getByRole("heading", { name: "Vườn trong HTX", exact: true })
@@ -484,6 +580,76 @@ export async function checkRoleNavigation({
           path: `${screenshots}/role-manager-empty-join.png`,
           fullPage: true,
         });
+        for (const page of [manager, farmer]) {
+          await visit(page, `/requests?kind=farm&id=${joined.id}`);
+          await assertReadableRequest(page, [
+            ownFarm.address,
+            ...(page === manager
+              ? []
+              : [approval.cooperative.cooperative_name]),
+            worker.user_name,
+          ]);
+          assert.equal(
+            (await page.locator(".request-summary").allTextContents()).some(
+              (text) => text.includes("HTX đề nghị gia nhập"),
+            ),
+            page !== manager,
+          );
+          await page.screenshot({
+            path: `${screenshots}/readable-cooperative-join-${page === manager ? "manager" : "farmer"}.png`,
+            fullPage: true,
+          });
+        }
+      },
+    );
+    await check(
+      "account settings distinguish profile, verified email and password for all roles on desktop and mobile",
+      async () => {
+        for (const [page, role] of [
+          [admin, "admin"],
+          [farmer, "farmer"],
+          [manager, "manager"],
+        ]) {
+          for (const viewport of [
+            { width: 1440, height: 1000 },
+            { width: 390, height: 844 },
+            { width: 320, height: 740 },
+          ]) {
+            await page.setViewportSize(viewport);
+            await visit(page, "/account");
+            await page
+              .getByRole("heading", { name: "Thông tin cá nhân", exact: true })
+              .waitFor();
+            for (const label of [
+              "Tên hiển thị",
+              "Email tài khoản",
+              "Đổi mật khẩu",
+            ]) {
+              assert.equal(
+                await page
+                  .getByRole("region", { name: label, exact: true })
+                  .count(),
+                1,
+              );
+            }
+            await page.getByText("Xem mã tài khoản", { exact: true }).click();
+            assert.equal(
+              await page
+                .getByLabel("Mã tài khoản", { exact: true })
+                .getAttribute("readonly"),
+              "",
+            );
+            assert.ok(
+              await page.evaluate(
+                () => document.documentElement.scrollWidth <= window.innerWidth,
+              ),
+            );
+            await page.screenshot({
+              path: `${screenshots}/account-${role}-${viewport.width}.png`,
+              fullPage: true,
+            });
+          }
+        }
       },
     );
     await check(
@@ -520,7 +686,13 @@ export async function checkRoleNavigation({
           .click();
         await group(farmer, "Công việc được giao").click();
         await farmer.locator('.sidebar a[href="/assigned-work"]').click();
-        await heading(farmer, "Công việc được giao");
+        await farmer
+          .getByRole("heading", {
+            name: "Công việc được giao",
+            exact: true,
+            level: 1,
+          })
+          .waitFor();
         assert.equal(await farmer.locator(".sidebar.open").count(), 0);
         await farmer.waitForFunction(
           () =>
@@ -582,6 +754,59 @@ export async function checkRoleNavigation({
           0,
         );
         await farmer.unroute("**/api/farm-requests?*");
+      },
+    );
+    await check(
+      "dashboard links reset after hover and return, with the same typography across three roles",
+      async () => {
+        const styles = [];
+        for (const page of [admin, farmer, manager])
+          styles.push(await checkDashboardLinks(page, origin));
+        assert.deepEqual(styles[0], styles[1]);
+        assert.deepEqual(styles[1], styles[2]);
+      },
+    );
+    await check(
+      "switching owned gardens reserves layout and latest/history use 10 and 12 rows with real fixture telemetry",
+      async () => {
+        const own = (
+          await http("farms?limit=100&offset=0", "GET", undefined, workerToken)
+        ).items.find((farm) => farm.certificate_number === "NAV-OWN-FARM");
+        const zone = (
+          await http(
+            `zones?farm_id=${own.id}&limit=100&offset=0`,
+            "GET",
+            undefined,
+            workerToken,
+          )
+        ).items[0];
+        const device = await checkGardenTransition({
+          page: farmer,
+          origin,
+          http,
+          workerToken,
+          adminToken,
+          standardId: standard.id,
+          firstFarm: own.id,
+          firstZone: zone.id,
+          screenshots,
+        });
+        await checkTelemetryPages({
+          page: farmer,
+          origin,
+          http,
+          token: workerToken,
+          device,
+          broker,
+        });
+        await checkJournalRows({
+          page: farmer,
+          origin,
+          http,
+          token: workerToken,
+          zoneId: device.zone_id,
+          screenshots,
+        });
       },
     );
   } finally {

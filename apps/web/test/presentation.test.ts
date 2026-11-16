@@ -4,9 +4,17 @@ import {
   displayDateTime,
   displayValue,
   fieldLabels,
+  shortTreeCode,
 } from "../src/components/presentation";
 
 describe("Vietnamese business presentation", () => {
+  it("shortens generated tree labels only, preserving custom codes and original input", () => {
+    const code = "DRN-12345678-1234-4234-8234-1234a1b2c3d4";
+    expect(shortTreeCode(code)).toBe("Cây SR-A1B2C3D4");
+    expect(code).toBe("DRN-12345678-1234-4234-8234-1234a1b2c3d4");
+    expect(shortTreeCode("DRN-123")).toBe("DRN-123");
+    expect(shortTreeCode("CAY-001")).toBe("CAY-001");
+  });
   it("keeps calendar dates and displays instants in Vietnam including midnight", () => {
     expect(calendarDate("2026-10-05")).toBe("05/10/2026");
     expect(displayDateTime("2026-10-05T02:00:06.000Z")).toMatch(/09:00/);

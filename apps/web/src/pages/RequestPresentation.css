@@ -1,0 +1,9 @@
+.request-summary {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+  color: var(--sd-muted);
+  font-size: var(--sd-font-caption);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}

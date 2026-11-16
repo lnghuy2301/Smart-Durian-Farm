@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DeviceReadingPreview } from "../components/DeviceReadingPreview";
 import { Link } from "react-router-dom";
 import { Badge, dateTime, number } from "../components/ui";
 import { ReadableValue } from "../components/ReadableValue";
@@ -138,6 +139,10 @@ export const deviceDefinition: Definition<Device> = {
     { label: "Chi phí", value: (x) => number(x.cost) },
     { label: "Trạng thái quản trị", value: (x) => <Badge status={x.status} /> },
     { label: "Tín hiệu gần nhất", value: (x) => dateTime(x.last_seen_at) },
+    {
+      label: "Số đo gần nhất",
+      value: (x) => <DeviceReadingPreview deviceId={x.id} />,
+    },
   ],
   detail: [
     { label: "Mã trạm", value: (x) => x.station_id },
@@ -145,6 +150,10 @@ export const deviceDefinition: Definition<Device> = {
     { label: "Chi phí", value: (x) => number(x.cost) },
     { label: "Trạng thái quản trị", value: (x) => <Badge status={x.status} /> },
     { label: "Tín hiệu gần nhất", value: (x) => dateTime(x.last_seen_at) },
+    {
+      label: "Số đo gần nhất",
+      value: (x) => <DeviceReadingPreview deviceId={x.id} />,
+    },
     {
       label: "Khu vực",
       value: (x) => (
@@ -160,7 +169,7 @@ export const deviceDefinition: Definition<Device> = {
         className="button secondary"
         to={`/actuator-control?device_id=${x.id}`}
       >
-        Điều khiển tưới / phun
+        Điều khiển tưới/phun thuốc
       </Link>
       <Link className="button secondary" to={`/iot?zone_id=${x.zone_id}`}>
         Giám sát tín hiệu và cảm biến

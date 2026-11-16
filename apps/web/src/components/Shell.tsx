@@ -34,14 +34,18 @@ function Shell() {
   const { logout } = useAuth();
   const [open, setOpen] = useState(false);
   const location = useLocation();
-  const selected = selectedNavigation(user.role, location.pathname);
+  const selected = selectedNavigation(
+    user.role,
+    location.pathname,
+    location.search,
+  );
   const [expanded, setExpanded] = useState<string | undefined>(
     selected?.group.id,
   );
   const menuButton = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     setExpanded(selected?.group.id);
-  }, [location.pathname, selected?.group.id]);
+  }, [location.pathname, location.search, selected?.group.id]);
   useEffect(() => {
     if (!open) return;
     const escape = (event: KeyboardEvent) => {
@@ -59,7 +63,9 @@ function Shell() {
     Manager: "Quản lý hợp tác xã",
   }[user.role];
   return (
-    <div className="app-shell">
+    <div
+      className={`app-shell ${location.pathname === "/" ? "dashboard-page" : ""}`}
+    >
       <a className="skip-link" href="#main-content">
         Đến nội dung chính
       </a>

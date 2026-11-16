@@ -75,7 +75,7 @@ export async function checkWorkflows({
       "workflow UI creates farm proposal, compares and approves through real API",
       async () => {
         await visit(owner, "/farms");
-        await button(owner, "Đề xuất tạo vườn").click();
+        await button(owner, "Tạo vườn").click();
         const dialog = owner.getByRole("dialog");
         await dialog
           .getByLabel("Số chứng nhận vườn", { exact: true })
@@ -83,7 +83,7 @@ export async function checkWorkflows({
         await dialog
           .getByLabel("Địa chỉ vườn")
           .fill("Vườn kiểm thử các module mới");
-        await dialog.getByLabel("Diện tích", { exact: true }).fill("4");
+        await dialog.getByLabel("Diện tích (ha)", { exact: true }).fill("4");
         await dialog.getByLabel("Vĩ độ", { exact: true }).fill("10");
         await dialog.getByLabel("Kinh độ", { exact: true }).fill("106");
         const request = await save(owner, "farms/requests");
@@ -104,7 +104,7 @@ export async function checkWorkflows({
           .getByLabel("Vườn trồng", { exact: true })
           .selectOption(farm.id);
         await form.getByLabel("Tên khu vực").fill("Khu workflow");
-        await form.getByLabel("Diện tích", { exact: true }).fill("1");
+        await form.getByLabel("Diện tích (ha)", { exact: true }).fill("1");
         await form
           .getByLabel("Tiêu chuẩn canh tác", { exact: true })
           .selectOption(standard.id);
@@ -220,7 +220,10 @@ export async function checkWorkflows({
           .getByRole("tab", { name: "Cây trong khu vực", exact: true })
           .click();
         await owner
-          .getByRole("link", { name: tree.tree_code, exact: true })
+          .getByRole("link", {
+            name: `Cây SR-${tree.tree_code.slice(-8).toUpperCase()}`,
+            exact: true,
+          })
           .waitFor();
         await visit(owner, `/sensors/${sensor.id}`);
         await button(owner, "Chỉnh sửa").click();
@@ -285,7 +288,10 @@ export async function checkWorkflows({
         await review(workerPage, "assignment", invite.id);
         await visit(workerPage, `/trees/${tree.id}`);
         await workerPage
-          .getByRole("heading", { name: tree.tree_code, exact: true })
+          .getByRole("heading", {
+            name: `Cây SR-${tree.tree_code.slice(-8).toUpperCase()}`,
+            exact: true,
+          })
           .waitFor();
         assert.equal(await button(workerPage, "Chỉnh sửa").count(), 0);
         await visit(workerPage, "/tree-harvests");
@@ -301,7 +307,7 @@ export async function checkWorkflows({
         }).formatToParts();
         const part = (key) => parts.find((x) => x.type === key).value;
         await dialog
-          .getByLabel("Ngày thu hoạch thực tế (lịch Việt Nam)")
+          .getByLabel("Ngày thu hoạch", { exact: true })
           .fill(`${part("year")}-${part("month")}-${part("day")}`);
         await dialog.getByLabel("Số quả", { exact: true }).fill("10");
         await dialog.getByLabel("Khối lượng (kg)").fill("20");
@@ -633,6 +639,19 @@ export async function checkWorkflows({
           await owner.screenshot({
             path: `${screenshots}/workflow-dialog-${viewport.width}.png`,
           });
+          if (viewport.width >= 1100) {
+            const row = owner.locator(".workflow-material-row").first();
+            const inputs = await row.locator("input,select").all();
+            const remove = await row
+              .getByRole("button", { name: "Bỏ", exact: true })
+              .boundingBox();
+            for (const input of inputs) {
+              const box = await input.boundingBox();
+              assert.ok(
+                Math.abs(box.y + box.height - remove.y - remove.height) <= 2,
+              );
+            }
+          }
           await button(owner.getByRole("dialog"), "Đóng").click();
           await visit(owner, "/devices");
           await owner.locator("tbody tr").first().waitFor();

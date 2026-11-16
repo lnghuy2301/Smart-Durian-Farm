@@ -1,5 +1,6 @@
-import "./JournalUsability.css";
 import { useCallback, useEffect, useState } from "react";
+import "./FilterLayout.css";
+import "./JournalUsability.css";
 import {
   Link,
   useNavigate,
@@ -88,7 +89,7 @@ export function CultivationPage() {
   const status = params.get("status") ?? "";
   const targetType = params.get("target_type") ?? "";
   const targetId = params.get("target_id") ?? "";
-  const path = `cultivation-events${mine ? "/mine" : ""}${queryString({ zone_id: zoneId, action_type: action in activityLabels ? action : undefined, status: ["Pending", "Locked"].includes(status) ? status : undefined, target_type: ["Zone", "Tree"].includes(targetType) ? targetType : undefined, target_id: targetId || undefined, limit: 20, offset })}`;
+  const path = `cultivation-events${mine ? "/mine" : ""}${queryString({ zone_id: zoneId, action_type: action in activityLabels ? action : undefined, status: ["Pending", "Locked"].includes(status) ? status : undefined, target_type: ["Zone", "Tree"].includes(targetType) ? targetType : undefined, target_id: targetId || undefined, limit: 10, offset })}`;
   const resource = useGet<Page<Journal>>(path);
   const [create, setCreate] = useState(false);
   const [verify, setVerify] = useState(false);
@@ -122,7 +123,9 @@ export function CultivationPage() {
         }
       />
       <section className="panel">
-        <div className="toolbar">
+        <div
+          className={`toolbar ${user.role === "Manager" ? "manager-filter-grid" : ""}`}
+        >
           <Field label="Phạm vi nhật ký">
             <select
               value={mine ? "mine" : "visible"}
@@ -193,13 +196,15 @@ export function CultivationPage() {
             </select>
           </Field>
           {zoneId && (
-            <button
-              className="button secondary"
-              onClick={() => setVerify(true)}
-            >
-              <ShieldCheck size={16} />
-              Kiểm tra chuỗi
-            </button>
+            <div className="resource-filter-action">
+              <button
+                className="button secondary"
+                onClick={() => setVerify(true)}
+              >
+                <ShieldCheck size={16} />
+                Kiểm tra chuỗi
+              </button>
+            </div>
           )}
         </div>
         <DataState
@@ -207,38 +212,61 @@ export function CultivationPage() {
           empty={resource.data?.items.length === 0}
         >
           {(data) => (
-            <div className="workflow-card-grid">
-              {data.items.map((event) => (
-                <article className="workflow-card" key={event._id}>
-                  <div className="actions">
-                    {event.action_type === "Watering" ? (
-                      <Droplets size={22} />
-                    ) : (
-                      <Leaf size={22} />
-                    )}
-                    <h2>
-                      {event.action_type === "Other"
-                        ? event.details.activity_name
-                        : activityLabels[event.action_type]}
-                    </h2>
-                  </div>
-                  <LockState event={event} onExpired={resource.reload} />
-                  <p>{event.details.note || "Không có ghi chú"}</p>
-                  <small>
-                    {event.is_correction ? "Bản đính chính · " : ""}
-                    {event.target_type === "Zone"
-                      ? "Toàn khu vực"
-                      : "Một cây"}{" "}
-                    · {dateTime(event.created_at)}
-                  </small>
-                  <Link
-                    className="button secondary"
-                    to={`/cultivation-events/${event._id}`}
-                  >
-                    Xem nhật ký
-                  </Link>
-                </article>
-              ))}
+            <div className="table-scroll journal-list">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Thời gian</th>
+                    <th>Hoạt động & nội dung</th>
+                    <th>Đối tượng</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.items.map((event) => (
+                    <tr key={event._id}>
+                      <td>
+                        {dateTime(event.created_at)}
+                        {event.is_correction && <small>Bản đính chính</small>}
+                      </td>
+                      <td>
+                        <div className="actions">
+                          {event.action_type === "Watering" ? (
+                            <Droplets size={22} />
+                          ) : (
+                            <Leaf size={22} />
+                          )}
+                          <strong>
+                            {event.action_type === "Other"
+                              ? event.details.activity_name
+                              : activityLabels[event.action_type]}
+                          </strong>
+                        </div>
+                        <p className="journal-note">
+                          {event.details.note || "Không có ghi chú"}
+                        </p>
+                      </td>
+                      <td>
+                        {event.target_type === "Zone"
+                          ? "Toàn khu vực"
+                          : "Một cây"}
+                      </td>
+                      <td>
+                        <LockState event={event} onExpired={resource.reload} />
+                      </td>
+                      <td>
+                        <Link
+                          className="button secondary"
+                          to={`/cultivation-events/${event._id}`}
+                        >
+                          Xem nhật ký
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </DataState>

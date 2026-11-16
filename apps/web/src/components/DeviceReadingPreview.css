@@ -1,0 +1,11 @@
+.device-reading-preview {
+  display: grid;
+  gap: 4px;
+}
+.device-reading-preview strong {
+  font-weight: 600;
+}
+.device-reading-preview small {
+  color: var(--sd-muted);
+  font-size: var(--sd-font-caption);
+}

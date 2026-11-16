@@ -41,7 +41,6 @@ import {
   type ControlOperation,
 } from "../control/types";
 import { controlTime, TaskBadge, TaskProgress } from "../control/TaskProgress";
-import { ControlReadings } from "../control/ControlReadings";
 import "../control/control.css";
 import { ControlJournal } from "../control/ControlJournal";
 
@@ -60,7 +59,7 @@ export function ActuatorControlPage() {
   // These are selector scopes built from authorized responses, not synthetic Farm records.
   const scopes: FarmScope[] = (farms.data ?? []).map((farm) => ({
     id: farm.id,
-    label: `${farm.certificate_number} · ${farm.address}`,
+    label: farm.address,
   }));
   for (const zone of zones.data ?? []) {
     if (!scopes.some((scope) => scope.id === zone.farm_id))
@@ -109,7 +108,7 @@ export function ActuatorControlPage() {
   return (
     <div className="actuator-control">
       <PageHeader
-        title="Điều khiển tưới / phun"
+        title="Điều khiển tưới/phun thuốc"
         subtitle="Chọn đúng khu vực, gửi lệnh và theo dõi phản hồi của thiết bị."
         actions={
           <Link className="button secondary" to="/iot">
@@ -595,15 +594,12 @@ function ControlWorkspace({
           }
         </DataState>
       </section>
-      <section className="panel">
-        <ControlReadings
-          deviceId={device.id}
-          zoneId={zone.id}
-          onFailure={onFailure}
-        />
-      </section>
       {progress?.root && controller && (
-        <ControlJournal key={progress.root._id} stop={progress.root} zoneId={zone.id} />
+        <ControlJournal
+          key={progress.root._id}
+          stop={progress.root}
+          zoneId={zone.id}
+        />
       )}
       <section className="panel control-history" aria-label="Lịch sử lệnh">
         <div className="control-section-title">

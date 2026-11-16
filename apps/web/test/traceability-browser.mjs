@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
+import { readFile } from "node:fs/promises";
 
 const require = createRequire(import.meta.url);
 
@@ -183,7 +184,7 @@ export async function checkTraceability({
       },
     );
     await check(
-      "SVG QR independently decodes to configured public URL and downloads",
+      "square PNG QR downloads with centered code and independently decodes to original public URL",
       async () => {
         await page.waitForFunction(() => {
           const image = document.querySelector(".trace-qr img");
@@ -207,12 +208,57 @@ export async function checkTraceability({
         assert.equal(decoded, `http://localhost:5173/trace/${a.tree_code}`);
         const download = page.waitForEvent("download");
         await page
-          .getByRole("link", { name: "Tải mã QR SVG", exact: true })
+          .getByRole("button", { name: "Tải mã QR PNG", exact: true })
           .click();
         assert.equal(
           (await download).suggestedFilename(),
-          `${a.tree_code}-qr.svg`,
+          `${a.tree_code}-qr.png`,
         );
+        const png = await readFile(await (await download).path());
+        assert.deepEqual(
+          [...png.subarray(0, 8)],
+          [137, 80, 78, 71, 13, 10, 26, 10],
+        );
+        const raster = await page.evaluate(async (base64) => {
+          const image = new window.Image();
+          image.src = `data:image/png;base64,${base64}`;
+          await image.decode();
+          const canvas = document.createElement("canvas");
+          canvas.width = image.naturalWidth;
+          canvas.height = image.naturalHeight;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(image, 0, 0);
+          const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          let minX = canvas.width,
+            minY = canvas.height,
+            maxX = 0,
+            maxY = 0;
+          for (let y = 0; y < canvas.height; y++)
+            for (let x = 0; x < canvas.width; x++) {
+              const i = (y * canvas.width + x) * 4;
+              if (pixels.data[i] < 128) {
+                minX = Math.min(minX, x);
+                maxX = Math.max(maxX, x);
+                minY = Math.min(minY, y);
+                maxY = Math.max(maxY, y);
+              }
+            }
+          return {
+            width: canvas.width,
+            height: canvas.height,
+            minX,
+            minY,
+            maxX,
+            maxY,
+            code: window.jsQR(pixels.data, canvas.width, canvas.height)?.data,
+          };
+        }, png.toString("base64"));
+        assert.equal(raster.width, 1024);
+        assert.equal(raster.height, 1024);
+        assert.ok(raster.minX >= 64 && raster.minY >= 64);
+        assert.ok(Math.abs(raster.minX - (1023 - raster.maxX)) <= 1);
+        assert.ok(Math.abs(raster.minY - (1023 - raster.maxY)) <= 1);
+        assert.equal(raster.code, `http://localhost:5173/trace/${a.tree_code}`);
       },
     );
     await check(

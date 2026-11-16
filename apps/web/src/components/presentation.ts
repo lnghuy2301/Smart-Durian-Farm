@@ -1,4 +1,11 @@
 // Presentation only: API keys, enum values and timestamps are never rewritten.
+export function shortTreeCode(value: string): string {
+  return /^DRN-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    value,
+  )
+    ? `Cây SR-${value.slice(-8).toUpperCase()}`
+    : value;
+}
 export const fieldLabels: Record<string, string> = {
   id: "ID hồ sơ",
   _id: "ID nhật ký",
@@ -99,7 +106,7 @@ export const fieldLabels: Record<string, string> = {
 export const valueLabels: Record<string, string> = {
   Admin: "Quản trị viên",
   Manager: "Quản lý HTX",
-  Farmer: "Nông dân",
+  Farmer: "Nhà nông",
   Owner: "Chủ vườn",
   Active: "Đang sử dụng",
   Inactive: "Ngừng sử dụng",

@@ -10,7 +10,7 @@
   --sd-font-body: 1rem;
   --sd-font-heading-sm: 1.125rem;
   --sd-font-heading-md: 1.3125rem;
-  --sd-font-heading-lg: 2rem;
+  --sd-font-heading-lg: 1.875rem;
   --sd-sidebar-width: 260px;
 }
 body {
@@ -20,6 +20,44 @@ body {
   color: var(--sd-text);
   background: var(--sd-app-background);
   line-height: 1.65;
+}
+.app-shell {
+  font-family: var(--sd-font);
+  font-size: var(--sd-font-body);
+}
+.journal-list td {
+  vertical-align: top;
+}
+.journal-list td:nth-child(2) {
+  min-width: 260px;
+}
+.journal-list small {
+  display: block;
+  color: var(--sd-muted);
+}
+.journal-note {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin-top: 8px;
+}
+html:has(.app-shell) {
+  scrollbar-gutter: stable;
+}
+/* Dashboard links return to their base color after pointer/press ends,
+   regardless of visited history. Keyboard focus retains its outline. */
+.dashboard-page .page-content a:not(.button):not(.accent):not(.quick-panel a),
+.dashboard-page
+  .page-content
+  a:not(.button):not(.accent):not(.quick-panel a):visited {
+  color: var(--sd-text);
+}
+.dashboard-page
+  .page-content
+  a:not(.button):not(.accent):not(.quick-panel a):is(:hover, :active) {
+  color: var(--sd-brand);
+}
+.dashboard-page .page-content .role-inbox-item strong {
+  color: inherit;
 }
 h1,
 h2,
@@ -38,6 +76,14 @@ h2 {
 }
 h3 {
   font-size: var(--sd-font-heading-sm);
+}
+.app-shell h1,
+.app-shell h2,
+.app-shell h3,
+.trace-page h1,
+.trace-page h2,
+.trace-page h3 {
+  font-weight: 600;
 }
 a {
   color: var(--sd-brand);
@@ -646,6 +692,8 @@ fieldset {
   border: 0;
   background: transparent;
   color: var(--sd-muted);
+  touch-action: none;
+  user-select: none;
 }
 .role-tabs {
   display: flex;
@@ -1498,7 +1546,7 @@ fieldset {
 .presence-counts span {
   display: block;
   font-size: var(--sd-font-xs);
-  color: var(--sd-muted);
+  color: #52647b;
 }
 .manager-device-list > a {
   display: flex;
@@ -1534,7 +1582,7 @@ fieldset {
 .harvest-stats span {
   display: block;
   font-size: var(--sd-font-sm);
-  color: var(--sd-muted);
+  color: #52647b;
   margin-bottom: 10px;
   padding-right: 25px;
 }

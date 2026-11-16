@@ -16,8 +16,14 @@ import { useCollection } from "../workflows/shared";
 import { HarvestPrepare } from "../workflows/HarvestTools";
 import type { Cooperative, Tree } from "../types/api";
 import type { Page } from "../types/api";
-import { ReadableValue, ReferenceScope } from "../components/ReadableValue";
+import { ReferenceScope } from "../components/ReadableValue";
 import { valueLabels } from "../components/presentation";
+import {
+  RequestSummary,
+  RequestValue,
+  orderRequestFields,
+} from "./requestPresentation";
+import "./RequestPresentation.css";
 
 export interface ChangeRequest {
   id: string;
@@ -57,7 +63,7 @@ export const requestKinds: Record<string, { label: string; path: string }> = {
   actuator: { label: "Bơm / van", path: "actuator-requests" },
 };
 export const fieldLabels: Record<string, string> = {
-  area_size: "Diện tích",
+  area_size: "Diện tích (ha)",
   address: "Địa chỉ",
   certificate_number: "Số chứng nhận",
   longitude: "Kinh độ",
@@ -129,7 +135,7 @@ export function RequestsPage() {
           </button>
         }
       />
-      <div className="panel">
+      <div className="panel request-list">
         <div className="toolbar">
           <Field label="Loại đề xuất">
             <select
@@ -176,7 +182,9 @@ export function RequestsPage() {
                         <strong>
                           {actionLabels[item.action] ?? item.action}
                         </strong>
-                        <small className="break-word">{item.id}</small>
+                        <ReferenceScope kind={config.path} id={item.id}>
+                          <RequestSummary request={item} />
+                        </ReferenceScope>
                       </td>
                       <td>{dateTime(item.created_at)}</td>
                       <td>
@@ -322,50 +330,47 @@ function RequestDetail({
             return (
               <>
                 <p className="muted break-word">
-                  {request.id} · {dateTime(request.created_at)}
+                  Mã phiếu: {request.id} · {dateTime(request.created_at)}
                 </p>
                 <Badge status={request.status} />
-                {(request.requested_by ?? request.proposed_by) && (
-                  <p>
-                    Người gửi:{" "}
-                    <ReadableValue
-                      field="requested_by"
-                      value={request.requested_by ?? request.proposed_by}
-                    />
-                  </p>
-                )}
                 <h3 className="workflow-subheading">
                   {actionLabels[request.action]}
                 </h3>
+                <RequestSummary request={request} />
                 {snapshot && (
                   <>
                     <h3 className="workflow-subheading">
                       Hồ sơ tại thời điểm gửi
                     </h3>
-                    <Diff changes={snapshot} labels={fieldLabels} />
+                    <Diff
+                      changes={orderRequestFields(snapshot)}
+                      labels={fieldLabels}
+                      renderValue={(field, value) => (
+                        <RequestValue
+                          field={field}
+                          value={value}
+                          request={request}
+                        />
+                      )}
+                    />
                   </>
                 )}
                 {request.proposed_changes && (
                   <>
                     <h3 className="workflow-subheading">Thông tin thay đổi</h3>
                     <Diff
-                      changes={request.proposed_changes}
+                      changes={orderRequestFields(request.proposed_changes)}
                       snapshot={snapshot}
                       labels={fieldLabels}
+                      renderValue={(field, value) => (
+                        <RequestValue
+                          field={field}
+                          value={value}
+                          request={request}
+                        />
+                      )}
                     />
                   </>
-                )}
-                {request.cooperative_id && (
-                  <p className="break-word">
-                    {request.action === "Join"
-                      ? "HTX đề nghị gia nhập"
-                      : "Hợp tác xã liên quan"}
-                    :{" "}
-                    <ReadableValue
-                      field="cooperative_id"
-                      value={request.cooperative_id}
-                    />
-                  </p>
                 )}
                 {request.reason && <Notice>Lý do: {request.reason}</Notice>}
                 {request.required_approvals && (
@@ -380,7 +385,11 @@ function RequestDetail({
                         </strong>
                         {x.user_id && (
                           <p>
-                            <ReadableValue field="user_id" value={x.user_id} />
+                            <RequestValue
+                              request={request}
+                              field="user_id"
+                              value={x.user_id}
+                            />
                           </p>
                         )}
                         <p>
