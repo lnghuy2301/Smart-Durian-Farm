@@ -1,0 +1,48 @@
+/* Other roles retain the existing flex toolbar. Manager filters share tracks
+   for labels, controls and notes, so hints never lift a neighboring input. */
+.resource-number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.toolbar > .resource-filter-action {
+  display: contents;
+}
+.manager-filter-grid.toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  align-items: start;
+  gap: 7px 16px;
+}
+.manager-filter-grid.toolbar > .field,
+.manager-filter-grid.toolbar > .resource-filter-action {
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: span 4;
+  min-width: 0;
+  margin: 0;
+}
+.manager-filter-grid > .field > .field-label {
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: span 3;
+  min-width: 0;
+}
+.manager-filter-grid > .field > .field-label > :is(input, select),
+.manager-filter-grid > .resource-filter-action > .button {
+  grid-row: 2;
+  min-width: 0;
+  width: 100%;
+  height: 52px;
+}
+.manager-filter-grid > .field > .field-label > :is(small, .notice) {
+  grid-row: 3;
+  margin-block: 0;
+}
+.manager-filter-grid > .field > small {
+  grid-row: 4;
+}
+@media (max-width: 600px) {
+  .manager-filter-grid.toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

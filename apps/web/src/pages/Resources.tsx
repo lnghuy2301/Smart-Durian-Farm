@@ -1,13 +1,27 @@
+import { CatalogTools, StandardMaterialPanel } from "../workflows/CatalogTools";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
+import "./FilterLayout.css";
+import { shortTreeCode } from "../components/presentation";
+import {
+  ReadableValue,
+  ReferenceScope,
+  RecordReference,
+} from "../components/ReadableValue";
+import { calendarDate } from "../components/presentation";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowUpRight, Search, RefreshCw } from "lucide-react";
 import { queryString } from "../api/client";
 import { useSession } from "../auth/session";
 import { useResource } from "../hooks/useResource";
+import { RecordTools, recordConfigs } from "../workflows/RecordTools";
+import { RelationSelect, type Values } from "../workflows/shared";
+import { HarvestTools } from "../workflows/HarvestTools";
+import { WorkflowStats } from "../workflows/WorkflowStats";
 import {
   Badge,
   DataState,
   Field,
+  Notice,
   PageHeader,
   Pagination,
   dateTime,
@@ -26,21 +40,24 @@ import type {
 interface Column<T> {
   label: string;
   value: (item: T) => ReactNode;
+  numeric?: boolean;
 }
 interface Filter {
   key: string;
   label: string;
   options: [string, string][];
 }
-interface Definition<T extends { id: string }> {
+export interface Definition<T extends { id: string }> {
   path: string;
   title: string;
   subtitle: string;
   search: string;
   name: (item: T) => string;
+  fullName?: (item: T) => string;
   columns: Column<T>[];
   filters?: Filter[];
   relationships?: string[];
+  fixedFilters?: Record<string, string>;
   detail: Column<T>[];
   links?: (item: T) => ReactNode;
   extra?: (item: T) => ReactNode;
@@ -76,14 +93,31 @@ export const materialDefinition: Definition<Material> = {
   filters: [materialType, statusFilter],
   columns: [
     { label: "Loại vật tư", value: (x) => typeNames[x.material_type] },
-    { label: "Liều mặc định", value: (x) => `${x.default_dosage} ${x.unit}` },
-    { label: "Cách ly", value: (x) => `${x.quarantine_days} ngày` },
+    {
+      label: "Liều mặc định",
+      numeric: true,
+      value: (x) =>
+        x.default_dosage_value != null && x.dosage_basis
+          ? `${number(x.default_dosage_value)} ${x.unit}/${x.dosage_basis}`
+          : x.default_dosage,
+    },
+    {
+      label: "Cách ly",
+      value: (x) => `${x.quarantine_days} ngày`,
+      numeric: true,
+    },
     { label: "Trạng thái", value: (x) => <Badge status={x.status} /> },
   ],
   detail: [
     { label: "Tên vật tư", value: (x) => x.name },
     { label: "Loại vật tư", value: (x) => typeNames[x.material_type] },
-    { label: "Liều mặc định", value: (x) => x.default_dosage },
+    {
+      label: "Liều mặc định",
+      value: (x) =>
+        x.default_dosage_value != null && x.dosage_basis
+          ? `${number(x.default_dosage_value)} ${x.unit}/${x.dosage_basis}`
+          : x.default_dosage,
+    },
     { label: "Đơn vị", value: (x) => x.unit },
     { label: "Thời gian cách ly", value: (x) => `${x.quarantine_days} ngày` },
     { label: "Trạng thái", value: (x) => <Badge status={x.status} /> },
@@ -108,21 +142,12 @@ export const standardDefinition: Definition<Standard> = {
     { label: "Đơn vị chứng nhận", value: (x) => x.certifying_body },
     { label: "Trạng thái", value: (x) => <Badge status={x.status} /> },
   ],
-  extra: (x) => (
-    <ResourceList
-      definition={{
-        ...materialDefinition,
-        path: `standards/${x.id}/materials`,
-        title: "Vật tư liên kết",
-        subtitle: "Vật tư thuộc tiêu chuẩn này.",
-      }}
-      nested
-      detailPath="materials"
-    />
+  extra: (standard) => (
+    <StandardMaterialPanel key={standard.id} standardId={standard.id} />
   ),
 };
 const coordinates = <T extends { longitude: number; latitude: number }>(x: T) =>
-  `${number(x.latitude)}, ${number(x.longitude)}`;
+  `${x.latitude.toLocaleString("en-US", { useGrouping: false, maximumFractionDigits: 7 })}, ${x.longitude.toLocaleString("en-US", { useGrouping: false, maximumFractionDigits: 7 })}`;
 export const farmDefinition: Definition<Farm> = {
   path: "farms",
   title: "Vườn trồng",
@@ -131,16 +156,30 @@ export const farmDefinition: Definition<Farm> = {
   name: (x) => x.certificate_number,
   columns: [
     { label: "Địa chỉ", value: (x) => x.address },
-    { label: "Diện tích", value: (x) => number(x.area_size) },
+    { label: "Diện tích (ha)", value: (x) => number(x.area_size) },
     {
       label: "Hợp tác xã",
-      value: (x) => (x.cooperative_id ? "Đã tham gia HTX" : "Chưa tham gia"),
+      value: (x) =>
+        x.cooperative_id ? (
+          <RecordReference
+            kind="farms"
+            id={x.id}
+            field="cooperative_id"
+            value={x.cooperative_id}
+          />
+        ) : (
+          "Chưa tham gia"
+        ),
     },
   ],
   detail: [
     { label: "Số chứng nhận", value: (x) => x.certificate_number },
+    {
+      label: "Chủ vườn",
+      value: (x) => <ReadableValue field="owner_id" value={x.owner_id} />,
+    },
     { label: "Địa chỉ", value: (x) => x.address },
-    { label: "Diện tích", value: (x) => number(x.area_size) },
+    { label: "Diện tích (ha)", value: (x) => number(x.area_size) },
     { label: "Vĩ độ, kinh độ", value: coordinates },
     {
       label: "Ngày tham gia HTX",
@@ -150,7 +189,9 @@ export const farmDefinition: Definition<Farm> = {
       label: "Hợp tác xã",
       value: (x) =>
         x.cooperative_id ? (
-          <Link to={`/cooperatives/${x.cooperative_id}`}>Xem hợp tác xã</Link>
+          <Link to={`/cooperatives/${x.cooperative_id}`}>
+            <ReadableValue field="cooperative_id" value={x.cooperative_id} />
+          </Link>
         ) : (
           "Chưa tham gia"
         ),
@@ -171,23 +212,27 @@ export const zoneDefinition: Definition<Zone> = {
   name: (x) => x.zone_name,
   relationships: ["farm_id"],
   columns: [
-    { label: "Diện tích", value: (x) => number(x.area_size) },
+    { label: "Diện tích (ha)", value: (x) => number(x.area_size) },
     { label: "Vĩ độ, kinh độ", value: coordinates },
   ],
   detail: [
     { label: "Tên khu vực", value: (x) => x.zone_name },
-    { label: "Diện tích", value: (x) => number(x.area_size) },
+    { label: "Diện tích (ha)", value: (x) => number(x.area_size) },
     { label: "Vĩ độ, kinh độ", value: coordinates },
     {
       label: "Tiêu chuẩn",
       value: (x) => (
-        <Link to={`/standards/${x.standard_id}`}>Xem tiêu chuẩn</Link>
+        <Link to={`/standards/${x.standard_id}`}>
+          <ReadableValue field="standard_id" value={x.standard_id} />
+        </Link>
       ),
     },
     {
       label: "Vườn",
       value: (x) => (
-        <Link to={`/farms/${x.farm_id}`}>Xem vườn (cần quyền của vườn)</Link>
+        <Link to={`/farms/${x.farm_id}`}>
+          <ReadableValue field="farm_id" value={x.farm_id} />
+        </Link>
       ),
     },
   ],
@@ -209,7 +254,8 @@ export const treeDefinition: Definition<Tree> = {
   title: "Cây trồng",
   subtitle: "Hồ sơ cây theo khu vực trong phạm vi truy cập.",
   search: "Tìm giống hoặc mã cây",
-  name: (x) => x.tree_code,
+  name: (x) => shortTreeCode(x.tree_code),
+  fullName: (x) => x.tree_code,
   relationships: ["zone_id"],
   filters: [
     {
@@ -235,14 +281,24 @@ export const treeDefinition: Definition<Tree> = {
     { label: "Vĩ độ, kinh độ", value: coordinates },
     {
       label: "Khu vực",
-      value: (x) => <Link to={`/zones/${x.zone_id}`}>Xem khu vực</Link>,
+      value: (x) => (
+        <Link to={`/zones/${x.zone_id}`}>
+          <ReadableValue field="zone_id" value={x.zone_id} />
+        </Link>
+      ),
     },
   ],
   links: (x) => (
-    <Link className="button secondary" to={`/tree-harvests?tree_id=${x.id}`}>
-      Thu hoạch của cây
-      <ArrowUpRight size={16} />
-    </Link>
+    <>
+      <Link className="button secondary" to={`/tree-harvests?tree_id=${x.id}`}>
+        Thu hoạch của cây
+        <ArrowUpRight size={16} />
+      </Link>
+      <Link className="button secondary" to={`/trace/${x.tree_code}`}>
+        Truy xuất / mã QR
+        <ArrowUpRight size={16} />
+      </Link>
+    </>
   ),
   extra: (x) => <TreeHistory id={x.id} />,
 };
@@ -266,22 +322,34 @@ export const harvestDefinition: Definition<Harvest> = {
   ],
   columns: [
     { label: "Mùa vụ", value: (x) => x.season_name },
-    { label: "Ngày thu hoạch", value: (x) => x.harvest_date },
+    { label: "Ngày thu hoạch", value: (x) => calendarDate(x.harvest_date) },
     { label: "Khối lượng", value: (x) => `${number(x.total_weight_kg)} kg` },
     { label: "Trạng thái", value: (x) => <Badge status={x.status} /> },
   ],
   detail: [
     { label: "Mã lô", value: (x) => x.batch_code },
     { label: "Mùa vụ", value: (x) => x.season_name },
-    { label: "Ngày thu hoạch", value: (x) => x.harvest_date },
+    { label: "Ngày thu hoạch", value: (x) => calendarDate(x.harvest_date) },
     { label: "Số quả", value: (x) => number(x.fruit_count) },
     { label: "Khối lượng", value: (x) => `${number(x.total_weight_kg)} kg` },
     { label: "Trạng thái", value: (x) => <Badge status={x.status} /> },
+    {
+      label: "Người tạo",
+      value: (x) => <ReadableValue field="created_by" value={x.created_by} />,
+    },
+    {
+      label: "Người cập nhật",
+      value: (x) => <ReadableValue field="updated_by" value={x.updated_by} />,
+    },
     { label: "Tạo lúc", value: (x) => dateTime(x.created_at) },
     { label: "Cập nhật lúc", value: (x) => dateTime(x.updated_at) },
     {
       label: "Cây",
-      value: (x) => <Link to={`/trees/${x.tree_id}`}>Xem cây</Link>,
+      value: (x) => (
+        <Link to={`/trees/${x.tree_id}`}>
+          <ReadableValue field="tree_id" value={x.tree_id} />
+        </Link>
+      ),
     },
   ],
 };
@@ -301,12 +369,14 @@ export function ResourceList<T extends { id: string }>({
   definition: def,
   nested = false,
   detailPath,
+  onSettled,
 }: {
   definition: Definition<T>;
   nested?: boolean;
   detailPath?: string;
+  onSettled?: () => void;
 }) {
-  const { api } = useSession();
+  const { api, user } = useSession();
   const [params, setParams] = useSearchParams();
   const prefix = nested ? "linked_" : "";
   const q = (params.get(`${prefix}q`) ?? "").slice(0, 100);
@@ -318,8 +388,9 @@ export function ResourceList<T extends { id: string }>({
   const [search, setSearch] = useState(q);
   useEffect(() => setSearch(q), [q]);
   const filters: Record<string, string | number | undefined> = {
-    q,
-    limit: 20,
+    ...def.fixedFilters,
+    q: def.search ? q : undefined,
+    limit: def.path === "materials" ? 10 : 20,
     offset,
   };
   for (const filter of def.filters ?? []) {
@@ -329,7 +400,7 @@ export function ResourceList<T extends { id: string }>({
   }
   for (const key of def.relationships ?? []) {
     const value = params.get(key);
-    if (value) filters[key] = value;
+    if (value && !def.fixedFilters?.[key]) filters[key] = value;
   }
   const path = `${def.path}${queryString(filters)}`;
   const load = useCallback(
@@ -337,12 +408,16 @@ export function ResourceList<T extends { id: string }>({
     [api, path],
   );
   const resource = useResource(path, load);
+  useEffect(() => {
+    if (!resource.loading) onSettled?.();
+  }, [resource.loading, onSettled]);
   function change(key: string, value: string) {
     setParams((previous) => {
       const next = new URLSearchParams(previous);
       if (value) next.set(`${prefix}${key}`, value);
       else next.delete(`${prefix}${key}`);
       if (key !== "offset") next.delete(`${prefix}offset`);
+      if (key === "zone_id") next.delete(`${prefix}tree_id`);
       return next;
     });
   }
@@ -358,32 +433,59 @@ export function ResourceList<T extends { id: string }>({
       title={def.title}
       subtitle={def.subtitle}
       actions={
-        <button className="button secondary" onClick={resource.reload}>
-          <RefreshCw size={16} />
-          Làm mới
-        </button>
+        <>
+          {["materials", "standards"].includes(def.path) && (
+            <CatalogTools
+              key={def.path}
+              path={def.path}
+              onSaved={resource.reload}
+            />
+          )}
+          <button className="button secondary" onClick={resource.reload}>
+            <RefreshCw size={16} />
+            Làm mới
+          </button>
+        </>
       }
     />
   );
   return (
     <>
       {title}
+      {!nested &&
+        ["farms", "zones", "trees", "tree-harvests", "devices"].includes(
+          def.path,
+        ) && (
+          <WorkflowStats
+            key={path}
+            kind={def.path}
+            path={`${def.path}${queryString({ ...filters, limit: undefined, offset: undefined })}`}
+          />
+        )}
+      {!nested && recordConfigs[def.path] && (
+        <RecordTools key={def.path} path={def.path} onSaved={resource.reload} />
+      )}
+      {!nested && def.path === "tree-harvests" && (
+        <HarvestTools onSaved={resource.reload} />
+      )}
       <section className="panel">
         <form
-          className="toolbar"
+          className={`toolbar ${user.role === "Manager" ? "manager-filter-grid" : ""}`}
           onSubmit={(event) => {
             event.preventDefault();
             change("q", search.trim());
           }}
         >
-          <Field label={def.search}>
-            <input
-              aria-label={def.search}
-              maxLength={100}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </Field>
+          {def.search && (
+            <Field label={def.search}>
+              <input
+                aria-label={def.search}
+                maxLength={100}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </Field>
+          )}
           {def.filters?.map((filter) => (
             <Field key={filter.key} label={filter.label}>
               <select
@@ -399,25 +501,75 @@ export function ResourceList<T extends { id: string }>({
               </select>
             </Field>
           ))}
-          <button className="button secondary" type="submit">
-            <Search size={17} />
-            Tìm kiếm
-          </button>
+          {def.search && (
+            <div className="resource-filter-action">
+              <button className="button secondary" type="submit">
+                <Search size={17} />
+                Tìm kiếm
+              </button>
+            </div>
+          )}
+          {!nested &&
+            def.relationships?.map((key) => {
+              const relationship =
+                key === "farm_id"
+                  ? {
+                      label: "Vườn trồng",
+                      path: "farms",
+                      name: (x: Values) => String(x.address),
+                    }
+                  : key === "zone_id"
+                    ? {
+                        label: "Khu vực",
+                        path: "zones",
+                        name: (x: Values) => String(x.zone_name),
+                      }
+                    : key === "device_id"
+                      ? {
+                          label: "Trạm IoT",
+                          path: "devices",
+                          name: (x: Values) => String(x.station_id),
+                        }
+                      : {
+                          label: "Cây",
+                          path: `trees${queryString({ zone_id: typeof filters.zone_id === "string" ? filters.zone_id : undefined })}`,
+                          name: (x: Values) =>
+                            `${shortTreeCode(String(x.tree_code))} · ${x.variety}`,
+                        };
+              return (
+                <RelationSelect
+                  key={key}
+                  field={{
+                    key,
+                    label: relationship.label,
+                    required: false,
+                    relation: {
+                      path: relationship.path,
+                      label: relationship.name,
+                    },
+                  }}
+                  value={String(filters[key] ?? "")}
+                  onChange={(value) => change(key, value)}
+                />
+              );
+            })}
           {def.relationships?.some((key) => params.has(key)) && (
-            <button
-              type="button"
-              className="button secondary"
-              onClick={() =>
-                setParams((previous) => {
-                  const next = new URLSearchParams(previous);
-                  for (const key of def.relationships ?? []) next.delete(key);
-                  next.delete("offset");
-                  return next;
-                })
-              }
-            >
-              Bỏ lọc liên kết
-            </button>
+            <div className="resource-filter-action">
+              <button
+                type="button"
+                className="button secondary"
+                onClick={() =>
+                  setParams((previous) => {
+                    const next = new URLSearchParams(previous);
+                    for (const key of def.relationships ?? []) next.delete(key);
+                    next.delete("offset");
+                    return next;
+                  })
+                }
+              >
+                Bỏ lọc liên kết
+              </button>
+            </div>
           )}
         </form>
         <DataState
@@ -425,13 +577,24 @@ export function ResourceList<T extends { id: string }>({
           empty={resource.data?.items.length === 0}
         >
           {(data) => (
-            <div className="table-scroll">
+            <div
+              className={
+                recordConfigs[def.path] || def.path === "tree-harvests"
+                  ? "table-scroll workflow-record-scroll"
+                  : "table-scroll"
+              }
+            >
               <table>
                 <thead>
                   <tr>
                     <th>{def.title}</th>
                     {def.columns.map((col) => (
-                      <th key={col.label}>{col.label}</th>
+                      <th
+                        key={col.label}
+                        className={col.numeric ? "resource-number" : undefined}
+                      >
+                        {col.label}
+                      </th>
                     ))}
                     <th>
                       <span className="sr-only">Chi tiết</span>
@@ -444,13 +607,21 @@ export function ResourceList<T extends { id: string }>({
                       <td>
                         <Link
                           className="item-name"
+                          title={def.fullName?.(item)}
                           to={`/${detailPath ?? def.path}/${item.id}`}
                         >
                           {def.name(item)}
                         </Link>
                       </td>
                       {def.columns.map((col) => (
-                        <td key={col.label}>{col.value(item)}</td>
+                        <td
+                          key={col.label}
+                          className={
+                            col.numeric ? "resource-number" : undefined
+                          }
+                        >
+                          {col.value(item)}
+                        </td>
                       ))}
                       <td>
                         <Link
@@ -487,7 +658,8 @@ function ResourceDetail<T extends { id: string }>({
   definition: Definition<T>;
   id: string;
 }) {
-  const { api } = useSession();
+  const { api, user } = useSession();
+  const [message, setMessage] = useState("");
   const path = `${def.path}/${id}`;
   const load = useCallback(
     (signal: AbortSignal) => api.request<T>(path, { signal }),
@@ -505,25 +677,57 @@ function ResourceDetail<T extends { id: string }>({
           </Link>
         }
       />
-      <DataState resource={resource}>
-        {(data) => (
-          <>
-            <section className="panel">
-              <h2 className="break-word">{def.name(data)}</h2>
-              <dl className="details">
-                {def.detail.map((field) => (
-                  <div key={field.label}>
-                    <dt>{field.label}</dt>
-                    <dd>{field.value(data)}</dd>
-                  </div>
-                ))}
-              </dl>
-              {def.links && <div className="actions">{def.links(data)}</div>}
-            </section>
-            {def.extra?.(data)}
-          </>
-        )}
-      </DataState>
+      {message && <Notice kind="success">{message}</Notice>}
+      <ReferenceScope kind={def.path} id={id}>
+        <DataState resource={resource}>
+          {(data) => (
+            <>
+              <section className="panel">
+                <h2 className="break-word">{def.name(data)}</h2>
+                {["materials", "standards"].includes(def.path) && (
+                  <CatalogTools
+                    key={`${def.path}/${id}`}
+                    path={def.path}
+                    item={data}
+                    onSaved={resource.reload}
+                  />
+                )}
+                {recordConfigs[def.path] && (
+                  <RecordTools
+                    key={`${def.path}/${id}`}
+                    path={def.path}
+                    item={data}
+                    onSaved={() => {
+                      setMessage(
+                        def.path === "farms" || user.role === "Admin"
+                          ? "Đã gửi đề xuất. Mở Phiếu đề xuất để theo dõi phê duyệt."
+                          : "Đã lưu thông tin.",
+                      );
+                      resource.reload();
+                    }}
+                  />
+                )}
+                {def.path === "tree-harvests" && (
+                  <HarvestTools
+                    item={data as unknown as Harvest}
+                    onSaved={resource.reload}
+                  />
+                )}
+                <dl className="details">
+                  {def.detail.map((field) => (
+                    <div key={field.label}>
+                      <dt>{field.label}</dt>
+                      <dd>{field.value(data)}</dd>
+                    </div>
+                  ))}
+                </dl>
+                {def.links && <div className="actions">{def.links(data)}</div>}
+              </section>
+              {def.extra?.(data)}
+            </>
+          )}
+        </DataState>
+      </ReferenceScope>
     </>
   );
 }

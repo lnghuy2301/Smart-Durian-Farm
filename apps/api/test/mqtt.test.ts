@@ -13,12 +13,39 @@ import { DevicesService } from '../src/devices/devices.service';
 import { SensorsService } from '../src/sensors/sensors.service';
 import { ActuatorsService } from '../src/actuators/actuators.service';
 import { AssignmentsService } from '../src/assignments/assignments.service';
+import { TelemetryService } from '../src/telemetry/telemetry.service';
 
 const config: MqttConfig = { ...readMqttConfig({}), enabled: true, host: 'broker.invalid', port: 1883 };
 const topic = 'publish/station/DEMO_STATION';
 const packet = (value: unknown) => Buffer.from(JSON.stringify(value));
 const telemetry = (result = '26.54 C', stream = 301) => ({ stationId: 'DEMO_STATION', sensorRecords: [{ dataStreamId: stream, result }] });
 const page = { limit: 100, offset: 0 };
+
+test('All six verified streams route through registered metadata and preserve exact units without limiting future IDs', async () => {
+  const f = await fixture();
+  try {
+    const streams = [
+      { id: 302, type: 'air_humidity' as const, unit: '%', value: 78 },
+      { id: 303, type: 'soil_moisture' as const, unit: '%RH', value: 45 },
+      { id: 304, type: 'soil_temperature' as const, unit: 'C', value: 25.3 },
+      { id: 305, type: 'soil_ph' as const, unit: 'H+', value: 6.2 },
+      { id: 306, type: 'soil_ec' as const, unit: 'μS/cm', value: 850 },
+      { id: 307, type: 'soil_temperature' as const, unit: 'C', value: 24.1 },
+    ];
+    for (const stream of streams) {
+      f.sensors.create(f.owner.id, { device_id: f.device.id, data_stream_id: String(stream.id), sensor_type: stream.type, unit: stream.unit, name: `Stream ${stream.id}` });
+    }
+    f.transport.emit({ stationId: 'DEMO_STATION', sensorRecords: [{ dataStreamId: 301, result: '26.50 C' },
+      ...streams.map((stream) => ({ dataStreamId: stream.id, result: `${stream.value} ${stream.unit}` }))] });
+    const records = f.app.get(TelemetryService).latest(f.owner.id, f.device.id, page).items;
+    assert.equal(records.length, 7);
+    for (const stream of streams) {
+      const row = records.find((record) => record.data_stream_id === String(stream.id))!;
+      assert.equal(row.unit, stream.unit); assert.equal(row.value, stream.value);
+    }
+    assert.equal(f.mqtt.brokerStatus(f.admin.id).unit_mismatches, 0);
+  } finally { await f.app.close(); }
+});
 
 class FakeTransport extends MqttTransport {
   handlers?: TransportHandlers;

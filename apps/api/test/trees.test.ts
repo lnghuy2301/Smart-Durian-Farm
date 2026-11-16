@@ -5,9 +5,23 @@ import { zoneFixture } from '../integration/helpers/zone-fixture';
 import { AssignmentsService } from '../src/assignments/assignments.service';
 import { TreesService, TREE_HISTORY_LIMIT } from '../src/trees/trees.service';
 import { TestTree } from '../src/trees/trees.types';
+import { TreeRecords } from '../src/trees/tree-records';
 
 const page = { limit: 20, offset: 0 };
 const details = { variety: 'Ri6', plant_date: '2024-05-01T08:00:00+07:00', longitude: 106, latitude: 10 };
+
+test('Async Tree port shares domain records, proposals, trace lookup and history without another store', async () => {
+  const f = await fixture();
+  try {
+    const port=f.app.get(TreeRecords),tree=await port.create(f.owner.id,f.treeInput);
+    assert.equal(f.trees.getRecord(tree.id).tree_code,tree.tree_code);
+    const request=await port.updateRequest(f.admin.id,tree.id,{variety:'Monthong'});
+    f.trees.approve(f.owner.id,request.id);
+    assert.equal((await port.getTraceRecordByCode(tree.tree_code)).variety,'Monthong');
+    assert.equal((await port.history(f.owner.id,tree.id,page)).total,2);
+    await assert.rejects(port.update(f.worker.id,tree.id,{status:'Dead'}),/chủ Farm/);
+  } finally {await f.app.close();}
+});
 
 async function fixture() {
   const f = await zoneFixture();

@@ -1,3 +1,4 @@
+import { RecordReference } from "../components/ReadableValue";
 import { useCallback, useEffect, useState } from "react";
 import {
   Link,
@@ -19,6 +20,7 @@ import { useSession } from "../auth/session";
 import { queryString } from "../api/client";
 import { useResource } from "../hooks/useResource";
 import { useTask } from "../hooks/useTask";
+import { ManagerCooperativeEdit } from "./CooperativeUpdates";
 import {
   Badge,
   DataState,
@@ -183,7 +185,7 @@ export function CooperativeList() {
                     <th>Tên hợp tác xã</th>
                     <th>Người đại diện</th>
                     <th>Địa chỉ</th>
-                    <th>Manager</th>
+                    <th>Người quản lý</th>
                     <th>Thao tác</th>
                   </tr>
                 </thead>
@@ -209,9 +211,16 @@ export function CooperativeList() {
                           status={coop.manager_id ? "Active" : "Pending"}
                         />
                         <small>
-                          {coop.manager_id
-                            ? "Đã có Manager"
-                            : "Chưa có Manager"}
+                          {coop.manager_id ? (
+                            <RecordReference
+                              kind="cooperatives"
+                              id={coop.id}
+                              field="manager_id"
+                              value={coop.manager_id}
+                            />
+                          ) : (
+                            "Chưa có Manager"
+                          )}
                         </small>
                       </td>
                       <td>
@@ -255,6 +264,11 @@ export function CooperativeList() {
         )}
       </div>
       {user.role === "Admin" && <CooperativeNotifications />}
+      {user.role !== "Farmer" && (
+        <Link className="button secondary" to="/cooperative-updates">
+          Yêu cầu cập nhật HTX
+        </Link>
+      )}
     </>
   );
 }
@@ -311,6 +325,10 @@ export function CooperativeDetailPage() {
                   </Link>
                 )}
               </div>
+              <ManagerCooperativeEdit
+                cooperative={coop}
+                onSaved={resource.reload}
+              />
               <dl className="details">
                 <div>
                   <dt>Người đại diện / giám đốc</dt>
@@ -331,7 +349,16 @@ export function CooperativeDetailPage() {
                 <div>
                   <dt>Quản lý HTX</dt>
                   <dd>
-                    {coop.manager_id ? "Đã gắn Manager" : "Chưa có Manager"}
+                    {coop.manager_id ? (
+                      <RecordReference
+                        kind="cooperatives"
+                        id={coop.id}
+                        field="manager_id"
+                        value={coop.manager_id}
+                      />
+                    ) : (
+                      "Chưa có người quản lý"
+                    )}
                   </dd>
                 </div>
                 <div>

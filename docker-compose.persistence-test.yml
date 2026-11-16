@@ -1,0 +1,38 @@
+# Isolated, disposable integration environment. No .env values or demo volumes.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: persistence_test
+      POSTGRES_PASSWORD: persistence_test_only
+      POSTGRES_DB: sdf_persistence_test
+    ports:
+      - "127.0.0.1:15432:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U persistence_test -d sdf_persistence_test"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+  mongodb:
+    image: mongo:8.0
+    command: ["mongod", "--replSet", "rs-test", "--bind_ip_all"]
+    ports:
+      - "127.0.0.1:27028:27017"
+    tmpfs:
+      - /data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "if (!db.adminCommand({ping:1}).ok) quit(1)"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+  mongo-init:
+    image: mongo:8.0
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: ["mongosh", "--host", "mongodb:27017", "--quiet", "--eval"]
+    command:
+      - 'try { rs.status(); } catch (error) { if (error.code !== 94) throw error; rs.initiate({_id:"rs-test",members:[{_id:0,host:"localhost:27017"}]}); }'

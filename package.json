@@ -1,20 +1,53 @@
 {
   "name": "smart-durian-farm",
   "private": true,
-  "workspaces": ["apps/api", "apps/web"],
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
   "scripts": {
+    "start:api": "npm run start --workspace @smart-durian/api",
     "dev:api": "npm run start:dev --workspace @smart-durian/api",
+    "dev:ai": "python ai/run.py",
+    "test:ai": "python ai/test.py",
+    "ai:corpus:prepare": "ai/.venv/Scripts/python.exe ai/tools/prepare_corpus.py",
+    "ai:corpus:check": "npm run build && node apps/api/dist/ai/ai.corpus-cli.js check",
+    "ai:corpus:import": "npm run build && node apps/api/dist/ai/ai.corpus-cli.js import",
     "dev:web": "npm run dev --workspace @smart-durian/web",
     "build:web": "npm run build --workspace @smart-durian/web",
     "lint:web": "npm run lint --workspace @smart-durian/web",
     "typecheck:web": "npm run typecheck --workspace @smart-durian/web",
     "test:web": "npm run test --workspace @smart-durian/web",
     "test:web:e2e": "npm run test:e2e --workspace @smart-durian/web",
+    "test:web:ai": "npm run test:e2e:ai --workspace @smart-durian/web",
     "build": "npm run build --workspace @smart-durian/api",
     "lint": "npm run lint --workspace @smart-durian/api",
     "typecheck": "npm run typecheck --workspace @smart-durian/api",
-    "test": "npm run test --workspace @smart-durian/api"
+    "test": "npm run test --workspace @smart-durian/api",
+    "db:status": "npm run db:status --workspace @smart-durian/api",
+    "db:migrate": "npm run db:migrate --workspace @smart-durian/api",
+    "db:data:expand": "npm run db:data:expand --workspace @smart-durian/api",
+    "db:materials:expand": "npm run db:materials:expand --workspace @smart-durian/api",
+    "db:data:preview": "npm run db:data:preview --workspace @smart-durian/api",
+    "db:data:refresh": "npm run db:data:refresh --workspace @smart-durian/api",
+    "db:seed": "npm run db:seed --workspace @smart-durian/api",
+    "db:demo:prepare": "npm run db:demo:prepare --workspace @smart-durian/api",
+    "db:seed:telemetry": "npm run db:seed:telemetry --workspace @smart-durian/api",
+    "db:backup": "npm run db:backup --workspace @smart-durian/api",
+    "db:demo:check": "npm run db:demo:check --workspace @smart-durian/api",
+    "db:backup:verify": "npm run db:backup:verify --workspace @smart-durian/api --",
+    "db:restore:check": "npm run db:restore:check --workspace @smart-durian/api --",
+    "db:restore:new": "npm run db:restore:new --workspace @smart-durian/api --",
+    "test:persistence": "npm run test:persistence --workspace @smart-durian/api",
+    "db:audit": "npm run build && node tools/audit-data.cjs"
   },
-  "engines": { "node": ">=20.19.0" },
-  "overrides": { "@nestjs/swagger": { "js-yaml": "5.4.2" } }
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "overrides": {
+    "@nestjs/swagger": {
+      "js-yaml": "5.4.2"
+    }
+  },
+  "version": "1.0.0-rc.1"
 }

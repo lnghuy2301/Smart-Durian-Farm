@@ -1,0 +1,147 @@
+{
+  "info": {
+    "name": "Smart Durian Farm - QR Traceability Local Test",
+    "description": "Manual requests only; no scripts or environments. Start API/web as QR_TRACEABILITY_IMPLEMENTATION.md. Create data through existing module collections and replace PASTE_* by hand. For A→B, wait 15 minutes for each Cultivation version to lock. All requests deliberately No Auth; last request verifies private API still requires JWT. Backend RAM resets on restart.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "item": [
+    {
+      "name": "01 Public Tree A summary",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:3000/api/traceability/trees/PASTE_TREE_CODE_A",
+        "description": "200; tree/Zone/HTX/current standard only. No JWT. Copy tree_code from Trees module."
+      }
+    },
+    {
+      "name": "02 Locked lineage on Tree A",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:3000/api/traceability/trees/PASTE_TREE_CODE_A/cultivation?limit=20&offset=0",
+        "description": "200; after A→B Locked, both original and correction shown; latest_applies_to_tree=false for A."
+      }
+    },
+    {
+      "name": "03 Next version page on Tree A",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:3000/api/traceability/trees/PASTE_TREE_CODE_A/cultivation?limit=1&offset=1",
+        "description": "200; every row still includes latest_version/latest_target even when pagination splits lineage."
+      }
+    },
+    {
+      "name": "04 Same lineage on Tree B",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:3000/api/traceability/trees/PASTE_TREE_CODE_B/cultivation?limit=20&offset=0",
+        "description": "200; complete A→B lineage, latest applies B; Pending corrections remain hidden."
+      }
+    },
+    {
+      "name": "05 Pending target Tree C remains hidden",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:3000/api/traceability/trees/PASTE_TREE_CODE_C/cultivation?limit=20&offset=0",
+        "description": "200; if C appears only in Pending correction, that lineage does not appear yet."
+      }
+    },
+    {
+      "name": "06 Approved harvest contents",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:3000/api/traceability/trees/PASTE_TREE_CODE_A/harvests?limit=20&offset=0",
+        "description": "200; only previously confirmed records; Draft/first Pending excluded."
+      }
+    },
+    {
+      "name": "07 Recheck harvest during Pending correction",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:3000/api/traceability/trees/PASTE_TREE_CODE_A/harvests?limit=20&offset=0",
+        "description": "200; pending proposed values are hidden; approved old contents stay. Run again after authorized Manager/Admin approval: values change then."
+      }
+    },
+    {
+      "name": "08 SVG QR for Tree A",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:3000/api/traceability/trees/PASTE_TREE_CODE_A/qr.svg",
+        "description": "200 image/svg+xml. Save response as SVG; QR points at TRACE_PUBLIC_BASE_URL/trace/tree_code, never includes JWT."
+      }
+    },
+    {
+      "name": "09 Empty history Tree summary",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:3000/api/traceability/trees/PASTE_EMPTY_TREE_CODE",
+        "description": "200; existing Tree without Locked journals/confirmed harvests still has summary and QR."
+      }
+    },
+    {
+      "name": "10 Dead or Removed Tree public history",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:3000/api/traceability/trees/PASTE_DEAD_OR_REMOVED_TREE_CODE/cultivation?limit=20&offset=0",
+        "description": "200; Tree status does not erase public Locked history."
+      }
+    },
+    {
+      "name": "11 Malformed tree_code rejected",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:3000/api/traceability/trees/invalid-code",
+        "description": "400; do not use internal Tree UUID instead of DRN-code."
+      }
+    },
+    {
+      "name": "12 Unknown valid tree_code",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:3000/api/traceability/trees/DRN-00000000-0000-4000-8000-000000000099",
+        "description": "404 assuming this code is not in test data."
+      }
+    },
+    {
+      "name": "13 Oversize page rejected",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:3000/api/traceability/trees/PASTE_TREE_CODE_A/cultivation?limit=101&offset=0",
+        "description": "400; limit range 1..100."
+      }
+    },
+    {
+      "name": "14 Arbitrary private filter rejected",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:3000/api/traceability/trees/PASTE_TREE_CODE_A/harvests?farmer_id=PASTE_FARMER_UUID",
+        "description": "400; do not allow caller-controlled private projection filters."
+      }
+    },
+    {
+      "name": "15 Tree management remains protected",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:3000/api/trees/PASTE_TREE_UUID",
+        "description": "401; public QR routes do not remove AuthGuard from management routes."
+      }
+    }
+  ]
+}

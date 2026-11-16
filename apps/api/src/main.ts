@@ -8,11 +8,13 @@ async function bootstrap() {
   config({ path: resolve(__dirname, '../../../.env') });
   const environment = readEnvironment(process.env);
   const app = await createApplication(environment);
-  // Hộp thư OTP giả lập không được mở ra mạng LAN; chế độ mock chỉ bind loopback.
-  await app.listen(environment.port, environment.auth ? '127.0.0.1' : '0.0.0.0');
+  // Database mode may explicitly bind a container interface. Mock remains loopback-only.
+  await app.listen(environment.port, environment.host ?? '127.0.0.1');
 }
 
 void bootstrap().catch(() => {
   console.error('API startup failed. Check configuration and dependencies.');
-  process.exitCode = 1;
+  // Startup may have constructed part of the database graph before failing.
+  // Exit the owned process so partial pools and controller leases cannot linger.
+  process.exit(1);
 });

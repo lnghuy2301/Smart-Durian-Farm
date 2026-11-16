@@ -6,6 +6,8 @@ import { AssignmentsService } from '../src/assignments/assignments.service';
 import { DevicesService, DEVICE_HISTORY_LIMIT, DEVICE_LIMIT } from '../src/devices/devices.service';
 import { TestDevice } from '../src/devices/devices.types';
 import { TreesService } from '../src/trees/trees.service';
+import { DeviceRecords } from '../src/devices/device-records';
+import { MemoryDeviceRecords } from '../src/devices/memory-device-records';
 
 const page = { limit: 20, offset: 0 };
 const details = { station_id: 'DEMO_STATION', installed_at: '2026-10-06T08:00:00+07:00', cost: 1500000 };
@@ -15,6 +17,20 @@ async function fixture() {
   const zone = f.zones.create(f.owner.id, f.input);
   return { ...f, zone, devices: f.app.get(DevicesService), trees: f.app.get(TreesService), inputDevice: { zone_id: zone.id, ...details } };
 }
+
+test('Device async port shares the service used by metadata and MQTT consumers', async () => {
+  const f = await fixture();
+  try {
+    const port = f.app.get(DeviceRecords);
+    assert.equal(port, f.app.get(MemoryDeviceRecords));
+    const device = await port.create(f.owner.id, f.inputDevice);
+    assert.deepEqual(f.devices.getRecordByStationId(device.station_id), device);
+    await port.recordSeen(device.id, '2026-10-17T00:00:00Z');
+    assert.equal(f.devices.getRecord(device.id).last_seen_at, '2026-10-17T00:00:00.000Z');
+    f.devices.update(f.owner.id, device.id, { status: 'Maintenance' });
+    assert.equal((await port.get(f.owner.id, device.id)).status, 'Maintenance');
+  } finally { await f.app.close(); }
+});
 
 test('Devices HTTP validates hardware identity, installation fields and immutable identifiers', async () => {
   const f = await fixture();

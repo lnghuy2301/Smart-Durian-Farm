@@ -9,6 +9,8 @@ import { AssignmentListDto, CreateAssignmentRequestDto } from './assignments.dto
 import { AssignmentHistory, AssignmentRequest } from './assignments.types';
 import { MockZoneAssignmentStore } from './mock-zone-assignment.store';
 import { assignmentActive, assignmentAllowsCorrection, CORRECTION_GRACE_DAYS, intervalsOverlap } from './assignment-policy';
+import { candidateName, candidateSearch, CANDIDATE_LIMIT } from './assignment-candidates';
+import { phoneIdentity } from '../auth/account-identity';
 
 @Injectable()
 export class AssignmentsService {
@@ -31,6 +33,20 @@ export class AssignmentsService {
     if (end && Date.parse(end) <= Date.parse(actualEarliestStart)) { throw new BadRequestException('end_date phải sau start_date và sau thời điểm hiện tại'); }
     this.assertAvailable(zoneId, actualEarliestStart, end);
     return this.addRequest(actor, zone, ownerId, 'Assign', input.user_id, start, end, null);
+  }
+
+  candidates(actorId: string, zoneId: string, query = '') {
+    const { zone } = this.managementContext(actorId, zoneId);
+    const search = candidateSearch(query);
+    const previous = new Set(this.store.list().filter((entry) => entry.zone_snapshot.farm_id === zone.farm_id).map((entry) => entry.assignment.user_id));
+    const matches = this.users.activeFarmerNames().filter((user) => !search.name ? previous.has(user.id)
+      : search.phone !== null ? phoneIdentity(user.phone_number).includes(search.phone) || user.phone_number.replace(/^\+/, '').includes(search.name.replace(/\D/g, ''))
+        : candidateName(user.user_name).includes(search.name));
+    matches.sort((a, b) => {
+      const left = a.user_name.toLowerCase().normalize('NFC'), right = b.user_name.toLowerCase().normalize('NFC');
+      return left < right ? -1 : left > right ? 1 : a.id.localeCompare(b.id);
+    });
+    return { items: matches.slice(0, CANDIDATE_LIMIT).map((user) => ({ ...user, previously_assigned: previous.has(user.id) })), has_more: matches.length > CANDIDATE_LIMIT };
   }
 
   list(actorId: string, query: AssignmentListDto, mineOnly = false) {

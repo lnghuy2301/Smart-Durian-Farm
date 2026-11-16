@@ -1,3 +1,4 @@
+import { calendarDate } from "../components/presentation";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -40,6 +41,8 @@ import type {
 } from "../types/api";
 import { managerOverview, type Period } from "./managerOverview";
 import { Stat } from "../components/Stat";
+import { RecentJournals } from "./Cultivation";
+import { RequestInbox } from "./RequestInbox";
 
 const periodLabels: Record<Period, string> = {
   today: "Hôm nay",
@@ -48,7 +51,7 @@ const periodLabels: Record<Period, string> = {
   all: "Tất cả thời gian",
 };
 export function ManagerDashboard() {
-  const { api } = useSession();
+  const { api, user } = useSession();
   const [farmId, setFarmId] = useState("");
   const [period, setPeriod] = useState<Period>("7days");
   const load = useCallback(
@@ -63,32 +66,44 @@ export function ManagerDashboard() {
           identity,
         );
       const byId = (row: { id: string }) => row.id;
-      const [
-        cooperatives,
-        farms,
-        zones,
-        trees,
-        assignments,
-        devices,
-        harvests,
-      ] = await Promise.all([
-        api.request<Page<Cooperative>>("cooperatives?limit=100&offset=0", {
-          signal,
-        }),
-        read<Farm>("farms", byId),
-        read<Zone>("zones", byId),
-        read<Tree>("trees", byId),
-        read<AssignmentHistory>("zone-assignments", (row) => row.assignment.id),
-        read<Device>("devices", byId),
-        read<Harvest>("tree-harvests", byId),
-      ]);
+      const cooperatives = await read<Cooperative>("cooperatives", byId);
+      // Resolve the current Manager's HTX explicitly; never treat the first
+      // returned cooperative as authority for this account.
+      const cooperative = cooperatives.find(
+        (item) => item.manager_id === user.id,
+      );
+      if (!cooperative)
+        return {
+          cooperative: undefined,
+          records: {
+            farms: [],
+            zones: [],
+            trees: [],
+            assignments: [],
+            devices: [],
+            harvests: [],
+          },
+          checkedAt: new Date().toISOString(),
+        };
+      const [farms, zones, trees, assignments, devices, harvests] =
+        await Promise.all([
+          read<Farm>("farms", byId),
+          read<Zone>("zones", byId),
+          read<Tree>("trees", byId),
+          read<AssignmentHistory>(
+            "zone-assignments",
+            (row) => row.assignment.id,
+          ),
+          read<Device>("devices", byId),
+          read<Harvest>("tree-harvests", byId),
+        ]);
       return {
-        cooperative: cooperatives.items[0],
+        cooperative,
         records: { farms, zones, trees, assignments, devices, harvests },
         checkedAt: new Date().toISOString(),
       };
     },
-    [api],
+    [api, user.id],
   );
   const resource = useResource("manager-overview", load);
   return (
@@ -122,11 +137,55 @@ export function ManagerDashboard() {
                 Tài khoản chưa được gắn hợp tác xã. Vui lòng liên hệ Admin để
                 kiểm tra quyền quản lý.
               </Notice>
+              <Link className="button secondary" to="/account">
+                Xem thông tin tài khoản
+              </Link>
             </div>
           )
         }
       </DataState>
     </>
+  );
+}
+function ManagerStats({
+  view,
+  farmId,
+}: {
+  view: ReturnType<typeof managerOverview>;
+  farmId: string;
+}) {
+  return (
+    <div className="stats-grid manager-stats">
+      <Stat
+        title="Vườn thuộc HTX"
+        value={view.farms.length}
+        icon={Leaf}
+        to="/farms"
+        note={farmId ? "Theo bộ lọc vườn" : "Trong HTX hiện tại"}
+      />
+      <Stat
+        title="Khu vực canh tác"
+        value={view.zones.length}
+        icon={Map}
+        to={farmId ? `/zones?farm_id=${farmId}` : "/zones"}
+        note={`${view.zones.length - view.unassigned.length} khu đang có phân công`}
+      />
+      <Stat
+        title="Tổng số cây"
+        value={view.trees.length}
+        icon={Trees}
+        to="/trees"
+        note="Tất cả trạng thái cây"
+      />
+      <Stat
+        title="Khu vực chưa phân công"
+        value={view.unassigned.length}
+        icon={UserRoundX}
+        to="/zones"
+        note="Chưa có phân công đang hiệu lực"
+        accent
+      />
+    </div>
   );
 }
 function ManagerContent({
@@ -169,8 +228,38 @@ function ManagerContent({
   const farmName = (id: string) =>
     records.farms.find((item) => item.id === id)?.certificate_number ??
     "Vườn không còn trong danh sách";
+  // An empty HTX needs onboarding and its real inbox, rather than multiple
+  // repeated empty production tables. Existing detail routes stay available.
+  if (records.farms.length === 0)
+    return (
+      <>
+        <ManagerStats view={view} farmId="" />
+        <section className="panel role-getting-started">
+          <span className="section-label">{cooperative.cooperative_name}</span>
+          <h2>HTX chưa có vườn thành viên</h2>
+          <p>
+            Kiểm tra thông tin HTX và xem đề xuất gia nhập. Dữ liệu canh tác,
+            thu hoạch và IoT sẽ xuất hiện khi có vườn tham gia theo quy trình.
+          </p>
+          <div className="role-context-actions">
+            <Link
+              className="button secondary"
+              to={`/cooperatives/${cooperative.id}`}
+            >
+              Kiểm tra thông tin HTX
+            </Link>
+            <Link className="button secondary" to="/requests?kind=farm">
+              Xem đề xuất gia nhập
+            </Link>
+          </div>
+        </section>
+        <RequestInbox cooperativeId={cooperative.id} />
+      </>
+    );
   return (
     <>
+      <ManagerStats view={view} farmId={farmId} />
+      <RequestInbox cooperativeId={cooperative.id} />
       <section className="panel manager-controls">
         <div className="panel-heading">
           <div>
@@ -192,7 +281,7 @@ function ManagerContent({
               <option value="">Tất cả vườn trong HTX</option>
               {records.farms.map((farm) => (
                 <option key={farm.id} value={farm.id}>
-                  {farm.certificate_number} · {farm.address}
+                  {farm.address}
                 </option>
               ))}
             </select>
@@ -220,37 +309,6 @@ function ManagerContent({
           </Notice>
         )}
       </section>
-      <div className="stats-grid manager-stats">
-        <Stat
-          title="Vườn thuộc HTX"
-          value={view.farms.length}
-          icon={Leaf}
-          to="/farms"
-          note="Theo bộ lọc vườn"
-        />
-        <Stat
-          title="Khu vực canh tác"
-          value={view.zones.length}
-          icon={Map}
-          to={farmId ? `/zones?farm_id=${farmId}` : "/zones"}
-          note={`${view.zones.length - view.unassigned.length} khu đang có phân công`}
-        />
-        <Stat
-          title="Tổng số cây"
-          value={view.trees.length}
-          icon={Trees}
-          to="/trees"
-          note="Tất cả trạng thái cây"
-        />
-        <Stat
-          title="Khu vực chưa phân công"
-          value={view.unassigned.length}
-          icon={UserRoundX}
-          to="/zones"
-          note="Chưa có phân công đang hiệu lực"
-          accent
-        />
-      </div>
       <section className="panel">
         <div className="panel-heading">
           <div>
@@ -398,6 +456,10 @@ function ManagerContent({
           farms={records.farms}
         />
       </div>
+      <RecentJournals
+        zoneIds={view.zones.map((zone) => zone.id)}
+        period={period}
+      />
       <section className="panel">
         <div className="panel-heading">
           <div>
@@ -455,7 +517,7 @@ function ManagerContent({
                       </strong>
                       <small>
                         {zone ? farmName(zone.farm_id) : ""} · Mã lô{" "}
-                        {item.batch_code} · {item.harvest_date}
+                        {item.batch_code} · {calendarDate(item.harvest_date)}
                       </small>
                     </div>
                     <div className="activity-right">

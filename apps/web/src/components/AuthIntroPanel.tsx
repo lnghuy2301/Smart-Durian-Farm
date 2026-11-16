@@ -10,11 +10,11 @@ export function AuthIntroPanel() {
       <Brand light />
       <div className="auth-intro-copy">
         <span className="auth-intro-label">SMART DURIAN</span>
-        <h1 className="auth-intro-title">
-          Chăm sóc thông minh.
+        <h2 className="auth-intro-title">
+          Chăm sóc thông minh
           <br />
-          Nguồn gốc rõ ràng.
-        </h1>
+          Nguồn gốc rõ ràng
+        </h2>
         <p className="auth-intro-description">
           Kết nối nhà vườn, hợp tác xã và dữ liệu canh tác — từ chăm sóc đến
           truy xuất nguồn gốc sầu riêng.

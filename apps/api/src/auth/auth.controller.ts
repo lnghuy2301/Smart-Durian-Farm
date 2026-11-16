@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { AuthGuard, AuthRequest } from './auth.guard';
 import { LoginDto, PhoneDto, ResetPasswordDto } from './auth.dto';
+import { EmptyFarmActionDto } from '../farms/farms.dto';
 
 @ApiTags('auth-local-test')
 @Controller('auth')
@@ -20,6 +21,16 @@ export class AuthController {
   @ApiBearerAuth()
   me(@Req() request: AuthRequest) {
     return request.user;
+  }
+
+  @Post('refresh')
+  @HttpCode(200)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Gia hạn JWT còn hiệu lực khi người dùng thao tác; không dùng cho polling nền' })
+  refresh(@Req() request: AuthRequest, @Body() body: EmptyFarmActionDto) {
+    void body;
+    const match = /^Bearer ([^\s]+)$/i.exec(request.headers.authorization ?? '');
+    return this.auth.refresh(match?.[1] ?? '');
   }
 
   @Post('forgot-password')

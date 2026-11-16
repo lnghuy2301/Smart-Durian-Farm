@@ -21,10 +21,18 @@ import { readMqttConfig } from './mqtt/mqtt.config';
 import { MqttTransportModule } from './mqtt/mqtt-transport.module';
 import { ActuatorTasksModule } from './actuator-tasks/actuator-tasks.module';
 import { readActuatorTasksConfig } from './actuator-tasks/actuator-tasks.config';
+import { CultivationEventsModule } from './cultivation-events/cultivation-events.module';
+import { TraceabilityModule } from './traceability/traceability.module';
+import { readTraceabilityConfig } from './traceability/traceability.config';
+import { DatabaseRuntimeModule } from './persistence/database-runtime.module';
+import { DisplayModule } from './display/display.controller';
+import { AiModule } from './ai/ai.module';
+import { readAiConfig } from './ai/ai.config';
 
 @Module({})
 export class AppModule {
   static register(config: Environment): DynamicModule {
+    if (config.storage === 'database') return { module: AppModule, imports: [DatabaseRuntimeModule.register(config)] };
     const imports: DynamicModule[] = [HealthModule.register(config.database)];
     if (config.auth) {
       // Dùng cùng instance dynamic module để JWT và user đăng ký được thấy ở mọi module.
@@ -33,6 +41,7 @@ export class AppModule {
       const usersModule = UsersModule.forMock(config.auth, authModule);
       const materialsModule = MaterialsModule.forMock(authModule);
       const standardsModule = StandardsModule.forMock(authModule);
+      const standardMaterialsModule = StandardMaterialsModule.forMock(authModule, materialsModule, standardsModule);
       const farmsModule = FarmsModule.forMock(authModule, usersModule);
       const zonesModule = ZonesModule.forMock(authModule, farmsModule, standardsModule);
       const treesModule = TreesModule.forMock(authModule, farmsModule, zonesModule);
@@ -44,13 +53,20 @@ export class AppModule {
       const transportModule = MqttTransportModule.register(config.mqtt ?? readMqttConfig({}));
       const taskModule = ActuatorTasksModule.register(config.actuatorTasks ?? readActuatorTasksConfig({}),
         [authModule, farmsModule, zonesModule, devicesModule, actuatorsModule, assignmentsModule, transportModule]);
+      const harvestsModule = TreeHarvestsModule.forMock(authModule, usersModule, farmsModule, zonesModule, treesModule);
+      const cultivationModule = CultivationEventsModule.forMock([authModule, farmsModule, zonesModule, treesModule, assignmentsModule,
+        materialsModule, standardsModule, standardMaterialsModule]);
+      const cooperativesModule = CooperativesModule.forMock(config.auth, authModule, usersModule, farmsModule);
       imports.push(
+        AiModule.register(config.ai ?? readAiConfig({}), [authModule, zonesModule]),
         usersModule,
         materialsModule,
         standardsModule,
-        StandardMaterialsModule.forMock(authModule, materialsModule, standardsModule),
+        standardMaterialsModule,
         farmsModule,
-        CooperativesModule.forMock(config.auth, authModule, usersModule, farmsModule),
+        cooperativesModule,
+        DisplayModule.register([authModule, farmsModule, zonesModule, treesModule, devicesModule, sensorsModule,
+          actuatorsModule, harvestsModule, assignmentsModule, cultivationModule, cooperativesModule, standardsModule, materialsModule]),
         zonesModule,
         treesModule,
         devicesModule,
@@ -59,8 +75,11 @@ export class AppModule {
         telemetryModule,
         taskModule,
         MqttModule.register(authModule, devicesModule, sensorsModule, telemetryModule, transportModule, taskModule),
-        TreeHarvestsModule.forMock(authModule, usersModule, farmsModule, zonesModule, treesModule),
+        harvestsModule,
         assignmentsModule,
+        cultivationModule,
+        TraceabilityModule.register(config.traceability ?? readTraceabilityConfig({}),
+          [usersModule, farmsModule, zonesModule, treesModule, standardsModule, harvestsModule, cultivationModule]),
       );
     }
     return { module: AppModule, imports };

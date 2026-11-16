@@ -2,6 +2,8 @@ import { DynamicModule, Module } from '@nestjs/common';
 import { AdminGuard } from '../users/admin.guard';
 import { MaterialsController } from './materials.controller';
 import { MaterialsService } from './materials.service';
+import { MaterialRecords } from '../catalog/catalog-records';
+import { MemoryMaterialRecords } from '../catalog/memory-catalog-records';
 
 @Module({})
 export class MaterialsModule {
@@ -10,8 +12,8 @@ export class MaterialsModule {
       module: MaterialsModule,
       imports: [authModule],
       controllers: [MaterialsController],
-      providers: [MaterialsService, AdminGuard],
-      exports: [MaterialsService],
+      providers: [MaterialsService, MemoryMaterialRecords, { provide: MaterialRecords, useExisting: MemoryMaterialRecords }, AdminGuard],
+      exports: [MaterialsService, MaterialRecords],
     };
   }
 }

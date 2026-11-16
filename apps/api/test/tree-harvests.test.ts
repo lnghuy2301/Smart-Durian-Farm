@@ -7,6 +7,7 @@ import { AssignmentsService } from '../src/assignments/assignments.service';
 import { TreeHarvestsService, HARVEST_REQUEST_LIMIT } from '../src/tree-harvests/tree-harvests.service';
 import { HarvestRequest, TestTreeHarvest } from '../src/tree-harvests/tree-harvests.types';
 import { validateHarvestDate, vietnamToday } from '../src/tree-harvests/harvest-date-policy';
+import { HarvestRecords } from '../src/tree-harvests/harvest-records';
 
 const page = { limit: 20, offset: 0 };
 const dayBefore = (days: number) => new Date(Date.parse(vietnamToday() + 'T00:00:00Z') - days * 86400000).toISOString().slice(0, 10);
@@ -23,6 +24,20 @@ async function fixture() {
   const assign = () => assignments.approve(f.worker.id, assignments.createRequest(f.owner.id, zone.id, { user_id: f.worker.id }).id).assignment_id!;
   return { ...f, trees, harvests, assignments, zone, tree, treeInput, input, assign };
 }
+
+test('Async Harvest port shares official data, review state and public approved contents with the existing service', async () => {
+  const f=await fixture();
+  try {
+    const port=f.app.get(HarvestRecords),record=await port.create(f.owner.id,f.input);
+    assert.equal(f.harvests.get(f.owner.id,record.id).fruit_count,10);
+    f.harvests.submit(f.owner.id,record.id);
+    const request=await port.correction(f.owner.id,record.id,{reason:'Cân lại',changes:{total_weight_kg:31}});
+    assert.equal((await port.confirmedForTrace(f.tree.id))[0].total_weight_kg,30.5);
+    f.harvests.approve(f.admin.id,request.id);
+    assert.equal((await port.get(f.owner.id,record.id)).total_weight_kg,31);
+    assert.equal((await port.confirmedForTrace(f.tree.id))[0].total_weight_kg,31);
+  }finally{await f.app.close();}
+});
 
 test('Harvest HTTP validates ERD fields, nested corrections and forbids backend-managed fields', async () => {
   const f = await fixture();
@@ -58,6 +73,40 @@ test('Harvest HTTP validates ERD fields, nested corrections and forbids backend-
     assert.equal((await f.http('tree-harvests?created_by=' + f.owner.id, 'GET', undefined, token)).status, 400);
     assert.equal((await f.http('harvest-requests?status=bad', 'GET', undefined, token)).status, 400);
   } finally { await f.app.close(); }
+});
+
+test('Dead/Removed correction blocks changing to today at request/prepare/approval, while unchanged date remains editable', async () => {
+  for (const treeStatus of ['Dead', 'Removed'] as const) {
+    const f = await fixture();
+    try {
+      const record = f.harvests.create(f.owner.id, { ...f.input, harvest_date: dayBefore(1) });
+      f.harvests.submit(f.owner.id, record.id);
+      f.trees.update(f.owner.id, f.tree.id, { status: treeStatus });
+      const today = { harvest_date: vietnamToday(), batch_code: 'TODAY' };
+      assert.throws(() => f.harvests.correction(f.owner.id, record.id, { reason: 'Đổi ngày', changes: today }), /ngày cũ/);
+      const pending = f.harvests.correction(f.owner.id, record.id, { reason: 'Chuẩn bị sau' });
+      assert.throws(() => f.harvests.prepareCorrection(f.owner.id, pending.id, today), /ngày cũ/);
+      assert.equal(f.harvests.getRequest(f.owner.id, pending.id).proposed_changes, null);
+      f.harvests.reject(f.owner.id, pending.id);
+      f.trees.update(f.owner.id, f.tree.id, { status: 'Active' });
+      const beforeDead = f.harvests.correction(f.owner.id, record.id, { reason: 'Đổi ngày khi còn Active', changes: today });
+      f.trees.update(f.owner.id, f.tree.id, { status: treeStatus });
+      assert.throws(() => f.harvests.approve(f.admin.id, beforeDead.id), /ngày cũ/);
+      assert.equal(f.harvests.get(f.owner.id, record.id).harvest_date, dayBefore(1));
+      assert.equal(f.harvests.getRequest(f.owner.id, beforeDead.id).status, 'Pending');
+      f.harvests.reject(f.owner.id, beforeDead.id);
+      const sameDate = f.harvests.correction(f.owner.id, record.id, { reason: 'Cân lại', changes: { total_weight_kg: 31 } });
+      f.harvests.approve(f.admin.id, sameDate.id);
+      assert.equal(f.harvests.get(f.owner.id, record.id).total_weight_kg, 31);
+      const otherTree = f.trees.create(f.owner.id, f.treeInput);
+      const current = f.harvests.create(f.owner.id, { ...f.input, tree_id: otherTree.id, batch_code: 'CURRENT' });
+      f.harvests.submit(f.owner.id, current.id); f.trees.update(f.owner.id, otherTree.id, { status: treeStatus });
+      const keepToday = f.harvests.correction(f.owner.id, current.id, { reason: 'Giữ ngày đã lưu', changes: { harvest_date: vietnamToday(), fruit_count: 11 } });
+      f.harvests.approve(f.admin.id, keepToday.id);
+      assert.equal(f.harvests.get(f.owner.id, current.id).harvest_date, vietnamToday());
+      assert.equal(f.harvests.get(f.owner.id, current.id).fruit_count, 11);
+    } finally { await f.app.close(); }
+  }
 });
 
 test('Harvest tree/day conflicts serialize owner and worker; batch shares Zone/date and locks individual records', async () => {

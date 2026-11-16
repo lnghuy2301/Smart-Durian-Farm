@@ -1,0 +1,25 @@
+[Unit]
+Description=Smart Durian Farm private classification and PDF worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=smart-durian
+Group=smart-durian
+WorkingDirectory=/srv/smart-durian/ai
+EnvironmentFile=/etc/smart-durian/ai.env
+ExecStart=/srv/smart-durian/ai/.venv/bin/python -m uvicorn src.server:app --host 127.0.0.1 --port 8001
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=45
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/smart-durian/ai/.runtime
+
+[Install]
+WantedBy=multi-user.target

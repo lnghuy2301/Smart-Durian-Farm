@@ -14,8 +14,20 @@ import { MockZoneAssignmentStore } from '../src/assignments/mock-zone-assignment
 import { TelemetryService } from '../src/telemetry/telemetry.service';
 import { TELEMETRY_READING_LIMIT, TelemetryStore } from '../src/telemetry/telemetry.store';
 import { TelemetryRecord } from '../src/telemetry/telemetry.types';
+import { TelemetryRecords } from '../src/telemetry/telemetry-records';
+import { MemoryTelemetryRecords } from '../src/telemetry/memory-telemetry-records';
 
 const page = { limit: 100, offset: 0 };
+test('Telemetry async port uses the same reading store as the MQTT receiver', async () => {
+  const f=await fixture();
+  try {
+    const port=f.app.get(TelemetryRecords);assert.equal(port,f.app.get(MemoryTelemetryRecords));
+    f.service.record(f.device.id,[{dataStreamId:'301',receivedUnit:'C',rawResult:'1 C',value:1}],new Date().toISOString());
+    assert.equal((await port.latest(f.owner.id,f.device.id,page)).items[0].value,1);
+    await port.record(f.device.id,[{dataStreamId:'301',receivedUnit:'C',rawResult:'2 C',value:2}],new Date().toISOString());
+    assert.equal(f.service.latest(f.owner.id,f.device.id,page).items[0].value,2);
+  } finally {await f.app.close();}
+});
 const topic = 'publish/station/DEMO_STATION';
 const packet = (value: unknown) => Buffer.from(JSON.stringify(value));
 const reading = (result = '26.54 C', dataStreamId = 301) => ({ dataStreamId, result });

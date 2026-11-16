@@ -6,7 +6,9 @@ import { AppModule } from './app.module';
 import { Environment } from './config/environment';
 
 export async function createApplication(config: Environment, logger: false | undefined = undefined) {
-  const app = await NestFactory.create(AppModule.register(config), { logger });
+  // Let the process owner report a sanitized startup error instead of Nest
+  // terminating the process before bootstrap's error handler can run.
+  const app = await NestFactory.create(AppModule.register(config), { logger, abortOnError: false });
   configureApplication(app, config);
   return app;
 }
@@ -17,11 +19,16 @@ export function configureApplication(app: INestApplication, config: Environment)
   app.enableCors({ origin: config.corsOrigins });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
   app.enableShutdownHooks();
+  // Production documentation is disabled; public traffic never needs test metadata.
+  if (config.production) return;
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Smart Durian Farm API')
-    .setDescription('Local in-memory Auth/Users, catalogs, Cooperatives, Farms, Zones, assignments, Trees, Tree Harvests, Devices, Sensors and Actuators. Actuators register immutable per-Device numeric capabilities and watering/spraying/shared purposes, including separately controlled shared pumps; Active/Inactive is metadata availability, not relay on/off. MQTT v1 provides connection/parser/routing and diagnostics, Telemetry stores bounded RAM readings, and actuator tasks expose HTTP202 plus GET progress/state. ACK requires Device/taskId/action correlation and confirms command receipt only; physical state remains Unknown. Shared pump2 and valves3/4 run sequentially with10s per ACK step, pre-start reset when Unknown, Stop preemption and separate failure recovery. Business persistence, control UI and physical feedback remain future work. Sensors use per-Device stream uniqueness, immutable types/identifiers and editable varchar(16) expected units with nullable threshold pairs; metadata changes do not convert measured values. Devices use distinct immutable station IDs and internal UUIDs; owner-approved Admin proposals retain metadata snapshots, and Active/Inactive/Maintenance describes administration rather than MQTT connectivity. Device tree scope follows the shared Zone. Manager Cooperative updates require email then SMS verification. Unmanaged Cooperatives warn after 7 days and are removed after 30 days only without business references. Admin Zone/assignment/Tree proposals need owner approval; assignee Farmers accept before access. Trees use immutable backend codes and keep metadata snapshots. Harvest creators submit for owner confirmation; reviewed corrections retain data while Pending. Initial confirmation keeps update fields null. Backdate beyond 7 Vietnam calendar days requires scoped Admin permission. Cultivation correction policy remains separate. Database readiness checks connectivity only.')
+    .setDescription((config.storage === 'database'
+      ? 'Database runtime: shared PostgreSQL accounts/catalogs/metadata/workflows and MongoDB telemetry, actuator task journal and cultivation chain. Restart retains business data; unfinished OTP requires verification again. '
+      : 'Isolated memory runtime for tests: business data is lost on restart. ')
+      + 'Private APIs require JWT and current resource scope. Owner/admin approvals, assignment intervals and original correction authority remain enforced. MQTT uses registered station IDs, six sensor streams and taskId/action-correlated ACK receipts only; physical state remains Unknown. Commands use valve-before-pump ON, pump-before-valves OFF,10s per step, pre-start reset, preemption and recovery. Public QR exposes only whitelisted metadata, Locked correction lineages and approved harvest contents. Startup never migrates, seeds or publishes commands automatically; readiness checks database connectivity.')
     // Trạng thái quản trị của trạm tách biệt connectivity suy ra từ MQTT last_seen_at.
-    .setVersion('0.1.0')
+    .setVersion('1.0.0-rc.1')
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);

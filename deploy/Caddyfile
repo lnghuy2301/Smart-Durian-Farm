@@ -1,0 +1,29 @@
+# Prepared template only. Replace the domain and install Caddy separately.
+# Production account mode and the release gates in docs/DEPLOYMENT.md must pass first.
+farm.example.com {
+    encode zstd gzip
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy strict-origin-when-cross-origin
+        X-Frame-Options DENY
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        -Server
+    }
+    # Defense in depth: local test inboxes and API documentation are not public.
+    @privateRoutes path /api/auth/test/* /api/docs /api/docs/* /api/docs-json /api/docs-yaml
+    respond @privateRoutes 404
+    @api path /api /api/*
+    handle @api {
+        request_body {
+            max_size 11MB
+        }
+        reverse_proxy 127.0.0.1:3000
+    }
+    handle {
+        root * /srv/smart-durian/apps/web/dist
+        # Never apply SPA fallback to API routes.
+        try_files {path} /index.html
+        header Cache-Control "no-cache"
+        file_server
+    }
+}

@@ -1,6 +1,7 @@
 import { FarmDetailsDto, FarmRequestStatus } from './farms.dto';
 
-// Farm chỉ chứa các field hiện có trong ERD; metadata duyệt nằm riêng trong bộ nhớ.
+// Farm chỉ chứa fields ERD; metadata duyệt nằm ở storage kỹ thuật riêng,
+// không gộp vào response Farm hoặc thêm columns nghiệp vụ.
 export interface TestFarm extends FarmDetailsDto {
   id: string;
   owner_id: string;

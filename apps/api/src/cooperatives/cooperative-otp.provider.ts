@@ -7,7 +7,7 @@ export const COOPERATIVE_OTP_PROVIDER = Symbol('COOPERATIVE_OTP_PROVIDER');
 export class DisabledCooperativeOtpProvider extends OtpProvider {
   readonly mode = 'twilio' as const;
   async issue(): Promise<OtpProof> {
-    throw new ServiceUnavailableException('Cấu hình TWILIO_HTX_VERIFY_SERVICE_SID riêng và HTX_SMS_ALLOWED_PHONES để xác minh sửa HTX');
+    throw new ServiceUnavailableException('Cấu hình HTX_SMS_ALLOWED_PHONES để xác minh sửa HTX; SID HTX để trống sẽ dùng TWILIO_VERIFY_SERVICE_SID');
   }
   async verify(): Promise<boolean> { return false; }
   clear(): void {}

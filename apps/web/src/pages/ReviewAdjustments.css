@@ -1,0 +1,106 @@
+/* The registration columns use the viewport, not the role's intrinsic form
+   height. Only the form column scrolls; the selected orchard crop stays fixed. */
+@media (min-width: 901px) {
+  .auth-layout-registration {
+    block-size: 100dvh;
+    min-block-size: 0;
+    align-items: stretch;
+    overflow: hidden;
+  }
+  .auth-layout-registration .auth-story.auth-intro-panel {
+    position: relative;
+    top: auto;
+    block-size: 100dvh;
+    min-block-size: 0;
+  }
+  .auth-layout-registration .auth-form-side {
+    block-size: 100dvh;
+    min-block-size: 0;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    justify-content: flex-start;
+    padding-block: clamp(32px, 6dvh, 64px);
+  }
+  .auth-layout-registration .auth-card {
+    flex-shrink: 0;
+    margin-block: auto;
+  }
+  .auth-layout-registration .auth-intro-copy {
+    padding-block: clamp(16px, 3dvh, 32px);
+  }
+}
+.role-context-card .role-context-actions {
+  gap: 16px;
+  padding-inline: 4px;
+}
+.role-context-card .role-context-actions .button {
+  padding-inline: 22px;
+}
+.workflow-material-row > .field {
+  margin-bottom: 0;
+}
+.workflow-material-row > .button {
+  min-height: 52px;
+}
+.monitor-history-filter input {
+  block-size: 52px;
+}
+/* Two identity rows for either role: Manager moves phone beside name and
+   reveals email in the second row, without adding height to the form. */
+.registration-identity-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  row-gap: 14px;
+  margin-bottom: 14px;
+}
+.registration-identity-fields > .field {
+  grid-column: 1;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 0;
+  transition:
+    width 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    margin-inline-start 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.registration-identity-fields > .field:first-child {
+  grid-row: 1;
+}
+.registration-identity-fields > .field:nth-child(2) {
+  grid-row: 2;
+}
+.registration-identity-fields[data-manager="true"] > .field {
+  width: calc(50% - 6px);
+}
+.registration-identity-fields[data-manager="true"] > .field:nth-child(2) {
+  margin-inline-start: calc(50% + 6px);
+  transform: translateY(calc(-100% - 14px));
+}
+.registration-identity-fields .registration-email {
+  grid-area: 2 / 1;
+  align-self: stretch;
+}
+.registration-identity-fields .registration-email .field {
+  margin-bottom: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .registration-identity-fields > .field {
+    transition: none;
+  }
+}
+.iot-panel .station-transition {
+  min-width: 0;
+}
+.iot-panel .monitor-placeholder {
+  min-height: 190px;
+  color: var(--sd-muted);
+}
+.iot-panel .placeholder-line {
+  display: block;
+  block-size: 12px;
+  width: 65%;
+  border-radius: 4px;
+  background: #e8f0eb;
+  margin-block: 12px;
+}

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { checkPdfAuth } from "./pdf-review-browser.mjs";
 import { mkdirSync, existsSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
@@ -6,11 +7,16 @@ import { spawnSync } from "node:child_process";
 import { createServer } from "vite";
 import { chromium } from "playwright-core";
 import { loopbackBroker } from "./loopback-broker.mjs";
+import { checkTraceability } from "./traceability-browser.mjs";
+import { checkWorkflows } from "./workflows-browser.mjs";
+import { checkActuatorControl } from "./actuator-control-browser.mjs";
+import { checkRoleNavigation } from "./role-navigation-browser.mjs";
+import { checkManagerFilters } from "./manager-layout-browser.mjs";
 
 // Backend thật, RAM cô lập, không đọc .env root và không gửi SMTP/SMS thật.
 const webRoot = fileURLToPath(new URL("..", import.meta.url));
 const apiRoot = fileURLToPath(new URL("../../api", import.meta.url));
-const require = createRequire(import.meta.url);
+const require = createRequire(new URL("../../api/package.json", import.meta.url));
 const compilation = spawnSync(
   process.execPath,
   [require.resolve("typescript/bin/tsc"), "--outDir", ".test-dist"],
@@ -325,12 +331,21 @@ try {
     await heading("Đăng nhập");
     await page.getByLabel("Số điện thoại", { exact: true }).fill(phone);
     await page.getByLabel("Mật khẩu", { exact: true }).fill(password);
-    await page.getByRole("button", { name: "Đăng nhập", exact: true }).click();
-    await page.waitForFunction(
-      () =>
-        document.querySelector(".sidebar") ||
-        document.querySelector('.auth-card [role="alert"]'),
+    // Existing session-expiry alert is not a result of this login attempt.
+    // Wait for its HTTP response before deciding whether a session was established.
+    const response = page.waitForResponse(
+      (r) =>
+        new URL(r.url()).pathname.endsWith("/api/auth/login") &&
+        r.request().method() === "POST",
     );
+    await page.getByRole("button", { name: "Đăng nhập", exact: true }).click();
+    const status = (await response).status();
+    if (status === 200) {
+      await page.locator(".sidebar").waitFor();
+    } else {
+      await page.locator('.auth-card [role="alert"]').waitFor();
+    }
+    return status;
   }
   const logout = async () => {
     await page.getByRole("button", { name: "Đăng xuất", exact: true }).click();
@@ -382,7 +397,14 @@ try {
       await page.reload();
       await page.locator(".stat-card").first().waitFor();
       const keys = await page.evaluate(() => Object.keys(sessionStorage));
-      assert.deepEqual(keys, ["smart-durian.access-token"]);
+      assert.deepEqual(keys.sort(), [
+        "smart-durian.access-token",
+        "smart-durian.idle-deadline",
+      ]);
+      const idleDeadline = await page.evaluate(() =>
+        Number(sessionStorage.getItem("smart-durian.idle-deadline")),
+      );
+      assert(idleDeadline > Date.now());
     },
   );
   await check(
@@ -390,14 +412,20 @@ try {
     async () => {
       await visit("/materials");
       await page.locator("tbody tr").first().waitFor();
-      assert.equal(await page.locator("tbody tr").count(), 20);
+      assert.equal(await page.locator("tbody tr").count(), 10);
+      await page.getByRole("button", { name: "Sau", exact: true }).click();
+      await page.waitForURL("**/materials?offset=10");
+      await page
+        .getByRole("link", { name: "Vật tư kiểm thử 11", exact: true })
+        .waitFor();
+      assert.equal(await page.locator("tbody tr").count(), 10);
       await page.getByRole("button", { name: "Sau", exact: true }).click();
       await page.waitForFunction(
         () => document.querySelectorAll("tbody tr").length === 3,
       );
       await page.getByRole("button", { name: "Trước", exact: true }).click();
       await page.waitForFunction(
-        () => document.querySelectorAll("tbody tr").length === 20,
+        () => document.querySelectorAll("tbody tr").length === 10,
       );
       await page.getByLabel("Tìm theo tên vật tư").fill("kiểm thử 01");
       await page.getByRole("button", { name: "Tìm kiếm" }).click();
@@ -416,7 +444,7 @@ try {
     for (const [path, title] of [
       [`/farms/${farmAccepted.farm_id}`, "WEB-FARM"],
       [`/zones/${zone.id}`, zone.zone_name],
-      [`/trees/${tree.id}`, tree.tree_code],
+      [`/trees/${tree.id}`, `Cây SR-${tree.tree_code.slice(-8).toUpperCase()}`],
       [`/standards/${standard.id}`, standard.name],
     ]) {
       await visit(path);
@@ -466,12 +494,26 @@ try {
         }),
       });
       await history.locator("tbody tr").first().waitFor();
-      assert.equal(await history.locator("tbody tr").count(), 20);
+      const historyFields = await Promise.all(
+        ["Mã stream (không bắt buộc)", "Từ lúc", "Đến trước lúc"].map((label) =>
+          history.getByLabel(label, { exact: true }).boundingBox(),
+        ),
+      );
+      assert.ok(
+        historyFields.every((box) => Math.abs(box.y - historyFields[0].y) <= 1),
+      );
+      assert.equal(await history.locator("tbody tr").count(), 12);
       await history.getByRole("button", { name: "Sau", exact: true }).click();
       await page.waitForFunction(
         () =>
           document.querySelectorAll(".monitor-section:last-of-type tbody tr")
-            .length === 6,
+            .length === 12,
+      );
+      await history.getByRole("button", { name: "Sau", exact: true }).click();
+      await page.waitForFunction(
+        () =>
+          document.querySelectorAll(".monitor-section:last-of-type tbody tr")
+            .length === 2,
       );
       await page
         .getByLabel("Mã stream (không bắt buộc)", { exact: true })
@@ -587,6 +629,60 @@ try {
         .waitFor({ timeout: 23000 });
     },
   );
+  await check(
+    "station switching preserves layout while loading and never labels old readings as a new station",
+    async () => {
+      await visit("/iot");
+      await page.locator('.station-transition[aria-busy="false"]').waitFor();
+      const frame = page.locator(".station-transition");
+      const before = await frame.boundingBox();
+      let release;
+      const blocked = new Promise((resolve) => {
+        release = resolve;
+      });
+      const path = `**/api/telemetry/devices/${otherDevice.id}/latest?*`;
+      await page.route(path, async (route) => {
+        await blocked;
+        await route.continue().catch(() => {});
+      });
+      try {
+        await page
+          .getByLabel("Thiết bị / mã trạm", { exact: true })
+          .selectOption(otherDevice.id);
+        await page.locator(".monitor-loading").waitFor();
+        assert.ok((await frame.boundingBox()).height >= before.height - 1);
+        assert.equal(
+          await page
+            .locator(".sensor-card")
+            .filter({ hasText: "Nhiệt độ không khí A" })
+            .count(),
+          0,
+        );
+        release();
+        await page.locator('.station-transition[aria-busy="false"]').waitFor();
+        await page
+          .locator(".monitor-heading")
+          .getByText(otherDevice.station_id, { exact: true })
+          .waitFor();
+        assert.ok(
+          !(await page.locator(".sensor-cards").innerText()).includes(
+            "Nhiệt độ không khí A",
+          ),
+        );
+        await page
+          .getByLabel("Thiết bị / mã trạm", { exact: true })
+          .selectOption(device.id);
+        await page.locator('.station-transition[aria-busy="false"]').waitFor();
+        await page
+          .locator(".sensor-cards")
+          .getByText("Nhiệt độ không khí A", { exact: true })
+          .waitFor();
+      } finally {
+        release();
+        await page.unroute(path);
+      }
+    },
+  );
   await check("mobile layout and menu without body overflow", async () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await visit("/");
@@ -599,7 +695,12 @@ try {
     );
     await page.getByRole("button", { name: "Mở menu", exact: true }).click();
     await page.locator(".sidebar.open").waitFor();
-    await page.getByRole("link", { name: "Cây trồng", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Vườn của tôi", exact: true })
+      .click();
+    await page
+      .getByRole("link", { name: "Vườn & khu vực", exact: true })
+      .click();
     await page.locator("tbody tr").first().waitFor();
     assert.equal(await page.locator(".sidebar.open").count(), 0);
     await visit("/");
@@ -617,17 +718,18 @@ try {
     });
     await page.setViewportSize({ width: 1440, height: 1000 });
   });
+  await checkPdfAuth({ page, origin, check, screenshots });
   await check(
     "Farmer registration becomes Active with no farm or owner claims",
     async () => {
       await visit("/register");
       await page
-        .getByRole("button", { name: "Manager HTX", exact: true })
+        .getByRole("button", { name: "Quản lý HTX", exact: true })
         .click();
       await page
         .getByLabel("Email (bắt buộc xác minh)", { exact: true })
         .fill("hidden-email@example.com");
-      await page.getByRole("button", { name: "Farmer", exact: true }).click();
+      await page.getByRole("button", { name: "Nhà nông", exact: true }).click();
       await page.locator('input[type="email"]').waitFor({ state: "hidden" });
       await page
         .getByLabel("Họ và tên", { exact: true })
@@ -739,7 +841,7 @@ try {
   async function registerManager(phone, email, name) {
     await visit("/register");
     await page
-      .getByRole("button", { name: "Manager HTX", exact: true })
+      .getByRole("button", { name: "Quản lý HTX", exact: true })
       .click();
     await page.getByLabel("Họ và tên", { exact: true }).fill(name);
     await page.getByLabel("Số điện thoại", { exact: true }).fill(phone);
@@ -1080,6 +1182,12 @@ try {
         path: `${screenshots}/manager-desktop.png`,
         fullPage: true,
       });
+      const statsBox = await page.locator(".manager-stats").boundingBox();
+      const inboxBox = await page.locator(".role-inbox").boundingBox();
+      const controlsBox = await page.locator(".manager-controls").boundingBox();
+      assert.ok(statsBox.y + statsBox.height <= inboxBox.y);
+      assert.ok(statsBox.y + statsBox.height <= controlsBox.y);
+      await checkManagerFilters({ page, visit, screenshots });
       await page
         .getByLabel("Vườn thành viên", { exact: true })
         .selectOption(farmAccepted.farm_id);
@@ -1233,9 +1341,58 @@ try {
         .waitFor();
     },
   );
+  await checkWorkflows({
+    browser,
+    origin,
+    http,
+    check,
+    app,
+    apiModule,
+    ownerToken,
+    adminToken,
+    ownerId,
+    standard,
+    codes,
+    screenshots,
+    errors,
+  });
+  await checkActuatorControl({
+    browser,
+    origin,
+    http,
+    check,
+    broker,
+    app,
+    apiModule,
+    ownerToken,
+    adminToken,
+    standard,
+    screenshots,
+    errors,
+  });
+  await checkRoleNavigation({
+    broker,
+    browser,
+    origin,
+    http,
+    check,
+    app,
+    apiModule,
+    ownerToken,
+    adminToken,
+    standard,
+    codes,
+    screenshots,
+    errors,
+  });
   await check(
     "expired stored JWT is discarded before protected pages render",
     async () => {
+      // These session scenarios belong to a fresh limiter window, independent
+      // of >20 logins in preceding workflows. Advance only this fixture's
+      // bucket timestamp; production still enforces20 attempts/minute.
+      const bucket = app.get(AuthService).rateLimits.buckets.get("login");
+      if (bucket) bucket.startedAt = Date.now() - 60001;
       await page.evaluate(() => {
         const token = sessionStorage.getItem("smart-durian.access-token");
         const parts = token.split(".");
@@ -1246,7 +1403,7 @@ try {
       await heading("Đăng nhập");
       assert.equal(await page.locator(".sidebar").count(), 0);
       assert.equal(await page.evaluate(() => sessionStorage.length), 0);
-      await login("0900000001", "LocalAdminOnly123!");
+      assert.equal(await login("0900000001", config.auth.admin.password), 200);
     },
   );
   await check(
@@ -1262,6 +1419,18 @@ try {
       assert.equal(await page.evaluate(() => sessionStorage.length), 0);
     },
   );
+  await checkTraceability({
+    app,
+    apiModule,
+    browser,
+    origin,
+    check,
+    ownerId,
+    adminId,
+    zone,
+    screenshots,
+    errors,
+  });
   assert.deepEqual(errors, [], "Uncaught browser errors");
   writeFileSync(
     `${screenshots}/report.json`,
@@ -1280,6 +1449,19 @@ try {
           "iot-desktop.png",
           "manager-desktop.png",
           "manager-mobile.png",
+          "trace-desktop.png",
+          "trace-mobile.png",
+          "workflow-dialog-1440.png",
+          "workflow-dialog-1366.png",
+          "workflow-dialog-390.png",
+          "workflow-iot-1440.png",
+          "workflow-iot-1366.png",
+          "workflow-iot-390.png",
+          "control-recovery-desktop.png",
+          "control-1440.png",
+          "control-1366.png",
+          "control-390.png",
+          "control-320.png",
         ],
       },
       null,

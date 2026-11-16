@@ -1,182 +1,102 @@
-# Smart Durian Farm
+﻿# Smart Durian Farm
 
-Publication2026-10-09: **24 completed module/web/fix/documentation branches are now on GitHub**, verified against local commit IDs. The complete integration is **feat/actuator-tasks-v1**, tested source commit84536f5. [Create one PR into main](https://github.com/lnghuy2301/smart-durian-farm/compare/main...feat/actuator-tasks-v1?expand=1). Main remainsc71820d at verification; the user will merge it. Local .env and private uncommitted source/UI/Postman edits were excluded. Earlier local-only statements below record prior delivery status.
+A farm management platform connecting durian growers, cooperative managers and administrators with field records, ESP32 stations and AI-assisted tools.
 
-Final verification2026-10-09: API **168/168 tests + lint/typecheck/build**; web **8/8 unit tests +22/22 browser scenarios + typecheck/build**. Postman24 literal requests valid. ESP32 deployed hardware/persistence/control UI remain outside this delivery. Details: [ACTUATOR_TASKS guide](docs/ACTUATOR_TASKS_IMPLEMENTATION.md).
+**v1.0.0-rc.1** — verified locally; production rollout remains a separate acceptance step.
 
-Backend control delivered 2026-10-09 on **feat/actuator-tasks-v1**, from **feat/mqtt-contract-v1 @ f20ea20**: HTTP202 + GET progress/state, per-Device locks, reset before Start when Unknown, sequential valve/pump commands, correlated receipt ACKs with10s per step, Stop preemption and separate recovery records. **168/168 API tests** passed including real MQTT.js TCP control/ACK/HTTP integration. `Confirmed` means command receipt; physical state remains Unknown. [API/setup/reproduction](docs/ACTUATOR_TASKS_IMPLEMENTATION.md), [workflow](docs/ACTUATOR_TASKS_WORKFLOW_DESIGN.md), [manual Postman](docs/postman/Actuator-Tasks-Local-Test.postman_collection.json). `ACTUATOR_ACK_TIMEOUT_MS=10000` added to example and appended to local .env while preserving existing content. No business persistence, frontend control UI or live hardware test. Both branches local; private source/docs/UI edits preserved. Earlier statements that tasks are unimplemented record previous deliveries.
+Built with **React · TypeScript · NestJS · PostgreSQL · MongoDB · MQTT · Python · YOLO11s-cls**.
 
-MQTT contract update 2026-10-09: ACK now requires numeric `taskId` plus `action:0|1`, preserving Device/task/action correlation; legacy short ACK is rejected. Commands omit the old wire `errorMessage` field. ACK means hardware receipt, not relay execution. See [v1.0 contract guide](docs/MQTT_CONTRACT_V1_IMPLEMENTATION.md). Branch feat/mqtt-contract-v1 inherits the current web/backend chain; task/control implementation follows separately. The new DOCX supersedes older short-ACK descriptions below.
+## Features
 
-Latest UI fix 2026-10-09: local branch `fix/web-registration-spacing` inherits the complete Manager/web delivery and previous role-transition fix. Registration now has balanced bottom spacing and a compact Farmer form without email; Manager email opens/collapses smoothly with reduced-motion support. All22 browser scenarios, web lint/build (including TypeScript) and formatting checks passed. See [Auth UI and verification](docs/frontend/modules/AUTH.md).
+- Role-based workspaces for farm owners, assigned Farmers, cooperative Managers and Admins.
+- Farm and Zone management, accepted assignments, approval workflows and scope-aware resource access.
+- Tree records, shared harvest batches, owner confirmation and controlled backdated corrections.
+- Cultivation journals with material snapshots, a 15-minute editing window, immutable locked versions and SHA-256 verification.
+- Public tree QR traceability with explicit privacy boundaries and correction history.
+- Six sensor streams, telemetry retention and sequenced irrigation/spraying commands with ACK timeout and recovery.
+- Private image classification history, document-grounded assistance, optional citations and explicit Groq/Gemini provider selection.
 
-Current delivery 2026-10-08: **React + TypeScript + Vite web for Farmer, Admin and Manager** is implemented on the local branch `feat/web-manager-dashboard`, which inherits all frontend module branches. Approved Stitch screens use the official brand kit and existing APIs: authentication, resource list/detail, Admin cooperative create/edit, Manager approval/rejection, three dashboards and read-only IoT latest/history/presence. **22 browser scenarios + 8 unit tests + web lint/typecheck/build/format checks passed**; backend regression remains **147/147 tests**, rechecked during the IoT web module. No backend business changes or persistence migrations were added.
+Hardware ACKs acknowledge command receipt; they do not prove physical operation. Image predictions are classification suggestions, not a definitive diagnosis. Realistic sample history remains synthetic initialization rather than evidence of field measurements.
 
-At the repository root, run `npm ci`, then `npm run dev:api` and `npm run dev:web` in separate terminals. Web: http://127.0.0.1:5173. Read the [complete setup, configuration and reproduction guide](docs/frontend/WEB_FOUNDATION_IMPLEMENTATION.md), [Manager dashboard guide](docs/frontend/modules/MANAGER_DASHBOARD.md) and [handoff](docs/MODULE_HANDOFF.md). Backend business/telemetry data remain RAM and reset when the process restarts. React Native, resource write workflows and actuator control are separate future deliveries. Branches and commits are local; no push/merge/deployment. Private ERD/MQTT/Postman edits and root `.env` are preserved.
+## Architecture
 
-Brand selection 2026-10-08: **Smart Durian / Durian Connect v1.0**, supplied and selected by the user for web, mobile and project documents. Shared source: [assets/brand](assets/brand/README.md); frontend references: [docs/frontend](docs/frontend/README.md). The kit has 46 files after removing one identical 180px icon; platforms share the remaining source. Web imports shared assets and serves Be Vietnam Pro fonts locally with their OFL license.
-
-The review and module summaries below record earlier backend deliveries. Their proposed next steps and test counts are historical; the current frontend status is above.
-
-Project review 2026-10-07: code f20f6c1 rechecked with **147/147 tests + lint/typecheck/build**. Read the [readiness review](docs/PROJECT_READINESS_REVIEW_20261007.md), [current system diagrams](docs/CURRENT_SYSTEM_DIAGRAMS.md) and [next delivery plan](docs/NEXT_DELIVERY_PLAN.md). Recommended next: web foundation for stable APIs, then read-only IoT monitoring; design persistence separately before migrations/repository conversion. No frontend or business persistence yet. ACTUATOR_TASKS discussion is temporarily paused; its branch contains no control implementation. ACK10 seconds per step is an agreed future setting, not a running timer/configuration.
-
-Latest implemented branch: **feat/iot-telemetries**, from a656773 (inherits e1ad1a0/MQTT d10ebd2). MQTT now writes accepted readings into one shared RAM FIFO of **10,000 readings**. Read-only latest/history APIs enforce current Device/HTX/assignment scope; expired Farmers cannot read IoT history. measured_at is backend packet arrival, received_at is RAM write time; firmware is unchanged. **147/147 tests, lint/typecheck/build passed**, including real MQTT.js TCP -> App -> Telemetry -> HTTP. Read the [Telemetry guide](docs/IOT_TELEMETRIES_IMPLEMENTATION.md), [final design](docs/IOT_TELEMETRIES_WORKFLOW_DESIGN.md) and [project inventory](docs/PROJECT_REVIEW_20261007.md). Thirteen PostgreSQL business tables and one MongoDB-shaped Telemetry module have RAM logic; four collections and QR remain unimplemented. Business persistence is still pending. New IoT branches remain local.
-
-MQTT connection/parser/routing, shared-store mapping, presence, read-only diagnostics and Telemetry latest/history are implemented. See [MQTT setup, API and reproduction](docs/MQTT_COMMUNICATION_IMPLEMENTATION.md) and [metadata rules](docs/IOT_METADATA_UPDATE_IMPLEMENTATION.md). Device installation date/cost are required; types/purposes are lowercase and Sensor unit is varchar(16). Business persistence and actuator task/control workflows remain outstanding.
-
-GitHub **main** now contains all existing branches through **PR #5**, merge commit **c71820d** (verified 2026-10-05). Its tree matches the integrated code that passed 89 tests, lint, typecheck and build. Feature branches remain available. User ERD/MQTT/Postman edits and local .env are preserved outside the integration commits. Branch descriptions below record the original module batches.
-
-The Devices base branch is **feat/devices-management**, based on merged main c71820d. Devices metadata, owner writes/Admin proposals, immutable UUID/ESP32 station_id and Active/Inactive installation status are implemented. Trees are related through the shared Zone; no TREES.device_id, fixed tree list or device auth_token. **98/98 tests, lint/typecheck/build passed.** MQTT hardware integration follows separately. Read [Devices implementation](docs/IOT_METADATA_UPDATE_IMPLEMENTATION.md), [final workflow](docs/IOT_METADATA_UPDATE_IMPLEMENTATION.md) and [handoff](docs/MODULE_HANDOFF.md). This new branch is committed locally and has not been pushed.
-
-Monorepo for a NestJS backend, React web and React Native Android application. The API includes database connectivity and local in-memory Auth/Users, catalogs, Cooperatives, Farm approvals, Zones, Farmer assignments, Trees, Tree Harvests, Devices, Sensors and Actuators; clients follow later.
-
-## Local API setup
-
-Requires Node.js 20.19+ and npm. Run from the repository root:
-
-```powershell
-npm install
-if (-not (Test-Path -LiteralPath .env)) { Copy-Item .env.example .env }
-docker compose up -d
-npm run dev:api
+```mermaid
+flowchart LR
+    Web[React web app] --> API[NestJS API]
+    API --> PG[(PostgreSQL)]
+    API --> Mongo[(MongoDB replica set)]
+    API --> AI[Private Python worker]
+    API --> Chat[Groq or Gemini]
+    API <--> MQTT[MQTT broker]
+    MQTT <--> ESP[ESP32 hardware]
 ```
 
-Health: http://localhost:3000/api/health (API liveness only).
-Swagger: http://localhost:3000/api/docs.
-OpenAPI JSON: http://localhost:3000/api/docs-json.
-Readiness: http://localhost:3000/api/health/ready (200 when both databases respond; 503 otherwise).
+The API and MQTT workers share repository instances. Persistent business data, private uploaded files and trained weights must survive application restarts. A single active controller owns actuator orchestration.
 
-Start Docker Desktop before running Compose. PostgreSQL and MongoDB are bound to localhost. Compose initializes MongoDB as a single-node replica set for later transactions. The API runs on the host; its MongoDB URI uses directConnection=true. This Compose setup is for local development only; MongoDB is not authenticated.
+## Getting started
 
-If .env already exists, add DATABASE_URL, MONGODB_URI and DB_TIMEOUT_MS from .env.example instead of overwriting your configuration. PostgreSQL Compose also requires POSTGRES_USER, POSTGRES_PASSWORD and POSTGRES_DB. Changing credentials does not modify an existing PostgreSQL volume.
+Requirements: Node compatible with the workspace engines, npm, Docker Compose and Python for image/PDF support. Copy `.env.example` to `.env` only on a new machine, then fill private configuration. Never overwrite an existing environment file.
 
 ```powershell
-docker compose ps -a
-docker compose logs mongo-init
-docker compose stop
+npm ci
+docker compose -p smart-durian-farm up -d
+npm run db:status
+npm run db:migrate
+npm run build
 ```
 
-Stopping containers preserves their database volumes.
+Run migrations only when pending; back up an existing installation first. Seed is an explicit development operation, never an automatic production startup step.
+
+Start separate terminals:
+
+```powershell
+npm run dev:ai
+npm run start:api
+npm run dev:web
+```
+
+Web: `http://127.0.0.1:5173` · API: `http://127.0.0.1:3000/api` · Local API documentation: `/api/docs`.
+
+Set up `ai/.venv` and place the separately supplied weights at `ai/models/disease/best.pt` before starting the AI worker. The [runbook](docs/RUNBOOK.md) covers Python installation, account setup, source PDFs, migrations, backup and recovery. Provider keys and private login references are intentionally absent from this repository.
+
+## Verification
 
 ```powershell
 npm run lint
 npm run typecheck
-npm run build
 npm test
-npm run test:integration --workspace @smart-durian/api
-npm run start --workspace @smart-durian/api
+npm run build
+npm run lint:web
+npm run typecheck:web
+npm run test:web
+npm run build:web
+npm run test:ai
+node tools/audit-data.cjs
 ```
 
-Business-module Postman collections use literal URLs/JSON: paste JWT/UUID/OTP manually, with no scripts or environment. The older Foundation collection has an optional Local environment. Only implemented endpoints are included. Do not export real credentials or tokens to Git.
+Browser and database regression use isolated fixtures; follow the runbook rather than pointing them at field databases. Automated fixtures do not replace real hardware, SMS/email, provider or production acceptance.
 
-## MQTT communication
+## Documentation
 
-MQTT defaults to disabled; fill broker settings in your local .env before enabling it. Missing MQTT keys were appended locally at the user's request on 2026-10-07, preserving existing values. DEMO_DEVICE_STATION_ID is an operator reference to copy into Device registration, not a routing/authentication setting. See the [demo configuration and UUID authorization guide](docs/MQTT_DEMO_AND_API_IDENTIFIERS.md). Backend subscribes to publish/station/+ and resolves each station through Devices metadata. Telemetry retains hardware units, and short ACKs do not confirm any task or relay state. Global diagnostics require Admin; Device diagnostics use current Farm/HTX/assignment read scope.
+| Guide | Contents |
+| --- | --- |
+| [Architecture](docs/ARCHITECTURE.md) | Components, business rules, authorization and known limits |
+| [Runbook](docs/RUNBOOK.md) | Rebuild, local execution, realistic data, tests and recovery |
+| [Deployment](docs/DEPLOYMENT.md) | Hosting choices, production blockers and release checklist |
+| [MQTT protocol](docs/MQTT_PROTOCOL.md) | Final hardware-tested wire contract |
 
-Import [MQTT manual Postman collection](docs/postman/MQTT-Communication-Local-Test.postman_collection.json) (12 requests) and [Telemetry collection](docs/postman/IOT-Telemetries-Local-Test.postman_collection.json) (20 requests); see the [MQTT guide](docs/MQTT_COMMUNICATION_IMPLEMENTATION.md) for setup and packet examples. Telemetry latest/history are in RAM, not MongoDB persistence. The outgoing builder/publisher remains internal; HTTP control, automation and actuator tasks are pending.
+Manual API collections remain in `docs/postman/`; copy JWTs/identifiers by hand without Postman scripts. OpenAPI is generated from the running API. Previous implementation notes, thesis diagrams and unused reference assets were consolidated after a local safety archive.
 
-## Structure
+## Repository layout
 
-- apps/api: REST API, MQTT communication and future database persistence.
-- apps/web: future React/Vite web.
-- apps/mobile: future React Native Android app.
-- ai: future AI/RAG work.
-- docs: specifications, ERD, implementation plan and Postman files.
+```text
+apps/api/      API, repositories, migrations and automated tests
+apps/web/      React application and browser checks
+ai/            Private image/PDF worker and corpus preparation tools
+assets/brand/  Brand files actually imported by the web application
+deploy/        Reviewed deployment templates; no automatic deployment
+docs/          Four maintained guides and manual API collections
+tools/         Read-only data acceptance checks
+```
 
-Database connection providers and readiness checks are implemented. Auth is available only as a local in-memory test module; migrations, seed and real authentication persistence remain outstanding. Connectivity readiness does not verify schema or seed. The ERD remains the schema authority.
-
-## Auth local test
-
-Set AUTH_MODE=mock, SMS_PROVIDER=mock, NODE_ENV=development and AUTH_TEST_PHONE, AUTH_TEST_PASSWORD, JWT_SECRET in .env using .env.example. Restart the API after changing config. Mock account mode binds to 127.0.0.1 and cannot run in production.
-
-Import docs/postman/Auth-Local-Test.postman_collection.json and the Local environment. Run requests 01 through 11 in order. The SMS outbox is simulated; no real SMS is sent and no database tables or real account records are created. Restart the API before each full run to restore the original test password.
-
-See docs/AUTH_IMPLEMENTATION.md for endpoint contracts, OTP limits and session continuation notes.
-
-## Real SMS demo
-
-The selected provider is **Twilio Verify**. Read [docs/TWILIO_VERIFY_INTEGRATION.md](docs/TWILIO_VERIFY_INTEGRATION.md). Keep AUTH_MODE=mock for in-memory accounts; set SMS_PROVIDER=twilio, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_VERIFY_SERVICE_SID, SMS_ALLOWED_PHONE matching AUTH_TEST_PHONE, and LIVE_SMS_ENABLED=true in your local .env. Set the Verify Service code length to 6. Never commit credentials. Mock defaults do not send paid SMS.
-
-Import only docs/postman/Twilio-Verify-Demo.postman_collection.json and open **Smart Durian Farm - Twilio Verify - Nhap JSON**. No environment, variables or scripts are needed. Enter JSON directly in Body: 01 login, 02 request SMS OTP, 03 enter the received code and new password, 04 login with the new password. Replace the sample phone with AUTH_TEST_PHONE. Twilio generates/checks the code. No new npm dependency, table or database write is required.
-
-## Users registration and Manager approval
-
-For the latest branch order and session setup, read [docs/MODULE_HANDOFF.md](docs/MODULE_HANDOFF.md).
-
-Read [docs/USERS_IMPLEMENTATION.md](docs/USERS_IMPLEMENTATION.md). Farmer registration becomes Active immediately; Manager verifies an email address through SMTP, registers Pending and becomes Active only when Admin approves and creates/assigns a Cooperative. Public Admin registration is rejected. Accounts and Cooperatives remain in memory; restarting clears registrations and restores configured fixtures.
-
-Nodemailer has been added for real verification email. Configure SMTP_USER/PASSWORD/FROM and EMAIL_PROVIDER=smtp in the root .env; Gmail sending requires an App Password. Recipient email can use any valid domain. Configure AUTH_TEST_ADMIN_PHONE/PASSWORD for the local Admin fixture. Preserve existing Twilio credentials. Profile email preferences and password-reset email fallback are future work.
-
-Import **docs/postman/Users-Local-Test.postman_collection.json**, open **Smart Durian Farm - Users - Nhap JSON**, and edit JSON directly. Copy verification_id, the emailed OTP, verification token, Manager id and Admin JWT manually as instructed in each request. No scripts or environment variables are required. The four-request Twilio collection is unchanged. USERS originally passed 29 automated tests; see MODULE_HANDOFF.md for the latest full-suite result, using fake transports without sending real email/SMS.
-
-## Agricultural materials catalog
-
-Admin can create/update/deactivate materials; Active users can read and search with pagination. Data stays in memory, without inventory management. See [docs/MATERIALS_IMPLEMENTATION.md](docs/MATERIALS_IMPLEMENTATION.md). Import docs/postman/Materials-Local-Test.postman_collection.json; edit literal JSON and paste the login JWT into Authorization. No new dependencies.
-
-## Farming standards catalog
-
-The same Admin-write/Active-user-read rules apply to standards. See [docs/STANDARDS_IMPLEMENTATION.md](docs/STANDARDS_IMPLEMENTATION.md) and import docs/postman/Standards-Local-Test.postman_collection.json. Standards now attach to Zones; new links require Active, and existing links remain when a standard is deactivated. No database write.
-
-## Standard-material links
-
-Admin can add/remove mappings between existing standards and materials; Active users can read a standard's materials. Both catalogs use shared stores and stay intact when a link is removed. Read [docs/STANDARD_MATERIALS_IMPLEMENTATION.md](docs/STANDARD_MATERIALS_IMPLEMENTATION.md), import docs/postman/Standard-Materials-Local-Test.postman_collection.json and follow its six JSON requests.
-
-## Farms and Cooperative membership
-
-Farm creation/updates require reciprocal Admin–owner-Farmer approval. Joining also requires the target Cooperative Manager; leaving only notifies that Manager after counterpart approval. Changes stay separate from official Farms until accepted. A Manager manages one Cooperative and reads only its member Farms; a Farmer reads owned Farms. Data, pending requests and Manager notifications remain in memory without schema changes.
-
-Read [docs/FARMS_IMPLEMENTATION.md](docs/FARMS_IMPLEMENTATION.md) and import **docs/postman/Farms-Local-Test.postman_collection.json**. Its 18 requests use literal URLs/JSON and manually pasted JWT/UUID values; no scripts/environment are needed. Creation/update tests need Farmer/Admin only; membership tests need a Manager previously email-verified and approved through USERS. Manager notifications are read through `/api/farm-notifications`. No additional npm install is required.
-
-See MODULE_HANDOFF.md for the latest integrated branch and validation; persistent approval/notification storage needs an ERD decision.
-
-## Zones
-
-Owner Farmers create/update Zones directly. Admin proposes changes for owner approval; Managers read only current member-Farm Zones. New standard links require Active; existing Inactive links remain. Total Zone area cannot exceed Farm area, including when accepting a Farm shrink. Read [docs/ZONES_IMPLEMENTATION.md](docs/ZONES_IMPLEMENTATION.md), import docs/postman/Zones-Local-Test.postman_collection.json and enter JSON/JWT/UUID directly. No new dependencies or .env values; all data stays in memory.
-
-## Farmer assignments
-
-Owners invite Farmers; Admin invitations additionally need owner approval. Assigned Farmers accept before obtaining access inside their assignment interval. Ending retains history and the original Zone snapshot. A prepared policy limits original-author correction to 15 days after end_date; journal/IoT modules will use these permission helpers when implemented. Read [docs/ASSIGNMENTS_IMPLEMENTATION.md](docs/ASSIGNMENTS_IMPLEMENTATION.md) and import docs/postman/Assignments-Local-Test.postman_collection.json. No scripts or environment are needed in Postman. Assignments are inherited by the integrated feat/tree-harvests-management branch; read MODULE_HANDOFF.md for validation and publication status.
-
-## Cooperatives
-
-Admin creates Cooperatives without a Manager and edits their information directly. Manager attachment uses the existing USERS approval flow. Managers can update their own Cooperative's name, director, address and contact number after email verification followed by SMS verification; only Admin edits its certificate number. OTP goes to the Manager account's email/phone, and changes apply only after both steps succeed.
-
-Unmanaged Cooperatives warn Admin after 7 days and are removed after 30 days only when no business records reference them. Notifications and lifecycle data stay in memory and disappear on restart. Read [docs/COOPERATIVES_IMPLEMENTATION.md](docs/COOPERATIVES_IMPLEMENTATION.md), import **docs/postman/Cooperatives-Local-Test.postman_collection.json** (20 manual requests). Its branch **feat/cooperatives-management** is inherited by feat/tree-harvests-management; no migrations/seed or database writes were added.
-
-For real Manager SMS, fill `TWILIO_HTX_VERIFY_SERVICE_SID` (a separate six-digit Verify Service) and `HTX_SMS_ALLOWED_PHONES` in your local .env. Blank keys were appended locally at the user's request; add missing keys from .env.example without overwriting existing values. Shared Twilio account credentials and SMTP remain as configured; Farmer reset service/allowlist stay unchanged. Without these optional HTX settings, existing Auth works and real HTX SMS returns 503. Automated checks use fake providers, never real .env credentials.
-
-## Trees
-
-Owner Farmers create/update Trees directly; Admin submits proposals for the correct owner to approve. Managers read Trees in their Cooperative's current Farms; assigned Farmers only read Trees in accepted, effective Zone assignments. Backend generates immutable DRN-UUID codes; no Zone transfer or hard delete. Dead/Removed can be restored to Active to correct mistakes, retaining metadata snapshots and the same code. Owner edits make older Admin proposals require rejection and resubmission.
-
-Read [docs/TREES_IMPLEMENTATION.md](docs/TREES_IMPLEMENTATION.md) and import **docs/postman/Trees-Local-Test.postman_collection.json** (20 manual requests). No new .env settings or dependencies. Trees on feat/trees-management are inherited by the latest Harvests branch below. QR public trace and cultivation follow separately.
-
-## Tree Harvests
-
-Owners enter harvests directly; other Farmers need an accepted, effective Zone assignment. Creator submits Draft for owner confirmation; owner-creators confirm automatically on submit. Initial confirmation leaves updated_by/updated_at null. Confirmed corrections retain original data while Pending; the current Cooperative Manager or Admin for an independent Farm approves changes and applies them immediately, recording the actual editor and update time.
-
-One harvest per Tree/day prevents conflicting entries. Multiple Trees share a batch code in the same Zone/day; individual confirmation keeps other Trees open for entry. Backdate up to seven Vietnam calendar days, beyond requires a scoped Admin permission. Former authors retain own history and can request correction, with the owner preparing changes. No Cultivation hash/15-minute lifecycle or extra business table; records/proposals/permissions remain in backend RAM.
-
-Read [docs/TREE_HARVESTS_IMPLEMENTATION.md](docs/TREE_HARVESTS_IMPLEMENTATION.md) and [final workflow design](docs/TREE_HARVESTS_WORKFLOW_DESIGN.md). Import **docs/postman/Tree-Harvests-Local-Test.postman_collection.json** (24 manual requests); replace dates, JWT and UUID manually. No new .env settings/dependencies or persistence. Latest integrated local branch: **feat/tree-harvests-management**, based on Trees d39c5ce; no push/merge.
-
-Harvests batch validation: **89/89 tests**, lint/typecheck/build passed. The Devices batch passed **98/98 tests**; the Sensors batch passed **107/107 tests** and the latest Actuators branch passes **116/116 tests**. If the Windows npm wrapper hits installation-path EPERM, use the equivalent local commands in the module guides.
-
-## Actuators metadata
-
-Owners create/update names and Active/Inactive metadata directly; Admin proposes for owner approval. Current reads follow Device → Zone → Farm. UUID actuator/device IDs remain distinct from numeric firmware capability_id. The unique pair is (device_id, capability_id); Device/capability/purpose are immutable, including while Inactive.
-
-Purpose enum watering / spraying / shared represents a shared pump with its own capability plus separate watering/spraying valves. Future dedicated pumps and valves may share the same purpose. The user updated both private ERD files during this session to include Shared; code and diagrams now agree, and those user edits remain outside this module commit. Active/Inactive does not toggle relays, and this batch does not send MQTT commands.
-
-Read [Actuators API and reproduction guide](docs/IOT_METADATA_UPDATE_IMPLEMENTATION.md); import **docs/postman/Actuators-Local-Test.postman_collection.json** (24 manual requests). Enter actual firmware capability IDs, copy JWT/UUID by hand. All data remains in RAM; no new .env settings/dependencies/migrations/seed. Next: discuss and implement MQTT core separately.
-
-## Sensors metadata
-
-Owners create/update Sensors directly; Admin proposes for owner approval. Reads follow Device → Zone scope. UUID device_id and data_stream_id form the unique stream pair; identical stream IDs on different Devices are allowed. Type/identity stay fixed; unit is an editable expected-unit string of 1–16 characters. Thresholds are both null or both numeric with min < max; unit edits do not convert values.
-
-Read [Sensors API and reproduction guide](docs/IOT_METADATA_UPDATE_IMPLEMENTATION.md); import **docs/postman/Sensors-Local-Test.postman_collection.json** (24 manual requests). Copy JWT/Device UUID/Sensor UUID/Request UUID by hand. Metadata/history remain in backend RAM. No new .env settings, dependencies, MQTT/telemetry/control, migrations or seed.
-
-## Devices metadata
-
-Owners register hardware stations and edit installation dates/cost/status directly; Admin proposals require the correct owner's approval. Manager/current assigned-Farmer reads reuse the existing Farm/Zone/assignment scope. UUID id and immutable unique station_id remain distinct; Active/Inactive records are retained without moving Zone or deleting the station. Trees in the Device's Zone are read directly from the shared Trees store. Metadata does not establish MQTT connectivity or send control commands.
-
-Read [Devices API and reproduction guide](docs/IOT_METADATA_UPDATE_IMPLEMENTATION.md); import **docs/postman/Devices-Local-Test.postman_collection.json** (24 manual requests). Copy JWT/UUID/station_id by hand. No new .env settings/dependencies, auth_token, TREES.device_id, migrations or seed. All data stays in backend RAM and disappears on restart.
+Deployment is a separate, explicit operation. Review the production authentication and broker-access gates before exposing this application publicly. `.env`, private accounts, model weights, PDFs, uploaded files, test outputs and database backups must remain outside Git.

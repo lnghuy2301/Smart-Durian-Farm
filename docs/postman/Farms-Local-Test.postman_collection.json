@@ -2,7 +2,7 @@
   "info": {
     "name": "Smart Durian Farm - Farms - Nhap JSON",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Đọc docs/FARMS_IMPLEMENTATION.md. URL/JSON trực tiếp, không Scripts/Environment. JWT và UUID copy bằng tay. 01→03→02→05→06 tạo Farm. Gia nhập: 11→05(Admin)→13(Manager), đủ hai duyệt mới Accepted. Rời: 14→15(Admin)→16(Manager nhận thông báo). Manager/HTX tạo qua collection USERS với email đã xác minh; không có fixture Manager bỏ xác minh."
+    "description": "Đọc docs/RUNBOOK.md. URL/JSON trực tiếp, không Scripts/Environment. JWT và UUID copy bằng tay. 01→03→02→05→06 tạo Farm. Gia nhập: 11→05(Admin)→13(Manager), đủ hai duyệt mới Accepted. Rời: 14→15(Admin)→16(Manager nhận thông báo). Manager/HTX tạo qua collection USERS với email đã xác minh; không có fixture Manager bỏ xác minh."
   },
   "item": [
     {

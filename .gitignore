@@ -8,3 +8,10 @@ coverage/
 !.env.example
 *.log
 test-results/
+backups/
+# Local acceptance guide contains login credentials; never publish it.
+/docs/LOCAL_MODULE_ACCEPTANCE.private.md
+# Editor/OS metadata is not application source.
+.DS_Store
+Thumbs.db
+*.tsbuildinfo

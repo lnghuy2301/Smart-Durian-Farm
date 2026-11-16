@@ -1,0 +1,4 @@
+-r requirements.txt
+# Match Ultralytics/Torch versions with the Colab training environment before
+# deployment; this optional dependency is not downloaded for scaffold tests.
+ultralytics==8.4.189

@@ -33,6 +33,13 @@ export class StandardMaterialsService {
     return { standard_id: standardId, ...this.materials.list(query, materialIds) };
   }
 
+  // Internal lookup for journal snapshots; uses the same bridge as the API.
+  has(standardId: string, materialId: string): boolean {
+    this.standards.get(standardId);
+    this.materials.get(materialId);
+    return this.links.get(standardId)?.has(materialId) ?? false;
+  }
+
   remove(standardId: string, materialId: string): void {
     this.standards.get(standardId);
     this.materials.get(materialId);

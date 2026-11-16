@@ -1,14 +1,15 @@
-import { Body, Controller, Get, Inject, Param, ParseUUIDPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Header, Inject, Param, ParseUUIDPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard, AuthRequest } from '../auth/auth.guard';
 import { EmptyFarmActionDto, FarmRequestListDto, RejectFarmRequestDto } from '../farms/farms.dto';
-import { AssignmentListDto, CreateAssignmentRequestDto } from './assignments.dto';
-import { AssignmentsService } from './assignments.service';
+import { AssignmentListDto, CreateAssignmentRequestDto, AssignmentCandidateQueryDto } from './assignments.dto';
+import { WindowRateLimiter } from '../auth/rate-limiter';
+import { AssignmentRecords } from './assignment-records';
 
 @ApiTags('zone-assignments-local-test') @ApiBearerAuth() @UseGuards(AuthGuard)
 @Controller('zone-assignments')
 export class AssignmentsController {
-  constructor(@Inject(AssignmentsService) private readonly assignments: AssignmentsService) {}
+  constructor(@Inject(AssignmentRecords) private readonly assignments: AssignmentRecords) {}
 
   @Get()
   list(@Req() request: AuthRequest, @Query() query: AssignmentListDto) { return this.assignments.list(request.user!.id, query); }
@@ -33,7 +34,15 @@ export class AssignmentsController {
 @ApiTags('assignment-requests-local-test') @ApiBearerAuth() @UseGuards(AuthGuard)
 @Controller()
 export class AssignmentRequestsController {
-  constructor(@Inject(AssignmentsService) private readonly assignments: AssignmentsService) {}
+  private readonly candidateLimiter = new WindowRateLimiter();
+  constructor(@Inject(AssignmentRecords) private readonly assignments: AssignmentRecords) {}
+
+  @Get('zones/:id/assignment-candidates')
+  @Header('Cache-Control', 'no-store')
+  candidates(@Req() request: AuthRequest, @Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Query() query: AssignmentCandidateQueryDto) {
+    this.candidateLimiter.take('assignment-candidates', 20, request.user!.id);
+    return this.assignments.candidates(request.user!.id, id, query.q);
+  }
 
   @Post('zones/:id/assignment-requests')
   create(@Req() request: AuthRequest, @Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Body() body: CreateAssignmentRequestDto) {

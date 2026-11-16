@@ -3,12 +3,12 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard, AuthRequest } from '../auth/auth.guard';
 import { EmptyFarmActionDto, FarmPageDto, FarmRequestListDto, RejectFarmRequestDto } from '../farms/farms.dto';
 import { CreateSensorDto, SensorListDto, SensorStreamParamDto, UpdateSensorDto } from './sensors.dto';
-import { SensorsService } from './sensors.service';
+import { SensorRecords } from './sensor-records';
 
 @ApiTags('sensors-local-test') @ApiBearerAuth() @UseGuards(AuthGuard)
 @Controller('sensors')
 export class SensorsController {
-  constructor(@Inject(SensorsService) private readonly sensors: SensorsService) {}
+  constructor(@Inject(SensorRecords) private readonly sensors: SensorRecords) {}
 
   @Get()
   list(@Req() req: AuthRequest, @Query() query: SensorListDto) { return this.sensors.list(req.user!.id, query); }
@@ -46,7 +46,7 @@ export class SensorsController {
 @ApiTags('sensor-requests-local-test') @ApiBearerAuth() @UseGuards(AuthGuard)
 @Controller('sensor-requests')
 export class SensorRequestsController {
-  constructor(@Inject(SensorsService) private readonly sensors: SensorsService) {}
+  constructor(@Inject(SensorRecords) private readonly sensors: SensorRecords) {}
 
   @Get()
   list(@Req() req: AuthRequest, @Query() query: FarmRequestListDto) { return this.sensors.listRequests(req.user!.id, query); }

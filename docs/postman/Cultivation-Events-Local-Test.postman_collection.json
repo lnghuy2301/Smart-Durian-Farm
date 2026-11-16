@@ -1,0 +1,541 @@
+{
+  "info": {
+    "name": "Smart Durian Farm — Cultivation Events (nhập JSON, copy JWT/UUID/ObjectId)",
+    "description": "25 literal requests; no scripts, variables or environments. Setup: docs/RUNBOOK.md. Replace every PASTE_* manually. RAM only, Pending15min then Locked; no auto journal from hardware ACK.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 Owner login — copy access_token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "http://localhost:3000/api/auth/login",
+        "description": "Dùng tài khoản Chủ Farm hiện có. Không dùng giá trị placeholder; thay bằng cấu hình local và copy access_token. Không lưu token/mật khẩu thật trong file Git.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone_number\": \"PASTE_OWNER_PHONE\",\n  \"password\": \"PASTE_OWNER_PASSWORD\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "02 Admin login — read only Cultivation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "http://localhost:3000/api/auth/login",
+        "description": "Admin cần để duyệt Farm trong collection Farms nếu chưa có Farm. Trong Cultivation chỉ đọc.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone_number\": \"PASTE_ADMIN_PHONE\",\n  \"password\": \"PASTE_ADMIN_PASSWORD\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "03 Find owned Farm UUID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/farms",
+        "description": "Nếu chưa có Farm: chạy Farms-Local-Test collection, tạo yêu cầu Owner rồi Admin duyệt. RAM reset khi restart API."
+      }
+    },
+    {
+      "name": "04 Find Zone and standard UUID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/zones?farm_id=PASTE_FARM_UUID",
+        "description": "Nếu chưa có Zone: dùng Zones-Local-Test collection, Chủ Farm tạo Zone với standard Active. Copy Zone.id và standard_id."
+      }
+    },
+    {
+      "name": "05 Find Tree UUID in Zone",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/trees?zone_id=PASTE_ZONE_UUID",
+        "description": "Nếu chưa có Tree: dùng Trees-Local-Test collection. target_id là Tree.id, không phải tree_code."
+      }
+    },
+    {
+      "name": "06 Find Active material UUID and unit",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/materials?status=Active",
+        "description": "Dùng Materials collection để Admin thêm vật tư nếu danh mục rỗng; quantity sẽ dùng unit trong response."
+      }
+    },
+    {
+      "name": "07 Read Zone standard material links",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/standards/PASTE_STANDARD_UUID/materials",
+        "description": "Không có link vẫn ghi nhật ký được với MATERIAL_OUTSIDE_STANDARD; không có nghĩa chứng nhận đạt tiêu chuẩn."
+      }
+    },
+    {
+      "name": "08 Create Zone Watering — copy BASE_OBJECTID",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/cultivation-events",
+        "description": "201 Pending. Copy _id 24 ký tự, lock_at. Không dùng UUID cho event. Không xác nhận bằng tay.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"target_type\": \"Zone\",\n  \"target_id\": \"PASTE_ZONE_UUID\",\n  \"action_type\": \"Watering\",\n  \"details\": {\n    \"duration_minutes\": 5,\n    \"water_volume_l\": 20,\n    \"note\": \"Tưới thực tế, nhập thủ công\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "09 Create single Tree Spraying",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/cultivation-events",
+        "description": "201 Pending; giữ snapshot vật tư. Tree chỉ đại diện cây này; không áp cho cả Zone.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"target_type\": \"Tree\",\n  \"target_id\": \"PASTE_TREE_UUID\",\n  \"action_type\": \"Spraying\",\n  \"details\": {\n    \"materials\": [\n      {\n        \"material_id\": \"PASTE_ACTIVE_MATERIAL_UUID\",\n        \"quantity\": 2\n      }\n    ],\n    \"note\": \"Phun riêng cây; unit lấy từ danh mục\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "10 Create Tree Fertilizing",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/cultivation-events",
+        "description": "Quantity >0, tối đa 3 số lẻ; unit do server lấy từ danh mục.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"target_type\": \"Tree\",\n  \"target_id\": \"PASTE_TREE_UUID\",\n  \"action_type\": \"Fertilizing\",\n  \"details\": {\n    \"materials\": [\n      {\n        \"material_id\": \"PASTE_ACTIVE_MATERIAL_UUID\",\n        \"quantity\": 1\n      }\n    ]\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "11 Create disposable Pending — copy DELETE_OBJECTID",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/cultivation-events",
+        "description": "Dùng bản này cho request xóa, không dùng bản BASE đã giữ để correction.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"target_type\": \"Zone\",\n  \"target_id\": \"PASTE_ZONE_UUID\",\n  \"action_type\": \"Watering\",\n  \"details\": {\n    \"duration_minutes\": 5,\n    \"water_volume_l\": 20,\n    \"note\": \"Tưới thực tế, nhập thủ công\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "12 Edit Pending target/action, same Zone",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/cultivation-events/PASTE_BASE_OBJECTID",
+        "description": "200 nếu trước lock_at và đúng tác giả. details thay toàn bộ; đổi action_type phải gửi details. Tree thuộc Zone gốc.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"target_type\": \"Tree\",\n  \"target_id\": \"PASTE_TREE_UUID\",\n  \"action_type\": \"Spraying\",\n  \"details\": {\n    \"materials\": [\n      {\n        \"material_id\": \"PASTE_ACTIVE_MATERIAL_UUID\",\n        \"quantity\": 2\n      }\n    ],\n    \"note\": \"Phun riêng cây; unit lấy từ danh mục\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "13 Read event",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/cultivation-events/PASTE_BASE_OBJECTID",
+        "description": "Pending: locked_at/hash/previous_hash null. created_at và lock_at không đổi khi PATCH."
+      }
+    },
+    {
+      "name": "14 List visible Zone journals",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/cultivation-events?zone_id=PASTE_ZONE_UUID&limit=20&offset=0",
+        "description": "Farmer đang phụ trách xem toàn bộ tác giả trong Zone; hết việc chỉ nhật ký của mình. Đổi Authorization bằng JWT Farmer để thử."
+      }
+    },
+    {
+      "name": "15 List own journals including ended assignments",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/cultivation-events/mine?limit=20&offset=0",
+        "description": "Không cấp lại quyền xem toàn bộ Zone. Chỉ lọc tác giả từ JWT."
+      }
+    },
+    {
+      "name": "16 List exact Tree target",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/cultivation-events?target_type=Tree&target_id=PASTE_TREE_UUID",
+        "description": "Không tự gộp Zone-target vào Tree-target. Luồng QR public/effective view triển khai riêng."
+      }
+    },
+    {
+      "name": "17 Delete disposable Pending",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/cultivation-events/PASTE_DELETE_OBJECTID",
+        "description": "204 chỉ tác giả, trước lock_at và còn quyền sửa theo context gốc. Đúng deadline trả409; ngoài tác giả403."
+      }
+    },
+    {
+      "name": "18 After lock_at, read Locked BASE",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/cultivation-events/PASTE_BASE_OBJECTID",
+        "description": "Đợi ít nhất tới lock_at trả từ backend. Worker30s hoặc chính GET sẽ khóa; không đổi đồng hồ máy demo, không chỉnh .env để rút 15 phút."
+      }
+    },
+    {
+      "name": "19 Reject Locked edit — expected409",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/cultivation-events/PASTE_BASE_OBJECTID",
+        "description": "Không sửa hoặc mở khóa Locked, bất kể worker có chậm.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"details\": {\n    \"duration_minutes\": 8\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "20 Reject Locked delete — expected409",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/cultivation-events/PASTE_BASE_OBJECTID",
+        "description": "Không xóa Locked; nguyên bản vẫn tồn tại."
+      }
+    },
+    {
+      "name": "21 Correct latest Locked — copy CORRECTION_OBJECTID",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/cultivation-events/PASTE_BASE_OBJECTID/corrections",
+        "description": "201 Pending mới; reference_event_id=BASE, root_event_id=BASE. Không sửa BASE. Nếu đã có correction, tham chiếu Locked mới nhất; một correction Pending/root.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"target_type\": \"Zone\",\n  \"target_id\": \"PASTE_ZONE_UUID\",\n  \"action_type\": \"Watering\",\n  \"details\": {\n    \"duration_minutes\": 5,\n    \"water_volume_l\": 20,\n    \"note\": \"Tưới thực tế, nhập thủ công\"\n  },\n  \"correction_reason\": \"Đã nhập nhầm hoạt động/target\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "22 Edit own Pending correction",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/cultivation-events/PASTE_CORRECTION_OBJECTID",
+        "description": "Giữ nguyên root/reference/reason và deadline; details là replacement, water_volume_l bỏ qua =>null. Kiểm tra phân công gốc nếu là người nhận việc.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"details\": {\n    \"duration_minutes\": 8,\n    \"note\": \"Nội dung đã chỉnh\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "23 Read lineage, original first",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/cultivation-events/PASTE_BASE_OBJECTID/corrections?limit=20&offset=0",
+        "description": "Gồm bản gốc và correction Pending/Locked. Pending chưa có hiệu lực thay thế bản Locked trước."
+      }
+    },
+    {
+      "name": "24 Verify full Locked Zone chain",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_OWNER_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/cultivation-events/zones/PASTE_ZONE_UUID/chain/verify",
+        "description": "valid/locked_events/tail_hash/failure. Chỉ quyền Zone hiện tại; Farmer đã hết việc không xem full chain. Chỉ Locked tham gia."
+      }
+    },
+    {
+      "name": "25 Admin read — no mutation",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer PASTE_ADMIN_JWT"
+          }
+        ],
+        "url": "http://localhost:3000/api/cultivation-events?zone_id=PASTE_ZONE_UUID",
+        "description": "Manager đọc tương tự với JWT Manager HTX chứa Farm; không tạo/sửa/xóa/correction."
+      }
+    }
+  ]
+}

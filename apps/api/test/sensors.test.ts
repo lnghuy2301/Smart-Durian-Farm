@@ -6,8 +6,36 @@ import { AssignmentsService } from '../src/assignments/assignments.service';
 import { DevicesService } from '../src/devices/devices.service';
 import { SensorsService, SENSOR_LIMIT, SENSOR_HISTORY_LIMIT, SENSOR_REQUEST_LIMIT } from '../src/sensors/sensors.service';
 import { TestSensor } from '../src/sensors/sensors.types';
+import { SensorRecords } from '../src/sensors/sensor-records';
+import { MemorySensorRecords } from '../src/sensors/memory-sensor-records';
 
 const page = { limit: 20, offset: 0 };
+
+test('Sensor async port shares metadata and stream lookup with the MQTT service store', async () => {
+  const f=await fixture();
+  try {
+    const port=f.app.get(SensorRecords);
+    assert.equal(port,f.app.get(MemorySensorRecords));
+    const sensor=await port.create(f.owner.id,f.inputSensor);
+    assert.deepEqual(f.sensors.getRecordByStream(f.device.id,sensor.data_stream_id),sensor);
+    f.sensors.update(f.owner.id,sensor.id,{unit:'C'});
+    assert.equal((await port.getRecordByStream(f.device.id,sensor.data_stream_id)).unit,'C');
+  } finally { await f.app.close(); }
+});
+
+test('Sensor HTTP registers six semantic types and keeps type immutable for new streams', async () => {
+  const f = await fixture();
+  try {
+    const token = await f.login(f.owner.phone_number);
+    for (const [id, type, unit] of [[304, 'soil_temperature', 'C'], [305, 'soil_ph', 'H+'], [306, 'soil_ec', 'μS/cm']] as const) {
+      const response = await f.http('sensors', 'POST', { device_id: f.device.id, name: type, sensor_type: type, data_stream_id: String(id), unit }, token);
+      assert.equal(response.status, 201);
+      const sensor = await response.json() as TestSensor;
+      assert.equal(sensor.sensor_type, type); assert.equal(sensor.unit, unit);
+      assert.equal((await f.http(`sensors/${sensor.id}`, 'PATCH', { sensor_type: 'air_temperature' }, token)).status, 400);
+    }
+  } finally { await f.app.close(); }
+});
 async function fixture() {
   const f = await zoneFixture();
   const zone = f.zones.create(f.owner.id, f.input);

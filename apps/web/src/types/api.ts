@@ -28,6 +28,8 @@ export interface Material {
   name: string;
   material_type: "Fertilizer" | "Pesticide" | "Biological";
   default_dosage: string;
+  default_dosage_value?: number | null;
+  dosage_basis?: string | null;
   unit: string;
   quarantine_days: number;
   status: CatalogStatus;
@@ -119,8 +121,22 @@ export interface Sensor {
   min_threshold: number | null;
   max_threshold: number | null;
   status: CatalogStatus;
-  sensor_type: "air_temperature" | "air_humidity" | "soil_moisture";
+  sensor_type:
+    | "air_temperature"
+    | "air_humidity"
+    | "soil_moisture"
+    | "soil_temperature"
+    | "soil_ph"
+    | "soil_ec";
   data_stream_id: string;
+}
+export interface Actuator {
+  id: string;
+  device_id: string;
+  name: string;
+  purpose: "watering" | "spraying" | "shared";
+  capability_id: number;
+  status: CatalogStatus;
 }
 export interface AssignmentHistory {
   assignment: {
@@ -157,7 +173,7 @@ export interface TelemetryRecord {
 export interface TelemetryPage extends Page<TelemetryRecord> {
   device_id: string;
   storage: {
-    mode: "Memory";
+    mode: "Memory" | "MongoDB";
     capacity_readings: number;
     eviction: "OldestInserted";
   };

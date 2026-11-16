@@ -1,30 +1,30 @@
-import { Body, Controller, Get, Inject, Param, ParseUUIDPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, ParseUUIDPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from '../auth/auth.guard';
+import { AuthGuard, AuthRequest } from '../auth/auth.guard';
 import { AdminGuard } from '../users/admin.guard';
 import { CreateStandardDto, StandardListDto, UpdateStandardDto } from './standards.dto';
-import { StandardsService } from './standards.service';
+import { StandardRecords } from '../catalog/catalog-records';
 
 @ApiTags('farming-standards-local-test')
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
 @Controller('standards')
 export class StandardsController {
-  constructor(@Inject(StandardsService) private readonly standards: StandardsService) {}
+  constructor(@Inject(StandardRecords) private readonly standards: StandardRecords) {}
 
   @Get()
-  list(@Query() query: StandardListDto) { return this.standards.list(query); }
+  list(@Req() request: AuthRequest, @Query() query: StandardListDto) { return this.standards.list(request.user!.id, query); }
 
   @Get(':id')
-  get(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) { return this.standards.get(id); }
+  get(@Req() request: AuthRequest, @Param('id', new ParseUUIDPipe({ version: '4' })) id: string) { return this.standards.get(request.user!.id, id); }
 
   @Post()
   @UseGuards(AdminGuard)
-  create(@Body() body: CreateStandardDto) { return this.standards.create(body); }
+  create(@Req() request: AuthRequest, @Body() body: CreateStandardDto) { return this.standards.create(request.user!.id, body); }
 
   @Patch(':id')
   @UseGuards(AdminGuard)
-  update(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Body() body: UpdateStandardDto) {
-    return this.standards.update(id, body);
+  update(@Req() request: AuthRequest, @Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Body() body: UpdateStandardDto) {
+    return this.standards.update(request.user!.id, id, body);
   }
 }

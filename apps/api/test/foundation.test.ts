@@ -9,6 +9,14 @@ const databaseEnv = {
   MONGODB_URI: 'mongodb://127.0.0.1:27017/test',
 };
 
+test('database is the development default, tests remain isolated and invalid storage modes are rejected', () => {
+  assert.equal(readEnvironment({ ...databaseEnv, NODE_ENV: 'development' }).storage, 'database');
+  assert.equal(readEnvironment({ ...databaseEnv, NODE_ENV: 'test' }).storage, 'memory');
+  assert.equal(readEnvironment({ ...databaseEnv, NODE_ENV: 'test', BUSINESS_STORAGE: 'database' }).storage, 'database');
+  assert.equal(readEnvironment({ ...databaseEnv, BUSINESS_STORAGE: 'memory' }).storage, 'memory');
+  assert.throws(() => readEnvironment({ ...databaseEnv, BUSINESS_STORAGE: 'mixed' }), /BUSINESS_STORAGE/);
+});
+
 test('rejects invalid ports and unsafe CORS configuration', () => {
   for (const PORT of ['0', '65536', '3000.5', 'abc', '']) {
     assert.throws(() => readEnvironment({ ...databaseEnv, PORT }));

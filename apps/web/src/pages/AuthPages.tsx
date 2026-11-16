@@ -25,7 +25,7 @@ function Phone({
     <Field
       label="Số điện thoại"
       hint={
-        fresh ? undefined : "Dùng đúng số đã đăng ký, kể cả tiền tố +84 hoặc 0."
+        fresh ? undefined : "Số đã đăng ký có thể nhập bằng dạng 0 hoặc +84."
       }
     >
       <input
@@ -54,6 +54,15 @@ function Password({
   fresh?: boolean;
 }) {
   const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const hide = () => setVisible(false);
+    window.addEventListener("blur", hide);
+    document.addEventListener("visibilitychange", hide);
+    return () => {
+      window.removeEventListener("blur", hide);
+      document.removeEventListener("visibilitychange", hide);
+    };
+  }, []);
   return (
     <Field label={label} hint={fresh ? "Từ 8 đến 128 ký tự." : undefined}>
       <span className="password-input">
@@ -69,8 +78,25 @@ function Password({
         />
         <button
           type="button"
-          aria-label={visible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-          onClick={() => setVisible(!visible)}
+          aria-label="Nhấn giữ để xem mật khẩu"
+          aria-pressed={visible}
+          onPointerDown={(event) => {
+            if (event.button !== 0) return;
+            event.currentTarget.setPointerCapture(event.pointerId);
+            setVisible(true);
+          }}
+          onPointerUp={() => setVisible(false)}
+          onPointerCancel={() => setVisible(false)}
+          onLostPointerCapture={() => setVisible(false)}
+          onPointerLeave={() => setVisible(false)}
+          onKeyDown={(event) => {
+            if (event.key === " " || event.key === "Enter") {
+              event.preventDefault();
+              setVisible(true);
+            }
+          }}
+          onKeyUp={() => setVisible(false)}
+          onBlur={() => setVisible(false)}
         >
           {visible ? <EyeOff size={19} /> : <Eye size={19} />}
         </button>
@@ -267,8 +293,8 @@ export function RegisterPage() {
         <h1>Đăng ký thành công</h1>
         <Notice kind="success">
           {created.role === "Manager"
-            ? "Tài khoản Manager đang chờ Admin duyệt và gắn hợp tác xã. Bạn có thể đăng nhập sau khi được kích hoạt."
-            : "Tài khoản Farmer đã được kích hoạt. Đăng nhập để tiếp tục."}
+            ? "Tài khoản Quản lý HTX đang chờ Admin duyệt và gắn hợp tác xã. Bạn có thể đăng nhập sau khi được kích hoạt."
+            : "Tài khoản Nhà nông đã được kích hoạt. Đăng nhập để tiếp tục."}
         </Notice>
         <Link className="button full" to="/login">
           Về trang đăng nhập
@@ -291,7 +317,7 @@ export function RegisterPage() {
           }}
         >
           <Leaf size={18} />
-          Farmer
+          Nhà nông
         </button>
         <button
           type="button"
@@ -303,7 +329,7 @@ export function RegisterPage() {
           }}
         >
           <ShieldCheck size={18} />
-          Manager HTX
+          Quản lý HTX
         </button>
       </div>
       <form
@@ -313,43 +339,48 @@ export function RegisterPage() {
         }}
       >
         <fieldset disabled={task.busy}>
-          <Field label="Họ và tên">
-            <input
-              autoComplete="name"
-              required
-              maxLength={40}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </Field>
-          <Phone
-            fresh
-            value={phone}
-            onChange={(value) => {
-              setPhone(value);
-              resetEmail();
-            }}
-          />
           <div
-            className="registration-email"
-            data-expanded={role === "Manager"}
-            aria-hidden={role !== "Manager"}
-            inert={role !== "Manager"}
+            className="registration-identity-fields"
+            data-manager={role === "Manager"}
           >
-            <div className="registration-email-inner">
-              <Field label="Email (bắt buộc xác minh)">
-                <input
-                  type="email"
-                  autoComplete="email"
-                  required={role === "Manager"}
-                  disabled={role !== "Manager"}
-                  value={gmail}
-                  onChange={(e) => {
-                    setGmail(e.target.value);
-                    resetEmail();
-                  }}
-                />
-              </Field>
+            <Field label="Họ và tên">
+              <input
+                autoComplete="name"
+                required
+                maxLength={40}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </Field>
+            <Phone
+              fresh
+              value={phone}
+              onChange={(value) => {
+                setPhone(value);
+                resetEmail();
+              }}
+            />
+            <div
+              className="registration-email"
+              data-expanded={role === "Manager"}
+              aria-hidden={role !== "Manager"}
+              inert={role !== "Manager"}
+            >
+              <div className="registration-email-inner">
+                <Field label="Email (bắt buộc xác minh)">
+                  <input
+                    type="email"
+                    autoComplete="email"
+                    required={role === "Manager"}
+                    disabled={role !== "Manager"}
+                    value={gmail}
+                    onChange={(e) => {
+                      setGmail(e.target.value);
+                      resetEmail();
+                    }}
+                  />
+                </Field>
+              </div>
             </div>
           </div>
           <Password fresh value={password} onChange={setPassword} />
@@ -360,8 +391,8 @@ export function RegisterPage() {
               aria-hidden={role !== "Farmer"}
             >
               <Notice>
-                Đăng ký Farmer để quản lý vườn và công việc được cấp quyền. Tài
-                khoản được kích hoạt ngay sau khi đăng ký.
+                Đăng ký Nhà nông để quản lý vườn và công việc được cấp quyền.
+                Tài khoản được kích hoạt ngay sau khi đăng ký.
               </Notice>
             </div>
             <div
@@ -370,7 +401,7 @@ export function RegisterPage() {
               aria-hidden={role !== "Manager"}
             >
               <Notice>
-                Manager cần xác minh email. Tài khoản được kích hoạt sau khi
+                Quản lý HTX cần xác minh email. Tài khoản được kích hoạt sau khi
                 Admin duyệt và gắn hợp tác xã.
               </Notice>
             </div>

@@ -52,6 +52,7 @@ export function parseIncoming(topic: string, payload: Buffer): IncomingMessage {
     });
     return { kind: 'Telemetry', stationId, readings };
   }
+  if ('taskId' in parsed && parsed.status !== 'ACK') { throw new MqttProtocolError('INVALID_ACK_STATUS'); }
   if (parsed.status === 'ACK') {
     // Contract v1.0: ACK xác nhận nhận lệnh, không phải đo trạng thái relay.
     // Giữ ID/action để domain đối chiếu cùng Device; ACK cũ không thể xác nhận task.
@@ -79,7 +80,7 @@ export function buildControlPublication(stationId: string, targets: ControlTarge
       || taskIds.has(target.taskId) || capabilityIds.has(target.taskingCapabilityId)) { throw new MqttProtocolError('INVALID_TARGET'); }
     taskIds.add(target.taskId); capabilityIds.add(target.taskingCapabilityId);
   }
-  // Copy only verified fields. IDs must come from future task service and configured Actuator metadata.
+  // Copy only frozen protocol fields; the task allocator and Actuator metadata supply the IDs.
   const command: ControlCommand = { targets: targets.map(({ taskId, taskingCapabilityId }) => ({ taskId, taskingCapabilityId })),
     taskingParameters: { actionType: 'control', action } };
   return { topic: `subscribe/station/${stationId}`, payload: JSON.stringify(command) };

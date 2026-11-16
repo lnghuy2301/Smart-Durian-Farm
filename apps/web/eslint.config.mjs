@@ -19,7 +19,15 @@ export default tseslint.config(
     },
   },
   {
-    files: ["test/e2e.mjs"],
+    files: [
+      "test/e2e.mjs",
+      "test/traceability-browser.mjs",
+      "test/workflows-browser.mjs",
+      "test/actuator-control-browser.mjs",
+      "test/role-navigation-browser.mjs",
+      "test/pdf-review-browser.mjs",
+      "test/database-runtime-browser.mjs",
+    ],
     languageOptions: {
       globals: {
         document: "readonly",

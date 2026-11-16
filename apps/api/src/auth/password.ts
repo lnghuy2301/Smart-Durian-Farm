@@ -22,7 +22,7 @@ export async function hashPassword(password: string): Promise<string> {
   return `${PREFIX}$${salt.toString('base64url')}$${key.toString('base64url')}`;
 }
 
-export async function verifyPassword(password: string, encodedHash: string): Promise<boolean> {
+export function isPasswordHash(encodedHash: string): boolean {
   const parts = encodedHash.split('$');
   // Chỉ chấp nhận cấu hình do hệ thống tạo, tránh hash hỏng yêu cầu RAM/CPU quá lớn.
   if (parts.length !== 6 || parts.slice(0, 4).join('$') !== PREFIX) { return false; }
@@ -32,6 +32,14 @@ export async function verifyPassword(password: string, encodedHash: string): Pro
       salt.toString('base64url') !== parts[4] || expected.toString('base64url') !== parts[5]) {
     return false;
   }
+  return true;
+}
+
+export async function verifyPassword(password: string, encodedHash: string): Promise<boolean> {
+  if (!isPasswordHash(encodedHash)) { return false; }
+  const parts = encodedHash.split('$');
+  const salt = Buffer.from(parts[4], 'base64url');
+  const expected = Buffer.from(parts[5], 'base64url');
   const actual = await deriveKey(password, salt);
   // So sánh constant-time, không dừng sớm tại byte đầu tiên khác nhau.
   return timingSafeEqual(actual, expected);

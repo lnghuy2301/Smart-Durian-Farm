@@ -1,0 +1,576 @@
+{
+  "info": {
+    "name": "AI Backend - Manual JWT and IDs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "See docs/RUNBOOK.md. Paste JWT directly into each request Authorization tab. Replace UUID/ObjectId manually. Select local image/PDF in Body. No scripts/environment. Worker localhost:8001, API localhost:3000. Missing best.pt or disabled chat provider returns 503 without fabricated history."
+  },
+  "item": [
+    {
+      "name": "Farmer delete own conversation and embedded messages",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_FARMER_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://localhost:3000/api/ai/conversations/PASTE_CONVERSATION_OBJECT_ID",
+        "description": "Permanently deletes only this Farmer's conversation and all embedded messages. Confirm before sending. Returns 200 {deleted:true}; another Farmer, unknown or already deleted ID returns 404; Admin/Manager 403; malformed ObjectId 400. No request body or provider call."
+      },
+      "response": []
+    },
+    {
+      "name": "Farmer status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_FARMER_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/status"
+      },
+      "response": []
+    },
+    {
+      "name": "Farmer model readiness and classes",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_FARMER_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/model"
+      },
+      "response": []
+    },
+    {
+      "name": "Farmer history",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_FARMER_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/diagnoses?limit=10&offset=0"
+      },
+      "response": []
+    },
+    {
+      "name": "Farmer diagnosis",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_FARMER_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/diagnoses/PASTE_DIAGNOSIS_OBJECTID"
+      },
+      "response": []
+    },
+    {
+      "name": "Farmer image",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_FARMER_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/diagnoses/PASTE_DIAGNOSIS_OBJECTID/image"
+      },
+      "response": []
+    },
+    {
+      "name": "Farmer feedback",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_FARMER_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/diagnoses/PASTE_DIAGNOSIS_OBJECTID/feedback",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_feedback\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Farmer create conversation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_FARMER_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/conversations",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"session_title\": \"Cham soc sau rieng\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Farmer conversations",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_FARMER_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/conversations?limit=10&offset=0"
+      },
+      "response": []
+    },
+    {
+      "name": "Farmer conversation",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_FARMER_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/conversations/PASTE_CONVERSATION_OBJECTID"
+      },
+      "response": []
+    },
+    {
+      "name": "Farmer send message",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_FARMER_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/conversations/PASTE_CONVERSATION_OBJECTID/messages",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"Cham soc sau rieng mua mua\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "description": "Gemini RAG: fill GEMINI_API_KEY in server .env and restart API. Send only Farmer JWT and question here. Never paste the Gemini key into Postman. Missing key:503/no history write; quota:429; success:201 with citations."
+      },
+      "response": []
+    },
+    {
+      "name": "Admin PDF inbox",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_ADMIN_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/rag/inbox"
+      },
+      "response": []
+    },
+    {
+      "name": "Admin documents",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_ADMIN_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/rag/documents"
+      },
+      "response": []
+    },
+    {
+      "name": "Admin import inbox PDF",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_ADMIN_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/rag/documents/import",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"filename\": \"huong-dan.pdf\",\n  \"title\": \"Huong dan canh tac\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Admin deactivate PDF",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_ADMIN_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/rag/documents/PASTE_DOCUMENT_OBJECTID/status",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"Inactive\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Admin activate PDF",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_ADMIN_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/rag/documents/PASTE_DOCUMENT_OBJECTID/status",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"Active\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Admin search citations",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_ADMIN_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/rag/search",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"Cham soc sau rieng mua mua\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Farmer classify standalone",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_FARMER_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/diagnoses",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "image",
+              "type": "file",
+              "src": []
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Farmer classify selected Zone",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_FARMER_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/diagnoses",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "image",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "zone_id",
+              "type": "text",
+              "value": "PASTE_ZONE_UUID"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Admin upload PDF",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_ADMIN_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/rag/documents/upload",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "pdf",
+              "type": "file",
+              "src": []
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Admin prepared PDFs with source page mapping",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_ADMIN_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/rag/prepared"
+      },
+      "response": []
+    },
+    {
+      "name": "Admin import prepared PDF - copy filename from prepared",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "PASTE_ADMIN_JWT",
+              "type": "string"
+            }
+          ]
+        },
+        "url": "http://127.0.0.1:3000/api/ai/rag/documents/import-prepared",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"filename\": \"PASTE_PREPARED_PDF_FILENAME_HERE\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": []
+    }
+  ]
+}

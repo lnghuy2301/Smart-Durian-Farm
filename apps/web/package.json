@@ -1,6 +1,6 @@
 {
   "name": "@smart-durian/web",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,8 +11,12 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "node test/e2e.mjs",
+    "test:e2e:ai": "node test/ai-browser.mjs",
+    "test:e2e:catalog": "node test/catalog-admin-browser.mjs",
+    "test:e2e:assignments": "node test/assignment-search-browser.mjs",
     "format": "prettier --write src test vite.config.ts eslint.config.mjs",
-    "format:check": "prettier --check src test vite.config.ts eslint.config.mjs"
+    "format:check": "prettier --check src test vite.config.ts eslint.config.mjs",
+    "test:e2e:database": "node test/database-runtime-browser.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
@@ -21,18 +25,20 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
     "eslint": "^9.39.5",
+    "jsqr": "1.4.0",
     "playwright-core": "^1.64.0",
     "prettier": "^3.9.9",
     "typescript": "~5.8.0",
-    "typescript-eslint": "^8.71.1",
+    "typescript-eslint": "^8.72.2",
     "vite": "^8.3.3",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.12"
   },
   "dependencies": {
     "@fontsource/be-vietnam-pro": "^5.3.0",
     "lucide-react": "^1.53.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "react-markdown": "10.1.0",
     "react-router-dom": "^7.18.4"
   }
 }

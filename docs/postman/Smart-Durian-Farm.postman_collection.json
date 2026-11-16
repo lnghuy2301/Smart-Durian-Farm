@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "b54dcfe3-9d0c-4ed5-830f-c69479bb59db",
     "name": "Smart Durian Farm API",
-    "description": "Import the Local environment. Health checks liveness; readiness checks both databases. Start local Compose before running the readiness request.",
+    "description": "Health/readiness/OpenAPI checks. Literal localhost URLs; khong scripts/environment. Doi PORT thu cong neu can.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -11,34 +11,35 @@
       "item": [
         {
           "name": "Database readiness",
-          "request": { "method": "GET", "header": [], "url": "{{base_url}}/api/health/ready" },
-          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
-            "pm.test('Both databases ready (start Compose first)', () => pm.response.to.have.status(200));",
-            "pm.test('Database probes are up', () => pm.expect(pm.response.json()).to.eql({status: 'ok', databases: {postgres: 'up', mongodb: 'up'}}));"
-          ] } }]
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:3000/api/health/ready"
+          }
         },
         {
           "name": "API health",
-          "request": { "method": "GET", "header": [], "url": "{{base_url}}/api/health" },
-          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
-            "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
-            "pm.test('API is live', () => pm.expect(pm.response.json()).to.eql({status: 'ok', service: 'smart-durian-api'}));"
-          ] } }]
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:3000/api/health"
+          }
         },
         {
           "name": "OpenAPI document",
-          "request": { "method": "GET", "header": [], "url": "{{base_url}}/api/docs-json" },
-          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
-            "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
-            "pm.test('Health endpoint documented', () => pm.expect(pm.response.json().paths).to.have.property('/api/health'));"
-          ] } }]
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:3000/api/docs-json"
+          }
         },
         {
           "name": "Unknown endpoint returns 404",
-          "request": { "method": "GET", "header": [], "url": "{{base_url}}/api/not-found" },
-          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
-            "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
-          ] } }]
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:3000/api/not-found"
+          }
         }
       ]
     }

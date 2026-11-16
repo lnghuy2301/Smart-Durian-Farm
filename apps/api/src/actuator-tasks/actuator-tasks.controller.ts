@@ -2,13 +2,13 @@ import { Body, Controller, Get, HttpCode, Inject, Param, ParseUUIDPipe, Post, Qu
 import { ApiAcceptedResponse, ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthGuard, AuthRequest } from '../auth/auth.guard';
 import { CreateControlDto, TaskIdParamDto, TaskPageDto } from './actuator-tasks.dto';
-import { ActuatorTasksService } from './actuator-tasks.service';
+import { ActuatorTaskRecords } from './actuator-task-records';
 import { acceptedSchema, listSchema, stateSchema, taskSchema } from './actuator-tasks.schema';
 
 @ApiTags('actuator-tasks') @ApiBearerAuth() @UseGuards(AuthGuard)
 @Controller('actuator-tasks')
 export class ActuatorTasksController {
-  constructor(@Inject(ActuatorTasksService) private readonly tasks: ActuatorTasksService) {}
+  constructor(@Inject(ActuatorTaskRecords) private readonly tasks: ActuatorTaskRecords) {}
   @Post('devices/:deviceId/commands') @HttpCode(202)
   @ApiOperation({ summary: 'Farmer đang có quyền: Bật tưới/phun hoặc Dừng; trả Pending ngay, ACK chỉ là CommandReceipt' })
   @ApiAcceptedResponse({ description: 'Task Pending + status_url/state_url; theo dõi GET, không có manual confirm', schema: acceptedSchema })

@@ -3,12 +3,12 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard, AuthRequest } from '../auth/auth.guard';
 import { EmptyFarmActionDto, FarmRequestListDto, RejectFarmRequestDto } from '../farms/farms.dto';
 import { CreateZoneDto, UpdateZoneDto, ZoneListDto } from './zones.dto';
-import { ZonesService } from './zones.service';
+import { ZoneRecords } from './zone-records';
 
 @ApiTags('zones-local-test') @ApiBearerAuth() @UseGuards(AuthGuard)
 @Controller('zones')
 export class ZonesController {
-  constructor(@Inject(ZonesService) private readonly zones: ZonesService) {}
+  constructor(@Inject(ZoneRecords) private readonly zones: ZoneRecords) {}
 
   @Get()
   list(@Req() request: AuthRequest, @Query() query: ZoneListDto) { return this.zones.list(request.user!.id, query); }
@@ -36,7 +36,7 @@ export class ZonesController {
 @ApiTags('zone-requests-local-test') @ApiBearerAuth() @UseGuards(AuthGuard)
 @Controller('zone-requests')
 export class ZoneRequestsController {
-  constructor(@Inject(ZonesService) private readonly zones: ZonesService) {}
+  constructor(@Inject(ZoneRecords) private readonly zones: ZoneRecords) {}
 
   @Get()
   list(@Req() request: AuthRequest, @Query() query: FarmRequestListDto) { return this.zones.listRequests(request.user!.id, query); }

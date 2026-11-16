@@ -3,6 +3,12 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEmail, IsIn, IsObject, IsString, IsUUID, Matches, MaxLength, MinLength, ValidateIf, ValidateNested } from 'class-validator';
 import { PhoneDto } from '../auth/auth.dto';
 
+export class FarmerSearchQueryDto {
+  @ApiProperty({ description: 'Tên ít nhất2 ký tự hoặc điện thoại ít nhất4 chữ số', maxLength: 100 })
+  @Transform(({ value }: { value: unknown }) => typeof value === 'string' ? value.trim() : value)
+  @IsString() @MinLength(2) @MaxLength(100) q!: string;
+}
+
 export class RequestRegistrationEmailDto extends PhoneDto {
   @ApiProperty({ example: 'manager@example.com', maxLength: 255 })
   @Transform(({ value }) => typeof value === 'string' ? value.trim().toLowerCase() : value)

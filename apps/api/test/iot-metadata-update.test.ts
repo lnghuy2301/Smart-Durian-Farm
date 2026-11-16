@@ -28,7 +28,7 @@ test('IoT metadata follows new lowercase enums and bounded configurable units wi
     assert.equal((await f.http(`sensors/${sensor.id}`, 'PATCH', { unit: ' %rH ' }, token)).status, 200);
     assert.equal(f.sensors.get(f.owner.id, sensor.id).unit, '%rH');
     assert.equal(f.sensors.get(f.owner.id, sensor.id).max_threshold, 40);
-    for (const body of [{ sensor_type: 'Air_temperature' }, { sensor_type: 'soil_temperature' }, { unit: '' }, { unit: ' ' }, { unit: 'x'.repeat(17) }]) {
+    for (const body of [{ sensor_type: 'Air_temperature' }, { sensor_type: 'leaf_temperature' }, { unit: '' }, { unit: ' ' }, { unit: 'x'.repeat(17) }]) {
       assert.equal((await f.http('sensors', 'POST', { device_id: f.device.id, name: 'Test', sensor_type: 'air_temperature', data_stream_id: 'OTHER', unit: 'C', ...body }, token)).status, 400);
     }
     for (const [capability_id, purpose] of (['watering', 'spraying', 'shared'] as const).entries()) {

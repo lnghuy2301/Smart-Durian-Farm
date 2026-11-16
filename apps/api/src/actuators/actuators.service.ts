@@ -63,6 +63,10 @@ export class ActuatorsService {
   }
 
   // Chỉ cho service nội bộ: controller phải dùng get/getByCapability với kiểm tra quyền.
+  getRecordsForDevice(deviceId: string): TestActuator[] {
+    return [...this.actuators.values()].filter((actuator) => actuator.device_id === deviceId).map((actuator) => structuredClone(actuator));
+  }
+
   getRecord(id: string): TestActuator {
     const actuator = this.actuators.get(id);
     if (!actuator) { throw new NotFoundException('Không tìm thấy thiết bị chấp hành'); }

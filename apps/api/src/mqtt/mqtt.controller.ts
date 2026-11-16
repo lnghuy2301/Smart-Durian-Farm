@@ -2,12 +2,12 @@ import { Controller, Get, Inject, Param, ParseUUIDPipe, Query, Req, UseGuards } 
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthGuard, AuthRequest } from '../auth/auth.guard';
 import { FarmPageDto } from '../farms/farms.dto';
-import { MqttService } from './mqtt.service';
+import { MqttDiagnostics } from './mqtt-diagnostics';
 
 @ApiTags('mqtt-communication') @ApiBearerAuth() @UseGuards(AuthGuard)
 @Controller('mqtt')
 export class MqttController {
-  constructor(@Inject(MqttService) private readonly mqtt: MqttService) {}
+  constructor(@Inject(MqttDiagnostics) private readonly mqtt: MqttDiagnostics) {}
   @Get('status')
   @ApiOperation({ summary: 'Admin: trạng thái broker và bộ đếm chẩn đoán, không trả config/secrets' })
   status(@Req() req: AuthRequest) { return this.mqtt.brokerStatus(req.user!.id); }

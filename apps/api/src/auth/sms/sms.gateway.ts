@@ -1,3 +1,5 @@
+import { ServiceUnavailableException } from '@nestjs/common';
+
 export interface OtpSms {
   phone_number: string;
   otp: string;
@@ -5,10 +7,17 @@ export interface OtpSms {
 }
 
 export abstract class SmsGateway {
-  abstract readonly mode: 'mock' | 'speedsms';
+  abstract readonly mode: 'mock' | 'speedsms' | 'disabled';
   abstract send(message: OtpSms): Promise<void>;
   abstract clear(phoneNumber?: string): void;
   abstract messages(phoneNumber: string): OtpSms[];
+}
+
+export class DisabledSmsGateway extends SmsGateway {
+  readonly mode = 'disabled' as const;
+  async send(): Promise<void> { throw new ServiceUnavailableException('Chưa cấu hình dịch vụ SMS thực; không tạo OTP giả lập'); }
+  clear(): void {}
+  messages(): OtpSms[] { return []; }
 }
 
 export class MockSmsGateway extends SmsGateway {

@@ -51,6 +51,16 @@ export class TreeHarvestsService {
     return record;
   }
 
+  // Pending sửa vẫn giữ dữ liệu đã Confirmed; đề xuất nằm trong requests.
+  // Dùng everConfirmed để không public Pending xác nhận lần đầu. Chỉ trả các
+  // field nội dung, không trả actor/UUID/request hoặc dữ liệu chờ duyệt.
+  confirmedForTrace(treeId: string): HarvestDetails[] {
+    this.trees.getRecord(treeId);
+    return [...this.records.values()].filter((record) => record.tree_id === treeId && this.metadata.get(record.id)?.everConfirmed)
+      .map((record) => ({ season_name: record.season_name, harvest_date: record.harvest_date,
+        fruit_count: record.fruit_count, total_weight_kg: record.total_weight_kg, batch_code: record.batch_code }));
+  }
+
   create(actorId: string, input: CreateHarvestDto): TestTreeHarvest {
     this.allowedFields(input, [...DETAIL_FIELDS, 'tree_id']);
     const { farm, zone } = this.context(input.tree_id);
@@ -113,7 +123,7 @@ export class TreeHarvestsService {
     let changes: Partial<HarvestDetails> | null = null;
     if (input.changes !== undefined) {
       changes = this.changes(record, input.changes);
-      this.validateDetails(actorId, record.tree_id, { ...record, ...changes }, id, changes.harvest_date !== undefined, false);
+      this.validateDetails(actorId, record.tree_id, { ...record, ...changes }, id, changes.harvest_date !== undefined, changes.harvest_date !== undefined);
     }
     return this.addRequest(record, 'Correct', actorId, changes ? actorId : null, changes, input.reason);
   }
@@ -128,7 +138,7 @@ export class TreeHarvestsService {
     this.assertWriter(actorId, farm.owner_id, zone.id);
     if (actorId !== farm.owner_id && actorId !== request.requested_by) { throw new ForbiddenException('Chỉ người yêu cầu hoặc chủ Farm chuẩn bị nội dung sửa'); }
     const changes = this.changes(record, input);
-    this.validateDetails(actorId, record.tree_id, { ...record, ...changes }, record.id, changes.harvest_date !== undefined, false);
+    this.validateDetails(actorId, record.tree_id, { ...record, ...changes }, record.id, changes.harvest_date !== undefined, changes.harvest_date !== undefined);
     entry.value = { ...request, editor_id: actorId, proposed_changes: changes };
     return structuredClone(entry.value);
   }
@@ -150,7 +160,11 @@ export class TreeHarvestsService {
       if (!request.editor_id || !request.proposed_changes) { throw new ConflictException('Chủ/người yêu cầu cần bổ sung nội dung sửa trước khi duyệt'); }
       this.assertWriter(request.editor_id, farm.owner_id, zone.id);
       const details = { ...record, ...request.proposed_changes };
-      this.validateDetails(request.editor_id, record.tree_id, details, record.id, request.proposed_changes.harvest_date !== undefined, false);
+      // Recheck Tree lúc áp dụng: cây có thể Dead/Removed sau khi đề xuất.
+      // Ngày không đổi vẫn được sửa nội dung của dữ liệu đã xác nhận.
+      const dateChanged = request.proposed_changes.harvest_date !== undefined
+        && request.proposed_changes.harvest_date !== record.harvest_date;
+      this.validateDetails(request.editor_id, record.tree_id, details, record.id, dateChanged, dateChanged);
       next = { ...details, status: 'Confirmed', updated_by: request.editor_id, updated_at: this.now() };
     }
     // Đồng bộ, không await: uniqueness, quyền và commit không bị chen bởi một request khác.

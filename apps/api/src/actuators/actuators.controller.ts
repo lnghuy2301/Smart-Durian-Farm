@@ -3,12 +3,12 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard, AuthRequest } from '../auth/auth.guard';
 import { EmptyFarmActionDto, FarmPageDto, FarmRequestListDto, RejectFarmRequestDto } from '../farms/farms.dto';
 import { CreateActuatorDto, ActuatorListDto, ActuatorCapabilityParamDto, UpdateActuatorDto } from './actuators.dto';
-import { ActuatorsService } from './actuators.service';
+import { ActuatorRecords } from './actuator-records';
 
 @ApiTags('actuators-local-test') @ApiBearerAuth() @UseGuards(AuthGuard)
 @Controller('actuators')
 export class ActuatorsController {
-  constructor(@Inject(ActuatorsService) private readonly actuators: ActuatorsService) {}
+  constructor(@Inject(ActuatorRecords) private readonly actuators: ActuatorRecords) {}
 
   @Get()
   list(@Req() req: AuthRequest, @Query() query: ActuatorListDto) { return this.actuators.list(req.user!.id, query); }
@@ -46,7 +46,7 @@ export class ActuatorsController {
 @ApiTags('actuator-requests-local-test') @ApiBearerAuth() @UseGuards(AuthGuard)
 @Controller('actuator-requests')
 export class ActuatorRequestsController {
-  constructor(@Inject(ActuatorsService) private readonly actuators: ActuatorsService) {}
+  constructor(@Inject(ActuatorRecords) private readonly actuators: ActuatorRecords) {}
 
   @Get()
   list(@Req() req: AuthRequest, @Query() query: FarmRequestListDto) { return this.actuators.listRequests(req.user!.id, query); }

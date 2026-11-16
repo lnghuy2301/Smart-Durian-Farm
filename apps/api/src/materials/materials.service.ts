@@ -1,12 +1,15 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { CatalogStatus, CreateMaterialDto, MaterialListDto, MaterialType, UpdateMaterialDto } from './materials.dto';
+import { materialDosage } from './material-dosage';
 
 export interface AgriculturalMaterial {
   id: string;
   name: string;
   material_type: MaterialType;
   default_dosage: string;
+  default_dosage_value?: number | null;
+  dosage_basis?: string | null;
   unit: string;
   quarantine_days: number;
   status: CatalogStatus;
@@ -20,7 +23,8 @@ export class MaterialsService {
     if (this.materials.size >= 1000) {
       throw new HttpException('Danh mục test đã đầy; restart để bắt đầu lại', HttpStatus.TOO_MANY_REQUESTS);
     }
-    const material: AgriculturalMaterial = { ...input, id: randomUUID(), status: input.status ?? 'Active' };
+    const dosage = materialDosage(input);
+    const material: AgriculturalMaterial = { ...input, ...dosage, default_dosage: dosage.default_dosage!, id: randomUUID(), status: input.status ?? 'Active' };
     this.materials.set(material.id, material);
     return { ...material };
   }
@@ -49,7 +53,7 @@ export class MaterialsService {
     const changes = Object.fromEntries(Object.entries(input).filter(([, value]) => value !== undefined));
     if (Object.keys(changes).length === 0) { throw new BadRequestException('Cần ít nhất một field để cập nhật'); }
     // Ghi một bản mới đồng bộ; không trả reference để module khác vô tình sửa trực tiếp store.
-    const updated: AgriculturalMaterial = { ...current, ...changes };
+    const updated: AgriculturalMaterial = { ...current, ...changes, ...materialDosage(input, current) };
     this.materials.set(id, updated);
     return { ...updated };
   }

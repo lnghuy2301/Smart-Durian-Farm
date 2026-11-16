@@ -2,14 +2,14 @@ import { Body, Controller, Get, Inject, Param, ParseUUIDPipe, Patch, Post, Query
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard, AuthRequest } from '../auth/auth.guard';
 import { CreateFarmRequestDto, EmptyFarmActionDto, FarmListDto, FarmPageDto, FarmRequestListDto, JoinCooperativeRequestDto, RejectFarmRequestDto, UpdateFarmRequestDto } from './farms.dto';
-import { FarmsService } from './farms.service';
+import { FarmRecords } from './farm-records';
 
 @ApiTags('farms-local-test')
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
 @Controller('farms')
 export class FarmsController {
-  constructor(@Inject(FarmsService) private readonly farms: FarmsService) {}
+  constructor(@Inject(FarmRecords) private readonly farms: FarmRecords) {}
 
   @Get()
   list(@Req() request: AuthRequest, @Query() query: FarmListDto) { return this.farms.list(request.user!.id, query); }
@@ -44,7 +44,7 @@ export class FarmsController {
 @UseGuards(AuthGuard)
 @Controller('farm-requests')
 export class FarmRequestsController {
-  constructor(@Inject(FarmsService) private readonly farms: FarmsService) {}
+  constructor(@Inject(FarmRecords) private readonly farms: FarmRecords) {}
 
   @Get()
   list(@Req() request: AuthRequest, @Query() query: FarmRequestListDto) { return this.farms.listRequests(request.user!.id, query); }
@@ -71,7 +71,7 @@ export class FarmRequestsController {
 @UseGuards(AuthGuard)
 @Controller()
 export class FarmAccessController {
-  constructor(@Inject(FarmsService) private readonly farms: FarmsService) {}
+  constructor(@Inject(FarmRecords) private readonly farms: FarmRecords) {}
 
   @Get('farm-notifications')
   notifications(@Req() request: AuthRequest, @Query() query: FarmPageDto) { return this.farms.listNotifications(request.user!.id, query); }

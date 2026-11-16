@@ -15,6 +15,8 @@ const explanations: Record<number, string> = {
   404: "Không tìm thấy dữ liệu trong phạm vi truy cập.",
   409: "Dữ liệu hoặc trạng thái đã thay đổi. Hãy tải lại và kiểm tra trước khi thao tác.",
   429: "Đã đạt giới hạn yêu cầu. Vui lòng chờ trước khi thử lại.",
+  502: "Kết nối tới API bị ngắt. Máy chủ có thể đang khởi động lại; vui lòng chờ rồi thử lại thao tác.",
+  504: "API chưa phản hồi kịp. Vui lòng kiểm tra máy chủ trước khi thử lại thao tác.",
   503: "Dịch vụ tạm thời chưa sẵn sàng. Vui lòng thử lại sau.",
 };
 
@@ -32,9 +34,14 @@ export class ApiClient {
   private active = true;
   constructor(
     private readonly baseUrl: string,
-    private readonly token?: string,
+    private token?: string,
     private readonly onUnauthorized?: () => void,
   ) {}
+
+  replaceToken(token: string) {
+    if (!this.active) throw new DOMException("Phiên đã đóng", "AbortError");
+    this.token = token;
+  }
 
   dispose() {
     // Hủy toàn bộ request khi đổi tài khoản/logout; response đến trễ không thuộc phiên mới.
@@ -49,6 +56,8 @@ export class ApiClient {
       method?: "GET" | "POST" | "PATCH" | "DELETE";
       body?: unknown;
       signal?: AbortSignal;
+      responseType?: "json" | "blob";
+      timeoutMs?: number;
     } = {},
   ): Promise<T> {
     if (!this.active) throw new DOMException("Phiên đã đóng", "AbortError");
@@ -57,12 +66,13 @@ export class ApiClient {
     if (options.signal?.aborted) abort();
     options.signal?.addEventListener("abort", abort, { once: true });
     this.requests.add(controller);
+    const tokenAtRequest = this.token;
     const timeout = setTimeout(
       () =>
         controller.abort(
           new DOMException("Hết thời gian kết nối", "TimeoutError"),
         ),
-      20000,
+      options.timeoutMs ?? 20000,
     );
     try {
       const response = await fetch(
@@ -72,27 +82,42 @@ export class ApiClient {
           signal: controller.signal,
           credentials: "omit",
           headers: {
-            Accept: "application/json",
-            ...(options.body !== undefined
+            Accept:
+              options.responseType === "blob"
+                ? "image/jpeg, image/png"
+                : "application/json",
+            ...(options.body !== undefined &&
+            !(options.body instanceof FormData)
               ? { "Content-Type": "application/json" }
               : {}),
-            ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+            ...(tokenAtRequest
+              ? { Authorization: `Bearer ${tokenAtRequest}` }
+              : {}),
           },
           body:
-            options.body !== undefined
-              ? JSON.stringify(options.body)
-              : undefined,
+            options.body instanceof FormData
+              ? options.body
+              : options.body !== undefined
+                ? JSON.stringify(options.body)
+                : undefined,
         },
       );
       if (!this.active) throw new DOMException("Phiên đã đóng", "AbortError");
       const body: unknown =
         response.status === 204
           ? undefined
-          : await response.json().catch(() => undefined);
+          : response.ok && options.responseType === "blob"
+            ? await response.blob()
+            : await response.json().catch(() => undefined);
       if (!this.active || controller.signal.aborted)
         throw new DOMException("Phiên hoặc request đã đóng", "AbortError");
       if (!response.ok) {
-        if (response.status === 401 && this.token && this.active)
+        if (
+          response.status === 401 &&
+          tokenAtRequest &&
+          tokenAtRequest === this.token &&
+          this.active
+        )
           this.onUnauthorized?.();
         const message =
           body && typeof body === "object" && "message" in body
@@ -104,6 +129,14 @@ export class ApiClient {
             : Array.isArray(message)
               ? message.filter((part) => typeof part === "string").join("; ")
               : "";
+        if (
+          response.status === 404 &&
+          /^Cannot DELETE \/(?:api\/)?ai\/conversations\//.test(detail)
+        )
+          throw new ApiError(
+            404,
+            "API đang chạy chưa có chức năng xóa hội thoại. Hãy build và khởi động lại API rồi tải lại trang; hội thoại chưa được xóa.",
+          );
         throw new ApiError(
           response.status,
           `${explanations[response.status] ?? "Máy chủ không thể xử lý yêu cầu."}${detail ? ` ${detail}` : ""}`,

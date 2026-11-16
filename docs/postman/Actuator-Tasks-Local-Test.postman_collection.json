@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Smart Durian Farm — Actuator Tasks v1 (manual JWT/UUID/ObjectId)",
-    "description": "Literal JSON requests, no scripts or variables/environments. Import directly; replace PASTE_* manually. Setup and receipt limits: docs/ACTUATOR_TASKS_IMPLEMENTATION.md. ACK is hardware receipt, not physical state.",
+    "description": "Literal JSON requests, no scripts or variables/environments. Import directly; replace PASTE_* manually. Setup and receipt limits: docs/RUNBOOK.md. ACK is hardware receipt, not physical state.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [

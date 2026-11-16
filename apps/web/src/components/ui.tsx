@@ -17,6 +17,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 import type { Resource } from "../hooks/useResource";
+import { displayDateTime, valueLabels } from "./presentation";
+export { calendarDate } from "./presentation";
 
 export function PageHeader({
   title,
@@ -98,6 +100,7 @@ export function Badge({ status }: { status: string }) {
     Inactive: "Ngừng sử dụng",
     Pending: "Chờ duyệt",
     Reject: "Đã từ chối",
+    Rejected: "Đã từ chối",
     Accepted: "Đã chấp nhận",
     Confirmed: "Đã xác nhận",
     Draft: "Bản nháp",
@@ -110,7 +113,7 @@ export function Badge({ status }: { status: string }) {
   };
   return (
     <span className={`badge status-${status.toLowerCase()}`}>
-      {labels[status] ?? status}
+      {labels[status] ?? valueLabels[status] ?? status}
     </span>
   );
 }
@@ -119,12 +122,15 @@ export function Pagination({
   offset,
   limit,
   onChange,
+  hideSinglePage = false,
 }: {
   total: number;
   offset: number;
   limit: number;
   onChange: (offset: number) => void;
+  hideSinglePage?: boolean;
 }) {
+  if (hideSinglePage && offset === 0 && total <= limit) return null;
   return (
     <div className="pagination">
       <span>
@@ -221,13 +227,6 @@ export function Field({
     </div>
   );
 }
-export const dateTime = (value: string | null) =>
-  value
-    ? new Intl.DateTimeFormat("vi-VN", {
-        dateStyle: "short",
-        timeStyle: "short",
-        timeZone: "Asia/Ho_Chi_Minh",
-      }).format(new Date(value))
-    : "Chưa có";
+export const dateTime = displayDateTime;
 export const number = (value: number) =>
   new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 3 }).format(value);

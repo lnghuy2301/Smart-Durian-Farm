@@ -50,6 +50,14 @@ export class TreesService {
     return this.get(actorId, tree.id);
   }
 
+  // Chỉ adapter truy xuất nội bộ dùng lookup không JWT; controller quản lý
+  // vẫn giữ get/getByCode có scope. Public controller phải whitelist response.
+  getTraceRecordByCode(code: string): TestTree {
+    const tree = [...this.trees.values()].find((item) => item.tree_code === code);
+    if (!tree) { throw new NotFoundException('Không tìm thấy cây'); }
+    return structuredClone(tree);
+  }
+
   // Chỉ cho service nội bộ: controller phải dùng get/getByCode với kiểm tra quyền.
   getRecord(id: string): TestTree {
     const tree = this.trees.get(id);

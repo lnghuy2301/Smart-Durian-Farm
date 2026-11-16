@@ -2,6 +2,22 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { randomUUID } from 'node:crypto';
 import { zoneFixture } from '../integration/helpers/zone-fixture';
+import { ZoneRecords } from '../src/zones/zone-records';
+
+test('Async Zone port shares the domain service and Farm area budget instead of duplicating stores', async () => {
+  const f = await zoneFixture();
+  try {
+    const port = f.app.get(ZoneRecords);
+    const zone = await port.create(f.owner.id, { ...f.input, area_size: 0.6 });
+    assert.equal(f.zones.getRecord(zone.id).area_size, 0.6);
+    f.zones.update(f.owner.id, zone.id, { zone_name: 'Shared Zone record' });
+    assert.equal((await port.get(f.owner.id, zone.id)).zone_name, 'Shared Zone record');
+    const proposal = await port.updateRequest(f.admin.id, zone.id, { area_size: 0.9 });
+    f.zones.approve(f.owner.id, proposal.id);
+    assert.equal((await port.getRequest(f.owner.id, proposal.id)).status, 'Accepted');
+    await assert.rejects(port.create(f.owner.id, { ...f.input, area_size: 0.2 }), /vượt quá/);
+  } finally { await f.app.close(); }
+});
 
 test('Zones owner writes, Admin proposes and only the owner approves; DTOs cannot bypass scope', async () => {
   const f = await zoneFixture();
