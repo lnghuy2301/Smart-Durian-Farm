@@ -6,7 +6,9 @@ import { AppModule } from './app.module';
 import { Environment } from './config/environment';
 
 export async function createApplication(config: Environment, logger: false | undefined = undefined) {
-  const app = await NestFactory.create(AppModule.register(config), { logger });
+  // Let the process owner report a sanitized startup error instead of Nest
+  // terminating the process before bootstrap's error handler can run.
+  const app = await NestFactory.create(AppModule.register(config), { logger, abortOnError: false });
   configureApplication(app, config);
   return app;
 }
@@ -17,6 +19,8 @@ export function configureApplication(app: INestApplication, config: Environment)
   app.enableCors({ origin: config.corsOrigins });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
   app.enableShutdownHooks();
+  // Production documentation is disabled; public traffic never needs test metadata.
+  if (config.production) return;
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Smart Durian Farm API')
     .setDescription((config.storage === 'database'

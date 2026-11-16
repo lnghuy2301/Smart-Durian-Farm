@@ -1,0 +1,26 @@
+[Unit]
+Description=Smart Durian Farm API and MQTT controller
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=smart-durian
+Group=smart-durian
+WorkingDirectory=/srv/smart-durian
+EnvironmentFile=/etc/smart-durian/api.env
+ExecStart=/usr/bin/node /srv/smart-durian/apps/api/dist/main.js
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=45
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+# The API persists private images/PDFs; backups are explicit maintenance operations.
+ReadWritePaths=/srv/smart-durian/ai/storage
+
+[Install]
+WantedBy=multi-user.target

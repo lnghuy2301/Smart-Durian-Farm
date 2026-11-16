@@ -16,7 +16,7 @@ import { checkManagerFilters } from "./manager-layout-browser.mjs";
 // Backend thật, RAM cô lập, không đọc .env root và không gửi SMTP/SMS thật.
 const webRoot = fileURLToPath(new URL("..", import.meta.url));
 const apiRoot = fileURLToPath(new URL("../../api", import.meta.url));
-const require = createRequire(import.meta.url);
+const require = createRequire(new URL("../../api/package.json", import.meta.url));
 const compilation = spawnSync(
   process.execPath,
   [require.resolve("typescript/bin/tsc"), "--outDir", ".test-dist"],

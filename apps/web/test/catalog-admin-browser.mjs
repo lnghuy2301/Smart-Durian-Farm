@@ -6,7 +6,7 @@ import { createServer } from "vite";
 import { chromium } from "playwright-core";
 
 // Only isolated RAM + mock providers. No .env, live DB or external commands.
-const require = createRequire(import.meta.url);
+const require = createRequire(new URL("../../api/package.json", import.meta.url));
 const apiRoot = fileURLToPath(
   new URL("../../api/.integration-dist/src/", import.meta.url),
 );

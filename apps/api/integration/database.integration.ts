@@ -1,16 +1,17 @@
 import 'reflect-metadata';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { resolve } from 'node:path';
-import { config as loadEnv } from 'dotenv';
 import { createApplication } from '../src/application';
 import { readEnvironment } from '../src/config/environment';
 import { DatabaseService } from '../src/database/database.service';
 
-loadEnv({ path: resolve(__dirname, '../../../../.env') });
-
-test('local database readiness and replica-set transactions work', async () => {
-  const app = await createApplication(readEnvironment(process.env), false);
+test('isolated database readiness and replica-set transactions work without local env or MQTT', async () => {
+  // Never load the operator's .env here: it may enable real MQTT and providers.
+  const app = await createApplication(readEnvironment({
+    NODE_ENV: 'test', AUTH_MODE: 'disabled', BUSINESS_STORAGE: 'memory',
+    DATABASE_URL: 'postgresql://persistence_test:persistence_test_only@127.0.0.1:15432/sdf_persistence_test',
+    MONGODB_URI: 'mongodb://127.0.0.1:27028/sdf_persistence_test?replicaSet=rs-test&directConnection=true',
+  }), false);
   try {
     await app.listen(0, '127.0.0.1');
     const response = await fetch(`${await app.getUrl()}/api/health/ready`);
@@ -18,7 +19,7 @@ test('local database readiness and replica-set transactions work', async () => {
     assert.deepEqual(await response.json(), { status: 'ok', databases: { postgres: 'up', mongodb: 'up' } });
     const database = app.get(DatabaseService);
     const hello = await database.mongo.db('admin').command({ hello: 1 });
-    assert.equal(hello.setName, 'rs0');
+    assert.equal(hello.setName, 'rs-test');
     assert.equal(hello.isWritablePrimary, true);
     const session = database.mongo.startSession();
     try {

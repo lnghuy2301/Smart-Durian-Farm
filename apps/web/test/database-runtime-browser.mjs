@@ -8,7 +8,7 @@ import { loopbackBroker } from "./loopback-broker.mjs";
 
 // Compile API first. This suite uses random PG/Mongo databases and real MQTT.js
 // over loopback TCP. It never reads root.env or connects to hardware/providers.
-const require = createRequire(import.meta.url);
+const require = createRequire(new URL("../../api/package.json", import.meta.url));
 require("reflect-metadata");
 const apiRoot = fileURLToPath(new URL("../../api", import.meta.url));
 const webRoot = fileURLToPath(new URL("..", import.meta.url));

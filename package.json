@@ -1,7 +1,10 @@
 {
   "name": "smart-durian-farm",
   "private": true,
-  "workspaces": ["apps/api", "apps/web"],
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
   "scripts": {
     "start:api": "npm run start --workspace @smart-durian/api",
     "dev:api": "npm run start:dev --workspace @smart-durian/api",
@@ -35,8 +38,15 @@
     "db:backup:verify": "npm run db:backup:verify --workspace @smart-durian/api --",
     "db:restore:check": "npm run db:restore:check --workspace @smart-durian/api --",
     "db:restore:new": "npm run db:restore:new --workspace @smart-durian/api --",
-    "test:persistence": "npm run test:persistence --workspace @smart-durian/api"
+    "test:persistence": "npm run test:persistence --workspace @smart-durian/api",
+    "db:audit": "npm run build && node tools/audit-data.cjs"
   },
-  "engines": { "node": ">=20.19.0" },
-  "overrides": { "@nestjs/swagger": { "js-yaml": "5.4.2" } }
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "overrides": {
+    "@nestjs/swagger": {
+      "js-yaml": "5.4.2"
+    }
+  }
 }

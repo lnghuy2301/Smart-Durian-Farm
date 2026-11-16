@@ -12,7 +12,7 @@ import { chromium } from "playwright-core";
 
 // Only isolated Nest memory stores, temporary AI files and explicit worker/chat
 // doubles. No .env, operating database, actual model or external provider.
-const require = createRequire(import.meta.url);
+const require = createRequire(new URL("../../api/package.json", import.meta.url));
 const apiRoot = fileURLToPath(new URL("../../api", import.meta.url));
 const webRoot = fileURLToPath(new URL("..", import.meta.url));
 const compiled = spawnSync(

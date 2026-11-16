@@ -7,7 +7,7 @@ export type OtpProof =
 
 // Auth quản lý hạn dùng/số lần thử; provider quyết định cách tạo và xác minh mã.
 export abstract class OtpProvider {
-  abstract readonly mode: 'mock' | 'speedsms' | 'twilio';
+  abstract readonly mode: 'mock' | 'speedsms' | 'twilio' | 'disabled';
   abstract issue(phone: string, expiresAt: number): Promise<OtpProof>;
   abstract verify(proof: OtpProof, code: string): Promise<boolean>;
   abstract clear(phone?: string): void;

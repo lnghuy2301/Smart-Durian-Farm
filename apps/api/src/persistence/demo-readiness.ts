@@ -39,7 +39,8 @@ export async function demoReadiness(pool: Pool, env: NodeJS.ProcessEnv) {
     primary_sms_configuration_present: twilioConfigured
       && !!env.TWILIO_VERIFY_SERVICE_SID && allowed(primary?.phone_number, env.SMS_ALLOWED_PHONE),
     manager_email_sms_configuration_present: twilioConfigured && env.EMAIL_PROVIDER === 'smtp'
-      && !!env.SMTP_USER && !!env.SMTP_PASSWORD && !!env.SMTP_FROM && !!env.TWILIO_HTX_VERIFY_SERVICE_SID
+      && !!env.SMTP_USER && !!env.SMTP_PASSWORD && !!env.SMTP_FROM
+      && !!(env.TWILIO_HTX_VERIFY_SERVICE_SID?.trim() || env.TWILIO_VERIFY_SERVICE_SID?.trim())
       && allowed(manager?.phone_number, env.HTX_SMS_ALLOWED_PHONES),
     accounts: counts,
   };

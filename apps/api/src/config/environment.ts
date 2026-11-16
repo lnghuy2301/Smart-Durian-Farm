@@ -7,21 +7,25 @@ import { ActuatorTasksConfig, readActuatorTasksConfig } from '../actuator-tasks/
 import { TraceabilityConfig, readTraceabilityConfig } from '../traceability/traceability.config';
 import { AiConfig, readAiConfig } from '../ai/ai.config';
 
-export interface MockAuthConfig {
-  mode: 'mock';
+export interface AuthConfig {
+  mode: 'mock' | 'database';
   phoneNumber: string;
   password: string;
   jwtSecret: string;
-  sms: { provider: 'mock' } | SpeedSmsConfig | TwilioVerifyConfig;
+  sms: { provider: 'mock' | 'disabled' } | SpeedSmsConfig | TwilioVerifyConfig;
   admin?: { phoneNumber: string; password: string };
   email?: SmtpConfig;
   cooperativeSms?: TwilioVerifyConfig;
 }
+// Compatibility name for existing memory fixtures; database mode never seeds it.
+export type MockAuthConfig = AuthConfig;
 
 export interface Environment {
   ai?: AiConfig;
   storage?: 'memory' | 'database';
   port: number;
+  host?: '127.0.0.1' | '0.0.0.0';
+  production?: boolean;
   corsOrigins: string[];
   database: { postgresUrl: string; mongoUri: string; timeoutMs: number };
   auth?: MockAuthConfig;
@@ -31,8 +35,12 @@ export interface Environment {
 }
 
 export function readEnvironment(env: NodeJS.ProcessEnv): Environment {
+  const production = env.NODE_ENV === 'production';
   const storage = env.BUSINESS_STORAGE ?? (env.NODE_ENV === 'test' ? 'memory' : 'database');
   if (!['memory', 'database'].includes(storage)) throw new Error('BUSINESS_STORAGE must be memory or database');
+  if (production && storage !== 'database') throw new Error('Production requires BUSINESS_STORAGE=database');
+  const host = env.API_HOST ?? '127.0.0.1';
+  if (!['127.0.0.1', '0.0.0.0'].includes(host)) throw new Error('API_HOST must be 127.0.0.1 or 0.0.0.0');
   const rawPort = env.PORT ?? '3000';
   const port = Number(rawPort);
   if (!/^\d+$/.test(rawPort) || !Number.isInteger(port) || port < 1 || port > 65535) {
@@ -45,6 +53,9 @@ export function readEnvironment(env: NodeJS.ProcessEnv): Environment {
     if (!['http:', 'https:'].includes(url.protocol) || url.origin !== origin) {
       throw new Error('CORS_ORIGINS must contain HTTP(S) origins without paths');
     }
+  }
+  if (production && (!corsOrigins.length || corsOrigins.some((origin) => new URL(origin).protocol !== 'https:'))) {
+    throw new Error('Production requires explicit HTTPS CORS_ORIGINS');
   }
   const postgresUrl = env.DATABASE_URL;
   const mongoUri = env.MONGODB_URI;
@@ -61,21 +72,27 @@ export function readEnvironment(env: NodeJS.ProcessEnv): Environment {
   }
   let auth: MockAuthConfig | undefined;
   const mode = env.AUTH_MODE ?? 'disabled';
-  if (!['disabled', 'mock'].includes(mode)) { throw new Error('AUTH_MODE must be disabled or mock'); }
-  if (mode === 'mock') {
-    if (!['development', 'test'].includes(env.NODE_ENV ?? '')) {
+  if (!['disabled', 'mock', 'database'].includes(mode)) { throw new Error('AUTH_MODE must be disabled, mock or database'); }
+  if (production && mode !== 'database') throw new Error('Production requires AUTH_MODE=database');
+  if (mode === 'mock' || mode === 'database') {
+    if (mode === 'mock' && !['development', 'test'].includes(env.NODE_ENV ?? '')) {
       throw new Error('Mock Auth is allowed only in development or test');
     }
-    const phoneNumber = env.AUTH_TEST_PHONE ?? '';
-    const password = env.AUTH_TEST_PASSWORD ?? '';
+    if (mode === 'mock' && host !== '127.0.0.1') throw new Error('Mock Auth binds loopback only');
+    if (mode === 'database' && storage !== 'database') throw new Error('Database Auth requires persistent database storage');
+    // Existing demo credentials remain local configuration, never production bootstrap input.
+    const phoneNumber = mode === 'mock' ? env.AUTH_TEST_PHONE ?? '' : '';
+    const password = mode === 'mock' ? env.AUTH_TEST_PASSWORD ?? '' : '';
     const jwtSecret = env.JWT_SECRET ?? '';
-    if (!/^\+?\d{9,13}$/.test(phoneNumber) || phoneNumber.length > 13) { throw new Error('Invalid AUTH_TEST_PHONE'); }
-    if (password.length < 8 || password.length > 128) { throw new Error('AUTH_TEST_PASSWORD must have 8 to 128 characters'); }
+    if (mode === 'mock' && (!/^\+?\d{9,13}$/.test(phoneNumber) || phoneNumber.length > 13)) { throw new Error('Invalid AUTH_TEST_PHONE'); }
+    if (mode === 'mock' && (password.length < 8 || password.length > 128)) { throw new Error('AUTH_TEST_PASSWORD must have 8 to 128 characters'); }
     if (Buffer.byteLength(jwtSecret) < 32) { throw new Error('JWT_SECRET must contain at least 32 bytes'); }
-    const smsProvider = env.SMS_PROVIDER ?? 'mock';
-    let sms: MockAuthConfig['sms'] = { provider: 'mock' };
+    if (production && /local-test|fixture|change-this/i.test(jwtSecret)) throw new Error('Production requires a dedicated JWT_SECRET');
+    const smsProvider = env.SMS_PROVIDER ?? (mode === 'database' ? 'disabled' : 'mock');
+    let sms: MockAuthConfig['sms'] = { provider: smsProvider === 'disabled' ? 'disabled' : 'mock' };
     let cooperativeSms: TwilioVerifyConfig | undefined;
-    if (!['mock', 'speedsms', 'twilio'].includes(smsProvider)) { throw new Error('SMS_PROVIDER must be mock, speedsms or twilio'); }
+    if (!['disabled', 'mock', 'speedsms', 'twilio'].includes(smsProvider)) { throw new Error('SMS_PROVIDER must be disabled, mock, speedsms or twilio'); }
+    if (mode === 'database' && smsProvider === 'mock') throw new Error('Database Auth forbids mock SMS/OTP');
     if (smsProvider === 'twilio') {
       const accountSid = env.TWILIO_ACCOUNT_SID?.trim() ?? '';
       const authToken = env.TWILIO_AUTH_TOKEN?.trim() ?? '';
@@ -84,7 +101,8 @@ export function readEnvironment(env: NodeJS.ProcessEnv): Environment {
       if (!/^AC[0-9a-fA-F]{32}$/.test(accountSid)) { throw new Error('TWILIO_ACCOUNT_SID must be an AC SID'); }
       if (!/^[0-9a-fA-F]{32}$/.test(authToken)) { throw new Error('TWILIO_AUTH_TOKEN must contain 32 hexadecimal characters'); }
       if (!/^VA[0-9a-fA-F]{32}$/.test(serviceSid)) { throw new Error('TWILIO_VERIFY_SERVICE_SID must be a VA SID'); }
-      if (normalizeTwilioPhone(allowedPhone) !== normalizeTwilioPhone(phoneNumber)) { throw new Error('SMS_ALLOWED_PHONE must match AUTH_TEST_PHONE'); }
+      normalizeTwilioPhone(allowedPhone);
+      if (mode === 'mock' && normalizeTwilioPhone(allowedPhone) !== normalizeTwilioPhone(phoneNumber)) { throw new Error('SMS_ALLOWED_PHONE must match AUTH_TEST_PHONE'); }
       const rawSmsTimeout = env.SMS_TIMEOUT_MS ?? '10000';
       const timeoutMs = Number(rawSmsTimeout);
       if (!/^\d+$/.test(rawSmsTimeout) || timeoutMs < 100 || timeoutMs > 30000) { throw new Error('SMS_TIMEOUT_MS must be between 100 and 30000'); }
@@ -114,7 +132,8 @@ export function readEnvironment(env: NodeJS.ProcessEnv): Environment {
       const sender = env.SPEEDSMS_SENDER ?? 'Verify';
       const rawSmsTimeout = env.SMS_TIMEOUT_MS ?? '10000';
       if (!accessToken) { throw new Error('SPEEDSMS_ACCESS_TOKEN is required'); }
-      if (normalizeVietnamPhone(allowedPhone) !== normalizeVietnamPhone(phoneNumber)) { throw new Error('SMS_ALLOWED_PHONE must match AUTH_TEST_PHONE'); }
+      normalizeVietnamPhone(allowedPhone);
+      if (mode === 'mock' && normalizeVietnamPhone(allowedPhone) !== normalizeVietnamPhone(phoneNumber)) { throw new Error('SMS_ALLOWED_PHONE must match AUTH_TEST_PHONE'); }
       if (!['2', '4'].includes(rawType)) { throw new Error('SPEEDSMS_SMS_TYPE must be 2 or 4'); }
       if (rawType === '4' && !['Verify', 'Notify'].includes(sender)) { throw new Error('Use an approved Verify or Notify sender'); }
       if (rawType === '2' && sender !== '') { throw new Error('Type 2 requires an empty sender'); }
@@ -124,8 +143,8 @@ export function readEnvironment(env: NodeJS.ProcessEnv): Environment {
       sms = { provider: 'speedsms', accessToken, allowedPhone, smsType: Number(rawType) as 2 | 4, sender,
         liveEnabled: env.LIVE_SMS_ENABLED === 'true', timeoutMs };
     }
-    const adminPhone = env.AUTH_TEST_ADMIN_PHONE ?? '';
-    const adminPassword = env.AUTH_TEST_ADMIN_PASSWORD ?? '';
+    const adminPhone = mode === 'mock' ? env.AUTH_TEST_ADMIN_PHONE ?? '' : '';
+    const adminPassword = mode === 'mock' ? env.AUTH_TEST_ADMIN_PASSWORD ?? '' : '';
     let admin: MockAuthConfig['admin'];
     if (adminPhone || adminPassword) {
       if (!/^\+?\d{9,13}$/.test(adminPhone) || adminPhone.length > 13 || adminPassword.length < 8 || adminPassword.length > 128) {
@@ -155,10 +174,11 @@ export function readEnvironment(env: NodeJS.ProcessEnv): Environment {
       if (!/^\d+$/.test(rawSmtpTimeout) || smtpTimeout < 100 || smtpTimeout > 30000) { throw new Error('SMTP_TIMEOUT_MS must be between 100 and 30000'); }
       email = { provider: 'smtp', host, port: smtpPort, secure: rawSecure === 'true', user, password: smtpPassword, from, timeoutMs: smtpTimeout };
     }
-    auth = { mode: 'mock', phoneNumber, password, jwtSecret, sms, admin, email, cooperativeSms };
+    auth = { mode, phoneNumber, password, jwtSecret, sms, admin, email, cooperativeSms };
   }
   const mqtt = readMqttConfig(env);
-  if (mqtt.enabled && !auth) { throw new Error('MQTT_ENABLED requires the current application metadata modules (AUTH_MODE=mock)'); }
-  return { ai: readAiConfig(env), storage: storage as 'memory' | 'database', port, corsOrigins, database: { postgresUrl, mongoUri, timeoutMs }, auth, mqtt,
+  if (mqtt.enabled && !auth) { throw new Error('MQTT_ENABLED requires configured account and metadata modules'); }
+  if (production && !env.TRACE_PUBLIC_BASE_URL?.startsWith('https://')) throw new Error('Production requires HTTPS TRACE_PUBLIC_BASE_URL');
+  return { ai: readAiConfig(env), production, host: host as Environment['host'], storage: storage as 'memory' | 'database', port, corsOrigins, database: { postgresUrl, mongoUri, timeoutMs }, auth, mqtt,
     actuatorTasks: readActuatorTasksConfig(env), traceability: readTraceabilityConfig(env) };
 }

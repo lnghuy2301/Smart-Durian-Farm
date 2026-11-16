@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { readFile } from "node:fs/promises";
 
-const require = createRequire(import.meta.url);
+const require = createRequire(new URL("../../api/package.json", import.meta.url));
 
 // Kiểm tra trang công khai với backend thật của bộ browser tests. Đồng hồ giả
 // chỉ dùng khi dựng dữ liệu RAM, luôn khôi phục trước request/browser async.

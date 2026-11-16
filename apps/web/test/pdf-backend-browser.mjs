@@ -8,7 +8,7 @@ import { chromium } from "playwright-core";
 
 // Compile API to .integration-dist first. Isolated RAM/Nest, captured email,
 // mock SMS and MQTT disabled; never reads root .env or operator credentials.
-const require = createRequire(import.meta.url);
+const require = createRequire(new URL("../../api/package.json", import.meta.url));
 require("reflect-metadata");
 const apiRoot = fileURLToPath(new URL("../../api", import.meta.url));
 const webRoot = fileURLToPath(new URL("..", import.meta.url));

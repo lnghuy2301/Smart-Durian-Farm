@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { createServer } from "vite";
 import { chromium } from "playwright-core";
 // Existing isolated fixture: shared RAM stores, mock providers, no .env or DB.
-const require = createRequire(import.meta.url);
+const require = createRequire(new URL("../../api/package.json", import.meta.url));
 const root = fileURLToPath(new URL("..", import.meta.url));
 const apiRoot = fileURLToPath(
   new URL("../../api/.integration-dist/", import.meta.url),

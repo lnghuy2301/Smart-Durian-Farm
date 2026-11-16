@@ -1,7 +1,7 @@
 import { createServer } from "node:net";
 import { once } from "node:events";
 import { createRequire } from "node:module";
-const { parser, generate } = createRequire(import.meta.url)("mqtt-packet");
+const { parser, generate } = createRequire(new URL("../../api/package.json", import.meta.url))("mqtt-packet");
 
 // Chỉ fixture MQTT TCP trên loopback; điều khiển/ACK giả lập không ra phần cứng thật.
 export async function loopbackBroker() {

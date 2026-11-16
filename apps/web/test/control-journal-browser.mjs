@@ -4,7 +4,7 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { createServer } from "vite";
 import { chromium } from "playwright-core";
-const require = createRequire(import.meta.url);
+const require = createRequire(new URL("../../api/package.json", import.meta.url));
 require("reflect-metadata");
 const api = (n) =>
   require(

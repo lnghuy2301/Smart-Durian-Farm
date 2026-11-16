@@ -7,7 +7,7 @@ import { chromium } from "playwright-core";
 
 // Isolated Nest/RAM, fake email and JWT clock. Never loads .env, sends mail,
 // touches the operating database or changes the operator's Manager account.
-const require = createRequire(import.meta.url);
+const require = createRequire(new URL("../../api/package.json", import.meta.url));
 require("reflect-metadata");
 const webRoot = fileURLToPath(new URL("..", import.meta.url));
 const apiRoot = fileURLToPath(
