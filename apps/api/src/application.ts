@@ -28,7 +28,7 @@ export function configureApplication(app: INestApplication, config: Environment)
       : 'Isolated memory runtime for tests: business data is lost on restart. ')
       + 'Private APIs require JWT and current resource scope. Owner/admin approvals, assignment intervals and original correction authority remain enforced. MQTT uses registered station IDs, six sensor streams and taskId/action-correlated ACK receipts only; physical state remains Unknown. Commands use valve-before-pump ON, pump-before-valves OFF,10s per step, pre-start reset, preemption and recovery. Public QR exposes only whitelisted metadata, Locked correction lineages and approved harvest contents. Startup never migrates, seeds or publishes commands automatically; readiness checks database connectivity.')
     // Trạng thái quản trị của trạm tách biệt connectivity suy ra từ MQTT last_seen_at.
-    .setVersion('0.1.0')
+    .setVersion('1.0.0-rc.1')
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
